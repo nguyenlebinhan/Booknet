@@ -31,3 +31,20 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Secrets / cấu hình cục bộ ###
+.env
+.env.*
+application-local.properties
+application-local.yml
+*.pem
+*.key
+
+### Log / dữ liệu sinh khi chạy ###
+*.log
+logs/
+uploads/
+
+### OS ###
+.DS_Store
+Thumbs.db

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BookNet - Home</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Navbar Stylesheet -->
+  <link rel="stylesheet" th:href="@{/css/navbar.css}" href="/css/navbar.css">
+
+  <style>
+    /* Global Base Styling for Home Page */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: var(--bn-font-family, 'Plus Jakarta Sans', system-ui, sans-serif);
+      background: radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
+                  radial-gradient(circle at 85% 75%, rgba(245, 158, 11, 0.08) 0%, transparent 45%),
+                  var(--bn-bg-primary, #0a0e1a);
+      background-attachment: fixed;
+      color: var(--bn-text-primary, #f8fafc);
+      transition: background-color var(--bn-transition-normal, 0.3s), color var(--bn-transition-normal, 0.3s);
+    }
+
+    /* Main Container (Empty Placeholder ready for content) */
+    .home-main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 24px;
+    }
+
+    .empty-state-box {
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+      padding: 48px 32px;
+      border-radius: var(--bn-radius-lg, 20px);
+      background: var(--bn-bg-card, rgba(18, 26, 47, 0.75));
+      border: 1px dashed var(--bn-border-glass, rgba(255, 255, 255, 0.15));
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .empty-state-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 20px;
+      border-radius: var(--bn-radius-md, 14px);
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--bn-primary-light, #6366f1);
+    }
+
+    .empty-state-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.3px;
+    }
+
+    .empty-state-desc {
+      font-size: 0.95rem;
+      color: var(--bn-text-secondary, #94a3b8);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===================================================================
+       NAVBAR COMPONENT INCLUSION (Thymeleaf fragment from Navbar.html)
+       =================================================================== -->
+  <header th:replace="~{Navbar :: navbar}"></header>
+
+  <!-- ===================================================================
+       MAIN CONTENT (Clean Home Page Placeholder)
+       =================================================================== -->
+  <main class="home-main">
+    <div class="empty-state-box">
+      <div class="empty-state-icon">
+        <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+      </div>
+      <h2 class="empty-state-title">Welcome to BookNet</h2>
+      <p class="empty-state-desc">
+        The home page content area is currently blank and ready for new components, such as hero banners, featured books, library services, and announcements.
+      </p>
+    </div>
+  </main>
+
+</body>
+</html>

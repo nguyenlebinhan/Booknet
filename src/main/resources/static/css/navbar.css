@@ -1,0 +1,416 @@
+/* ===================================================================
+   BookNet - Modern Navbar Stylesheet (Permanent Dark Theme)
+   Location: templates/navbar.css & static/css/navbar.css
+   Design System: Glassmorphism, Sapphire & Dark Slate, Amber Glow
+   =================================================================== */
+
+:root {
+  /* Color Palette - Dark Slate & Royal Sapphire (Pure Dark Theme) */
+  --bn-bg-primary: #0a0e1a;
+  --bn-bg-secondary: #0f172a;
+  --bn-bg-glass: rgba(15, 23, 42, 0.82);
+  --bn-bg-card: rgba(18, 26, 47, 0.85);
+  --bn-bg-card-hover: rgba(30, 41, 69, 0.95);
+  --bn-border-glass: rgba(255, 255, 255, 0.08);
+  --bn-border-focus: rgba(99, 102, 241, 0.5);
+
+  --bn-primary: #4f46e5;
+  --bn-primary-light: #6366f1;
+  --bn-primary-dark: #3730a3;
+  --bn-primary-glow: rgba(99, 102, 241, 0.35);
+
+  --bn-accent-amber: #f59e0b;
+  --bn-accent-amber-glow: rgba(245, 158, 11, 0.3);
+  --bn-accent-cyan: #06b6d4;
+  --bn-accent-emerald: #10b981;
+  --bn-accent-rose: #f43f5e;
+
+  --bn-text-primary: #f8fafc;
+  --bn-text-secondary: #94a3b8;
+  --bn-text-muted: #64748b;
+  --bn-text-inverse: #0f172a;
+
+  --bn-font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --bn-radius-sm: 8px;
+  --bn-radius-md: 14px;
+  --bn-radius-lg: 20px;
+  --bn-radius-full: 9999px;
+
+  --bn-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --bn-shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.35);
+  --bn-shadow-lg: 0 20px 40px -8px rgba(0, 0, 0, 0.5);
+  --bn-shadow-glow: 0 0 25px var(--bn-primary-glow);
+
+  --bn-transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --bn-transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --bn-transition-bounce: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ===================================================================
+   NAVBAR CONTAINER & LAYOUT
+   =================================================================== */
+.bn-navbar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: var(--bn-bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--bn-border-glass);
+  transition: all var(--bn-transition-normal);
+  font-family: var(--bn-font-family);
+}
+
+.bn-navbar.scrolled {
+  box-shadow: var(--bn-shadow-md);
+  background: var(--bn-bg-glass);
+  border-bottom-color: rgba(99, 102, 241, 0.2);
+}
+
+.bn-navbar-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+/* ===================================================================
+   BRAND / LOGO
+   =================================================================== */
+.bn-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  user-select: none;
+}
+
+.bn-logo-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--bn-radius-md);
+  background: linear-gradient(135deg, var(--bn-primary), #818cf8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 4px 14px var(--bn-primary-glow);
+  transition: transform var(--bn-transition-bounce);
+}
+
+.bn-logo:hover .bn-logo-icon {
+  transform: scale(1.08) rotate(-4deg);
+}
+
+.bn-logo-text {
+  background: linear-gradient(135deg, #ffffff 40%, #c7d2fe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+}
+
+.bn-logo-badge {
+  font-size: 0.68rem;
+  padding: 2px 8px;
+  border-radius: var(--bn-radius-full);
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--bn-accent-amber);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+/* ===================================================================
+   NAVIGATION LINKS
+   =================================================================== */
+.bn-nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bn-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--bn-text-secondary);
+  text-decoration: none;
+  position: relative;
+  padding: 8px 0;
+  transition: color var(--bn-transition-fast);
+}
+
+.bn-nav-link:hover,
+.bn-nav-link.active {
+  color: var(--bn-text-primary);
+}
+
+.bn-nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2.5px;
+  background: linear-gradient(90deg, var(--bn-primary), var(--bn-accent-amber));
+  border-radius: var(--bn-radius-full);
+  transition: width var(--bn-transition-normal);
+}
+
+.bn-nav-link:hover::after,
+.bn-nav-link.active::after {
+  width: 100%;
+}
+
+/* ===================================================================
+   ACTIONS (SEARCH, AUTH)
+   =================================================================== */
+.bn-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Search Input */
+.bn-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.bn-search-input {
+  background: var(--bn-bg-card);
+  border: 1px solid var(--bn-border-glass);
+  border-radius: var(--bn-radius-full);
+  padding: 8px 16px 8px 36px;
+  font-size: 0.88rem;
+  color: var(--bn-text-primary);
+  outline: none;
+  width: 180px;
+  transition: all var(--bn-transition-normal);
+}
+
+.bn-search-input:focus {
+  width: 240px;
+  border-color: var(--bn-primary-light);
+  box-shadow: 0 0 12px var(--bn-primary-glow);
+}
+
+.bn-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--bn-text-muted);
+  pointer-events: none;
+}
+
+/* Auth Buttons */
+.bn-btn-auth {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  border-radius: var(--bn-radius-full);
+  font-size: 0.92rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--bn-primary), #6366f1);
+  color: #ffffff;
+  text-decoration: none;
+  box-shadow: 0 4px 16px var(--bn-primary-glow);
+  transition: all var(--bn-transition-normal);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bn-btn-auth:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(99, 102, 241, 0.45);
+}
+
+.bn-btn-auth:active {
+  transform: translateY(0);
+}
+
+/* User Profile Badge (When logged in) */
+.bn-user-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bn-bg-card);
+  border: 1px solid var(--bn-border-glass);
+  padding: 5px 14px 5px 6px;
+  border-radius: var(--bn-radius-full);
+  transition: all var(--bn-transition-fast);
+}
+
+.bn-user-badge:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.bn-user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #06b6d4);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.bn-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.bn-user-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--bn-text-primary);
+  line-height: 1.2;
+}
+
+.bn-user-role {
+  font-size: 0.72rem;
+  color: var(--bn-text-muted);
+}
+
+.bn-btn-logout {
+  background: transparent;
+  border: none;
+  color: var(--bn-text-muted);
+  font-size: 0.85rem;
+  padding: 6px;
+  margin-left: 4px;
+  border-radius: var(--bn-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--bn-transition-fast);
+}
+
+.bn-btn-logout:hover {
+  color: var(--bn-accent-rose);
+  background: rgba(244, 63, 94, 0.12);
+}
+
+/* Hamburger button for mobile */
+.bn-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  background: var(--bn-bg-card);
+  border: 1px solid var(--bn-border-glass);
+  border-radius: var(--bn-radius-md);
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--bn-transition-fast);
+}
+
+.bn-hamburger span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background-color: var(--bn-text-primary);
+  border-radius: var(--bn-radius-full);
+  transition: all var(--bn-transition-fast);
+}
+
+.bn-hamburger.active span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.bn-hamburger.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.bn-hamburger.active span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ===================================================================
+   MOBILE DRAWER & RESPONSIVE DESIGN
+   =================================================================== */
+@media (max-width: 992px) {
+  .bn-search-box {
+    display: none;
+  }
+}
+
+@media (max-width: 868px) {
+  .bn-hamburger {
+    display: flex;
+  }
+
+  .bn-nav-menu {
+    position: fixed;
+    top: 76px;
+    left: 0;
+    right: 0;
+    background: var(--bn-bg-card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--bn-border-glass);
+    flex-direction: column;
+    align-items: stretch;
+    padding: 24px;
+    gap: 16px;
+    display: none;
+    box-shadow: var(--bn-shadow-lg);
+    animation: bnSlideDown 0.25s ease-out;
+  }
+
+  .bn-nav-menu.active {
+    display: flex;
+  }
+
+  .bn-nav-link {
+    padding: 12px 16px;
+    border-radius: var(--bn-radius-sm);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .bn-nav-link:hover,
+  .bn-nav-link.active {
+    background: rgba(99, 102, 241, 0.1);
+  }
+
+  .bn-nav-link::after {
+    display: none;
+  }
+}
+
+@keyframes bnSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

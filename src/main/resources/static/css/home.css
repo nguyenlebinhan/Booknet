@@ -1,0 +1,71 @@
+/* ===================================================================
+   BookNet - Home Page Stylesheet
+   Location: static/css/home.css
+   =================================================================== */
+
+/* Global Base Styling for Home Page */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--bn-font-family, 'Plus Jakarta Sans', system-ui, sans-serif);
+  background: radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
+              radial-gradient(circle at 85% 75%, rgba(245, 158, 11, 0.08) 0%, transparent 45%),
+              var(--bn-bg-primary, #0a0e1a);
+  background-attachment: fixed;
+  color: var(--bn-text-primary, #f8fafc);
+  transition: background-color var(--bn-transition-normal, 0.3s), color var(--bn-transition-normal, 0.3s);
+}
+
+/* Main Container (Empty Placeholder ready for content) */
+.home-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+}
+
+.empty-state-box {
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+  padding: 48px 32px;
+  border-radius: var(--bn-radius-lg, 20px);
+  background: var(--bn-bg-card, rgba(18, 26, 47, 0.75));
+  border: 1px dashed var(--bn-border-glass, rgba(255, 255, 255, 0.15));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.empty-state-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  border-radius: var(--bn-radius-md, 14px);
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bn-primary-light, #6366f1);
+}
+
+.empty-state-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -0.3px;
+}
+
+.empty-state-desc {
+  font-size: 0.95rem;
+  color: var(--bn-text-secondary, #94a3b8);
+  line-height: 1.6;
+}

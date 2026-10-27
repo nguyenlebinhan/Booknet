@@ -35,7 +35,7 @@ build/
 ### Secrets / cấu hình cục bộ ###
 .env
 .env.*
-application-local.properties
+src/main/resources/application.properties
 application-local.yml
 *.pem
 *.key

@@ -32,11 +32,12 @@ build/
 ### VS Code ###
 .vscode/
 
-### Secrets / cấu hình cục bộ ###
+### Secrets / Cấu hình cục bộ chứa thông tin nhạy cảm ###
 .env
 .env.*
-src/main/resources/application.properties
-application-local.yml
+!.env.example
+application-local-custom.properties
+application-local-custom.yml
 *.pem
 *.key
 

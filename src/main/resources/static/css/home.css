@@ -69,3 +69,56 @@ body {
   color: var(--bn-text-secondary, #94a3b8);
   line-height: 1.6;
 }
+
+.google-link-card {
+  margin-top: 28px;
+  padding: 22px;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: var(--bn-radius-md, 14px);
+  background: rgba(99, 102, 241, 0.08);
+  text-align: left;
+}
+
+.google-link-card h3 {
+  margin-bottom: 8px;
+  font-size: 1rem;
+}
+
+.google-link-card p {
+  margin-bottom: 16px;
+  color: var(--bn-text-secondary, #94a3b8);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.google-link-button {
+  border: 0;
+  border-radius: 9px;
+  padding: 11px 16px;
+  background: #fff;
+  color: #1f2937;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.google-link-button:hover {
+  background: #e8eaf0;
+}
+
+.google-link-notice {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: 10px;
+  background: rgba(127, 29, 29, 0.2);
+  color: #fecaca;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.google-link-notice.success {
+  border-color: rgba(74, 222, 128, 0.3);
+  background: rgba(20, 83, 45, 0.2);
+  color: #bbf7d0;
+}

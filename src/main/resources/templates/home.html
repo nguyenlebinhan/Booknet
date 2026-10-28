@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" data-theme="dark" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -35,6 +35,23 @@
       <p class="empty-state-desc">
         The home page content area is currently blank and ready for new components, such as hero banners, featured books, library services, and announcements.
       </p>
+
+      <div class="google-link-notice success" role="status" th:if="${googleLinkedMessage}">
+        Google đã được liên kết với tài khoản BookNet này.
+      </div>
+      <div class="google-link-notice success" role="status" th:if="${googleLinked}">
+        Tài khoản Google đã liên kết.
+      </div>
+      <div class="google-link-notice" role="alert" th:if="${googleLinkError}" th:text="${googleLinkError}"></div>
+      <div class="google-link-notice" role="status" th:if="${googleLinkInfo}" th:text="${googleLinkInfo}"></div>
+
+      <section class="google-link-card" sec:authorize="isAuthenticated()" th:if="${showGoogleLink}">
+        <h3>Liên kết tài khoản Google</h3>
+        <p>Đăng nhập Google để liên kết với tài khoản BookNet đang sử dụng. Tài khoản và mật khẩu hiện tại sẽ được giữ nguyên.</p>
+        <form th:action="@{/account/link/google}" method="post">
+          <button class="google-link-button" type="submit">Liên kết Google</button>
+        </form>
+      </section>
     </div>
   </main>
 

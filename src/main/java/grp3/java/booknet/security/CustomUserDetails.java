@@ -30,7 +30,7 @@ public class CustomUserDetails implements UserDetails {
         this.avatarUrl = user.getAvatarUrl();
         this.provider = user.getProvider();
         this.enabled = user.isEnabled();
-        this.authorities = Collections.singletonList(new SimpleGrantedAuthority(user.getRole()));
+        this.authorities = Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()));
     }
 
     @Override

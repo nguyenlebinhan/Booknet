@@ -2,6 +2,7 @@ package grp3.java.booknet.entity.user;
 
 import grp3.java.booknet.entity.BaseEntity;
 import grp3.java.booknet.enums.user.AuthProvider;
+import grp3.java.booknet.enums.user.UserRole;
 import grp3.java.booknet.enums.user.UserStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -47,8 +48,9 @@ public class User extends BaseEntity {
     @Column(length = 100)
     private String password;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    private String role;
+    private UserRole role;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -77,7 +79,7 @@ public class User extends BaseEntity {
 
     @PrePersist
     private void initDefaults() {
-        if (this.role == null) this.role = "ROLE_USER";
+        if (this.role == null) this.role = UserRole.ROLE_USER;
         if (this.provider == null) this.provider = AuthProvider.LOCAL;
         if (this.status == null) this.status = UserStatus.ACTIVE;
         this.enabled = true;

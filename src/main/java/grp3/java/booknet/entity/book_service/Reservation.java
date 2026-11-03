@@ -7,6 +7,7 @@ import grp3.java.booknet.entity.user.User;
 import grp3.java.booknet.enums.book_service.ReservationStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 
@@ -15,8 +16,11 @@ import java.time.LocalDateTime;
         @Index(name = "idx_resv_queue", columnList = "book_id, status, reserved_at"),
         @Index(name = "idx_resv_member", columnList = "member_id, status")
 })
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 @ToString(onlyExplicitlyIncluded = true)
 public class Reservation extends BaseEntity {
 
@@ -37,12 +41,11 @@ public class Reservation extends BaseEntity {
     private LocalDateTime reservedAt;
 
     @PrePersist
-    protected void onBorrow() {
+    protected void onReserve() {
         if (this.reservedAt == null) {
             this.reservedAt = LocalDateTime.now();
         }
     }
-
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

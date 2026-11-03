@@ -4,6 +4,7 @@ import grp3.java.booknet.dto.UserRegisterDto;
 import grp3.java.booknet.entity.user.User;
 import grp3.java.booknet.enums.user.AuthProvider;
 import grp3.java.booknet.enums.user.UserStatus;
+import grp3.java.booknet.enums.user.UserRole;
 import grp3.java.booknet.repository.user.UserRepository;
 import grp3.java.booknet.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class UserServiceImpl implements UserService {
                 .email(normalizedEmail)
                 .username(defaultUsername)
                 .password(passwordEncoder.encode(registerDto.getPassword()))
-                .role("ROLE_USER")
+                .role(UserRole.ROLE_USER)
                 .provider(AuthProvider.LOCAL)
                 .enabled(true)
                 .emailVerified(true)

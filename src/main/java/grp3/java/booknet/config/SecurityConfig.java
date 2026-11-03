@@ -3,6 +3,7 @@ package grp3.java.booknet.config;
 import grp3.java.booknet.security.CustomOAuth2UserService;
 import grp3.java.booknet.security.CustomUserDetailsService;
 import grp3.java.booknet.security.OAuthLinkSessionAttributes;
+import grp3.java.booknet.enums.user.UserRole;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -62,6 +63,7 @@ public class SecurityConfig {
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
+            .anonymous(anonymous -> anonymous.authorities(UserRole.ROLE_GUEST.name()))
             .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")

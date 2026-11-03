@@ -4,6 +4,7 @@ import grp3.java.booknet.entity.user.OAuthIdentity;
 import grp3.java.booknet.entity.user.User;
 import grp3.java.booknet.enums.user.AuthProvider;
 import grp3.java.booknet.enums.user.UserStatus;
+import grp3.java.booknet.enums.user.UserRole;
 import grp3.java.booknet.repository.user.OAuthIdentityRepository;
 import grp3.java.booknet.repository.user.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -148,7 +149,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .username(defaultUsername)
                     .avatarUrl(picture)
                     .provider(AuthProvider.GOOGLE)
-                    .role("ROLE_USER")
+                    .role(UserRole.ROLE_USER)
                     .enabled(true)
                     .emailVerified(true)
                     .status(UserStatus.ACTIVE)

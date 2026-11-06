@@ -1,0 +1,46 @@
+:root {
+  --bn-paper: #f8f6f0;
+  --bn-surface: #fffefa;
+  --bn-shelf: #efeadf;
+  --bn-forest: #173f35;
+  --bn-forest-hover: #102d27;
+  --bn-sage: #e8eee6;
+  --bn-sage-muted: #d0ddd3;
+  --bn-footer-muted: #b6c8bc;
+  --bn-ink: #202e28;
+  --bn-muted: #73786e;
+  --bn-line: #dfe2d7;
+  --bn-ochre: #ae7837;
+  --bn-ochre-soft: #f6eddc;
+  --bn-danger: #ac4439;
+  --bn-font-serif: 'Noto Serif', Georgia, serif;
+  --bn-font-sans: 'Inter', system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bn-paper);
+  color: var(--bn-ink);
+  font-family: var(--bn-font-sans);
+}
+
+p,
+h1,
+h2,
+h3,
+ul {
+  margin: 0;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--bn-forest);
+  outline-offset: 2px;
+}

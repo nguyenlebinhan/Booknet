@@ -23,6 +23,7 @@ public class UserRegisterDto {
 
     @NotBlank(message = "Email không được để trống")
     @Email(message = "Email không đúng định dạng")
+    @Size(max = 120, message = "Email tối đa 120 ký tự")
     private String email;
 
     @NotBlank(message = "Mật khẩu không được để trống")

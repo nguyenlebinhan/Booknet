@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -20,9 +22,11 @@ public class AccountLinkController {
     @PostMapping("/account/link/google")
     public String linkGoogle(
             @AuthenticationPrincipal CustomUserDetails user,
+            Authentication authentication,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
-        if (user == null || user.getProvider() != AuthProvider.LOCAL) {
+        if (!(authentication instanceof UsernamePasswordAuthenticationToken)
+                || user == null || user.getProvider() != AuthProvider.LOCAL || !user.isEnabled()) {
             redirectAttributes.addFlashAttribute("googleLinkError",
                     "Hãy đăng nhập bằng email và mật khẩu trước khi liên kết Google.");
             return "redirect:/";

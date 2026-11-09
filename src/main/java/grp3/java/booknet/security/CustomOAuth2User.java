@@ -15,10 +15,12 @@ public class CustomOAuth2User implements OAuth2User {
 
     private final OAuth2User oAuth2User;
     private final User user;
+    private final long authVersion;
 
     public CustomOAuth2User(OAuth2User oAuth2User, User user) {
         this.oAuth2User = oAuth2User;
         this.user = user;
+        this.authVersion = user.getAuthVersion();
     }
 
     @Override

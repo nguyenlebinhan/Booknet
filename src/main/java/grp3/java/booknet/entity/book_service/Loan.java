@@ -6,6 +6,7 @@ import grp3.java.booknet.entity.user.User;
 import grp3.java.booknet.enums.book_service.LoanStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

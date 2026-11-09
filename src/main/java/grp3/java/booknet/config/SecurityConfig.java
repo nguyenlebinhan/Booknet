@@ -3,11 +3,15 @@ package grp3.java.booknet.config;
 import grp3.java.booknet.security.CustomOAuth2UserService;
 import grp3.java.booknet.security.CustomUserDetailsService;
 import grp3.java.booknet.security.OAuthLinkSessionAttributes;
+import grp3.java.booknet.security.CustomOidcUserService;
+import grp3.java.booknet.security.AccountSessionFilter;
+import grp3.java.booknet.repository.user.UserRepository;
 import grp3.java.booknet.enums.user.UserRole;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -17,6 +21,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.rememberme.RememberMeAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -26,6 +31,12 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
     private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomOidcUserService customOidcUserService;
+    private final UserRepository userRepository;
+
+    @Value("${BOOKNET_REMEMBER_ME_KEY:}")
+    private String configuredRememberMeKey;
+    private final String ephemeralRememberMeKey = java.util.UUID.randomUUID().toString();
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -58,7 +69,9 @@ public class SecurityConfig {
                     "/js/**",
                     "/images/**",
                     "/favicon.ico",
-                    "/oauth2/**"
+                    "/oauth2/**",
+                    "/api/auth/csrf", "/api/auth/register", "/api/auth/forgot-password",
+                    "/api/auth/reset-password", "/api/auth/verify-email", "/api/auth/verification/resend"
                 ).permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
@@ -77,6 +90,7 @@ public class SecurityConfig {
                 .loginPage("/login")
                 .userInfoEndpoint(userInfo -> userInfo
                     .userService(customOAuth2UserService)
+                    .oidcUserService(customOidcUserService)
                 )
                 .successHandler((request, response, authentication) -> {
                     HttpSession session = request.getSession(false);
@@ -93,8 +107,16 @@ public class SecurityConfig {
                     response.sendRedirect(wasLinking ? "/?google_link_error=true" : "/login?oauth2_error=true");
                 })
             )
+            .addFilterAfter(new AccountSessionFilter(userRepository), RememberMeAuthenticationFilter.class)
+            .exceptionHandling(errors -> errors
+                .defaultAuthenticationEntryPointFor((request, response, exception) -> {
+                    response.setStatus(401);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"message\":\"Vui lòng đăng nhập.\"}");
+                }, request -> request.getRequestURI().startsWith(request.getContextPath() + "/api/"))
+            )
             .rememberMe(remember -> remember
-                .key("booknet-library-secret-remember-key-2026")
+                .key(configuredRememberMeKey.isBlank() ? ephemeralRememberMeKey : configuredRememberMeKey)
                 .tokenValiditySeconds(7 * 24 * 60 * 60)
                 .rememberMeParameter("remember-me")
                 .userDetailsService(customUserDetailsService)

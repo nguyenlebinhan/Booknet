@@ -2,6 +2,7 @@ package grp3.java.booknet.security;
 
 import grp3.java.booknet.entity.user.User;
 import grp3.java.booknet.enums.user.AuthProvider;
+import grp3.java.booknet.enums.user.UserStatus;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,6 +21,9 @@ public class CustomUserDetails implements UserDetails {
     private final String avatarUrl;
     private final AuthProvider provider;
     private final boolean enabled;
+    private final boolean emailVerified;
+    private final UserStatus status;
+    private final long authVersion;
     private final Collection<? extends GrantedAuthority> authorities;
 
     public CustomUserDetails(User user) {
@@ -30,6 +34,9 @@ public class CustomUserDetails implements UserDetails {
         this.avatarUrl = user.getAvatarUrl();
         this.provider = user.getProvider();
         this.enabled = user.isEnabled();
+        this.emailVerified = user.isEmailVerified();
+        this.status = user.getStatus();
+        this.authVersion = user.getAuthVersion();
         this.authorities = Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()));
     }
 
@@ -50,12 +57,12 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true;
+        return status != UserStatus.EXPIRED;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return status != UserStatus.SUSPENDED;
     }
 
     @Override
@@ -65,7 +72,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return enabled;
+        return enabled && emailVerified && status == UserStatus.ACTIVE;
     }
 }
 

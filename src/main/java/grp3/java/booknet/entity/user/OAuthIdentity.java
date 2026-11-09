@@ -23,7 +23,10 @@ import lombok.experimental.SuperBuilder;
 @Entity
 @Table(
     name = "oauth_identities",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"provider", "provider_user_id"})
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"provider", "provider_user_id"}),
+        @UniqueConstraint(columnNames = {"user_id", "provider"})
+    }
 )
 @Getter
 @Setter

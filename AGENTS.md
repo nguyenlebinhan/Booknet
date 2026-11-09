@@ -1,5 +1,7 @@
 # Booknet project conventions
 
+- Read `docs/project-context.md` for the project overview and current feature status,
+  then verify the relevant source; the context is a dated snapshot, not live state.
 - This is a Java 21 / Spring Boot / Spring MVC / Thymeleaf application with JPA and MySQL.
 - Before changing a feature, read its existing controllers, services, security rules,
   form DTOs, templates, fragments and relevant tests. Check the current branch and diff.

@@ -1,68 +1,285 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BookNet - Home</title>
+  <title>booknet Library</title>
 
-  <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- Stylesheets -->
+  <link rel="stylesheet" th:href="@{/css/tokens.css}" href="/css/tokens.css">
   <link rel="stylesheet" th:href="@{/css/navbar.css}" href="/css/navbar.css">
   <link rel="stylesheet" th:href="@{/css/home.css}" href="/css/home.css">
   <link rel="stylesheet" th:href="@{/css/footer.css}" href="/css/footer.css">
 </head>
-
 <body>
 
-  <!-- ===================================================================
-       NAVBAR COMPONENT INCLUSION (Thymeleaf fragment from Navbar.html)
-       =================================================================== -->
   <header th:replace="~{Navbar :: navbar}"></header>
 
-  <!-- ===================================================================
-       MAIN CONTENT (Clean Home Page Placeholder)
-       =================================================================== -->
-  <main class="home-main">
-    <div class="empty-state-box">
-      <div class="empty-state-icon">
-        <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
-      </div>
-      <h2 class="empty-state-title">Welcome to BookNet</h2>
-      <p class="empty-state-desc">
-        The home page content area is currently blank and ready for new components, such as hero banners, featured
-        books, library services, and announcements.
-      </p>
+  <main>
 
-      <div class="google-link-notice success" role="status" th:if="${googleLinkedMessage}">
+    <!--/* Stats, genres, books, events and opening hours are sample content from the design. See docs/auth-pages-backend-handoff.md. */-->
+    <section class="home-intro">
+      <div class="home-hero">
+        <div class="home-hero-copy">
+          <p class="home-kicker">READ. CONNECT. GROW.</p>
+          <h1 class="home-title">Open a book,<br>expand your horizons.</h1>
+          <p class="home-lead">Find your next book and bring knowledge home.<br>booknet is your community library, a familiar reading corner<br>and the start of every journey of discovery.</p>
+
+          <form class="home-search" role="search" onsubmit="return false;">
+            <img th:src="@{/images/home/search.svg}" width="20" height="20" alt="">
+            <input type="search" name="keyword" aria-label="Search books" placeholder="A title, an author, or something you're curious about…">
+            <button type="submit">Find books</button>
+          </form>
+
+          <p class="home-popular">Popular:   <a href="#">Nguyễn Nhật Ánh</a>   ·   <a href="#">Literature</a>   ·   <a href="#">Life skills</a></p>
+        </div>
+
+        <div class="home-corner">
+          <img class="home-corner-photo" th:src="@{/images/home/library-corner.jpg}" alt="A reading room lined with bookshelves">
+          <a href="#" class="home-visit">
+            <img th:src="@{/images/home/sun.svg}" width="28" height="28" alt="">
+            <span class="home-visit-text">
+              <span class="home-visit-title">booknet welcomes you until 20:00 today</span>
+              <span class="home-visit-place">28 Nguyễn Du, Hà Nội · A quiet corner in the city</span>
+            </span>
+            <img th:src="@{/images/home/arrow-up-right.svg}" width="20" height="20" alt="">
+          </a>
+        </div>
+      </div>
+
+      <div class="home-stats">
+        <div class="home-stat">
+          <span class="home-stat-value">12.000+</span>
+          <span class="home-stat-label">carefully selected titles</span>
+        </div>
+        <div class="home-stat">
+          <span class="home-stat-value">3.200+</span>
+          <span class="home-stat-label">fellow readers</span>
+        </div>
+        <div class="home-stat">
+          <span class="home-stat-value">14 days</span>
+          <span class="home-stat-label">per loan</span>
+        </div>
+        <div class="home-stat">
+          <span class="home-stat-value">01 community</span>
+          <span class="home-stat-label">building a reading habit together</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="home-account" aria-label="Account messages">
+      <div class="home-notice success" role="status" th:if="${googleLinkedMessage}">
         Google đã được liên kết với tài khoản BookNet này.
       </div>
-      <div class="google-link-notice success" role="status" th:if="${googleLinked}">
+      <div class="home-notice success" role="status" th:if="${googleLinked}">
         Tài khoản Google đã liên kết.
       </div>
-      <div class="google-link-notice" role="alert" th:if="${googleLinkError}" th:text="${googleLinkError}"></div>
-      <div class="google-link-notice" role="status" th:if="${googleLinkInfo}" th:text="${googleLinkInfo}"></div>
+      <div class="home-notice" role="alert" th:if="${googleLinkError}" th:text="${googleLinkError}"></div>
+      <div class="home-notice" role="status" th:if="${googleLinkInfo}" th:text="${googleLinkInfo}"></div>
 
-      <section class="google-link-card" sec:authorize="isAuthenticated()" th:if="${showGoogleLink}">
-        <h3>Liên kết tài khoản Google</h3>
-        <p>Đăng nhập Google để liên kết với tài khoản BookNet đang sử dụng. Tài khoản và mật khẩu hiện tại sẽ được giữ nguyên.</p>
+      <div class="google-link-card" sec:authorize="isAuthenticated()" th:if="${showGoogleLink}">
+        <div>
+          <h3>Liên kết tài khoản Google</h3>
+          <p>Đăng nhập Google để liên kết với tài khoản BookNet đang sử dụng. Tài khoản và mật khẩu hiện tại sẽ được giữ nguyên.</p>
+        </div>
         <form th:action="@{/account/link/google}" method="post">
           <button class="google-link-button" type="submit">Liên kết Google</button>
         </form>
-      </section>
-    </div>
+      </div>
+    </section>
+
+    <section class="home-explore">
+      <div class="home-section-head">
+        <div class="home-section-copy">
+          <h2 class="home-heading-large">What would you like to read today?</h2>
+          <p class="home-section-text">A little literature, something new, or a quiet moment of your own.</p>
+        </div>
+        <a href="#" class="home-link">All genres  ↗</a>
+      </div>
+
+      <div class="home-genres">
+        <a href="#" class="home-genre">
+          <img th:src="@{/images/home/book-open.svg}" width="26" height="26" alt="">
+          <span class="home-genre-text">
+            <span class="home-genre-name">Literature</span>
+            <span class="home-genre-count">4.260 titles</span>
+          </span>
+        </a>
+        <a href="#" class="home-genre">
+          <img th:src="@{/images/home/sprout.svg}" width="26" height="26" alt="">
+          <span class="home-genre-text">
+            <span class="home-genre-name">Life skills</span>
+            <span class="home-genre-count">1.840 titles</span>
+          </span>
+        </a>
+        <a href="#" class="home-genre">
+          <img th:src="@{/images/home/globe.svg}" width="26" height="26" alt="">
+          <span class="home-genre-text">
+            <span class="home-genre-name">History &amp; science</span>
+            <span class="home-genre-count">2.150 titles</span>
+          </span>
+        </a>
+        <a href="#" class="home-genre">
+          <img th:src="@{/images/home/sparkles.svg}" width="26" height="26" alt="">
+          <span class="home-genre-text">
+            <span class="home-genre-name">Children's books</span>
+            <span class="home-genre-count">1.620 titles</span>
+          </span>
+        </a>
+      </div>
+
+      <div class="home-shelf-head">
+        <h2 class="home-heading">On the shelves at booknet</h2>
+        <a href="#" class="home-outline-btn">
+          <img th:src="@{/images/home/arrow-right.svg}" width="17" height="17" alt="">
+          <span>Explore all</span>
+        </a>
+      </div>
+
+      <div class="home-books">
+        <a href="#" class="home-book">
+          <div class="home-book-stand">
+            <div class="home-book-cover">
+              <img th:src="@{/images/home/cover-hoa-vang.jpg}" alt="">
+              <div class="home-cover-text">
+                <span class="home-cover-author">NGUYỄN NHẬT ÁNH</span>
+                <span class="home-cover-title">Tôi thấy hoa vàng trên cỏ xanh</span>
+              </div>
+            </div>
+          </div>
+          <div class="home-book-info">
+            <span class="home-book-category">VIETNAMESE LITERATURE</span>
+            <span class="home-book-title">Tôi thấy hoa vàng trên cỏ xanh</span>
+            <span class="home-book-author">Nguyễn Nhật Ánh</span>
+            <span class="home-book-status">Available · 3/8 copies</span>
+          </div>
+        </a>
+        <a href="#" class="home-book">
+          <div class="home-book-stand">
+            <div class="home-book-cover">
+              <img th:src="@{/images/home/cover-nha-gia-kim.jpg}" alt="">
+              <div class="home-cover-text">
+                <span class="home-cover-author">PAULO COELHO</span>
+                <span class="home-cover-title">Nhà giả kim</span>
+              </div>
+            </div>
+          </div>
+          <div class="home-book-info">
+            <span class="home-book-category">WORLD LITERATURE</span>
+            <span class="home-book-title">Nhà giả kim</span>
+            <span class="home-book-author">Paulo Coelho</span>
+            <span class="home-book-status on-loan">On loan</span>
+          </div>
+        </a>
+        <a href="#" class="home-book">
+          <div class="home-book-stand">
+            <div class="home-book-cover">
+              <img th:src="@{/images/home/cover-de-men.jpg}" alt="">
+              <div class="home-cover-text">
+                <span class="home-cover-author">TÔ HOÀI</span>
+                <span class="home-cover-title">Dế Mèn phiêu lưu ký</span>
+              </div>
+            </div>
+          </div>
+          <div class="home-book-info">
+            <span class="home-book-category">CHILDREN'S BOOKS</span>
+            <span class="home-book-title">Dế Mèn phiêu lưu ký</span>
+            <span class="home-book-author">Tô Hoài</span>
+            <span class="home-book-status">Available · 4/10 copies</span>
+          </div>
+        </a>
+        <a href="#" class="home-book">
+          <div class="home-book-stand">
+            <div class="home-book-cover">
+              <img th:src="@{/images/home/cover-cay-cam.jpg}" alt="">
+              <div class="home-cover-text">
+                <span class="home-cover-author">JOSÉ MAURO DE VASCONCELOS</span>
+                <span class="home-cover-title">Cây cam ngọt của tôi</span>
+              </div>
+            </div>
+          </div>
+          <div class="home-book-info">
+            <span class="home-book-category">WORLD LITERATURE</span>
+            <span class="home-book-title">Cây cam ngọt của tôi</span>
+            <span class="home-book-author">José Mauro de Vasconcelos</span>
+            <span class="home-book-status">Available · 2/6 copies</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <section class="home-journey">
+      <div class="home-journey-copy">
+        <p class="home-eyebrow">A SIMPLE JOURNEY</p>
+        <h2 class="home-heading">Bring books home,<br>carry ideas further.</h2>
+      </div>
+      <ol class="home-steps">
+        <li class="home-step">
+          <span class="home-step-number">01</span>
+          <h3 class="home-step-title">Become a reader</h3>
+          <p class="home-step-text">Create a free account and activate your member card at the library.</p>
+        </li>
+        <li class="home-step">
+          <span class="home-step-number">02</span>
+          <h3 class="home-step-title">Choose a book</h3>
+          <p class="home-step-text">Find a book, check availability and request a loan or reservation.</p>
+        </li>
+        <li class="home-step">
+          <span class="home-step-number">03</span>
+          <h3 class="home-step-title">Read your way</h3>
+          <p class="home-step-text">Collect your books at booknet. Track due dates and renew on the website.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section class="home-meet">
+      <div class="home-events">
+        <div class="home-events-head">
+          <h2 class="home-heading">What's on at booknet</h2>
+          <a href="#" aria-label="All events">
+            <img th:src="@{/images/home/arrow-up-right.svg}" width="20" height="20" alt="">
+          </a>
+        </div>
+        <a href="#" class="home-event">
+          <span class="home-event-date">
+            <span class="home-event-day">07</span>
+            <span class="home-event-month">NOVEMBER</span>
+          </span>
+          <span class="home-event-body">
+            <span class="home-event-title">Slow reading together</span>
+            <span class="home-event-detail">09:00 – 11:00 · Shared reading room</span>
+          </span>
+          <img th:src="@{/images/home/arrow-right-large.svg}" width="18" height="18" alt="">
+        </a>
+        <a href="#" class="home-event">
+          <span class="home-event-date">
+            <span class="home-event-day">14</span>
+            <span class="home-event-month">NOVEMBER</span>
+          </span>
+          <span class="home-event-body">
+            <span class="home-event-title">Stories from the pages</span>
+            <span class="home-event-detail">15:00 – 16:30 · Children's corner</span>
+          </span>
+          <img th:src="@{/images/home/arrow-right-large.svg}" width="18" height="18" alt="">
+        </a>
+      </div>
+
+      <div class="home-invite">
+        <h2 class="home-invite-title">There's always<br>a place for you.</h2>
+        <p class="home-invite-text">Join the booknet community to start reading, save your favorites and keep up with every event.</p>
+        <a th:href="@{/register}" class="home-invite-btn">
+          <span>Get a free member card</span>
+          <img th:src="@{/images/home/arrow-right-large.svg}" width="18" height="18" alt="">
+        </a>
+      </div>
+    </section>
+
   </main>
 
-  <footer th:replace="~{Footer :: footer-section}"></footer>
+  <footer th:replace="~{footer :: footer-section}"></footer>
 
 </body>
-
 </html>

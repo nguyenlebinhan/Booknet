@@ -1,123 +1,121 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đăng ký thành viên | BookNet - Thư viện Trực tuyến</title>
+  <title>Become a member | booknet Library</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+  <link rel="stylesheet" th:href="@{/css/auth.css}" href="/css/auth.css">
 </head>
 <body class="auth-page">
 
-  <div class="auth-container">
-    <div class="auth-card">
-      
-      <div class="text-center">
-        <a th:href="@{/}" href="/" class="brand-logo">
-          <div class="brand-icon">
-            <i class="bi bi-book-half"></i>
-          </div>
-          <span class="brand-title">BookNet</span>
-        </a>
-      </div>
+  <div class="auth-layout">
 
-      <div class="auth-header text-center">
-        <h1>Đăng ký tài khoản</h1>
-        <p>Gia nhập mạng lưới thư viện và mở khóa kho tri thức</p>
-      </div>
+    <aside th:replace="~{authFragments :: aside('register-library.jpg', 'Every reader,', 'a story of their own.')}"></aside>
 
-      <div th:if="${globalError != null}" class="alert-custom-error" role="alert">
-        <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
-        <span th:text="${globalError}">Có lỗi xảy ra trong quá trình đăng ký.</span>
-      </div>
+    <main class="auth-main">
+      <div class="auth-content">
 
-      <form th:action="@{/register}" th:object="${user}" method="post">
-        
-        <div class="mb-3">
-          <label for="fullName" class="form-label">Họ và tên</label>
-          <div class="input-group-custom">
-            <i class="bi bi-person input-icon"></i>
-            <input type="text" id="fullName" th:field="*{fullName}" 
-                   class="form-control-custom" th:classappend="${#fields.hasErrors('fullName')} ? 'is-invalid' : ''"
-                   placeholder="Nguyễn Văn A" required>
-          </div>
-          <div class="field-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}">
-            <i class="bi bi-exclamation-circle"></i> Họ và tên không hợp lệ.
-          </div>
-        </div>
+        <header class="auth-header">
+          <p class="auth-eyebrow">GET STARTED WITH booknet</p>
+          <h1 class="auth-title auth-title-small">Become a reader.</h1>
+          <p class="auth-subtitle">Create a free account. A whole library awaits.</p>
+        </header>
 
-        <div class="mb-3">
-          <label for="email" class="form-label">Địa chỉ Email</label>
-          <div class="input-group-custom">
-            <i class="bi bi-envelope input-icon"></i>
-            <input type="email" id="email" th:field="*{email}" 
-                   class="form-control-custom" th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''"
-                   placeholder="name@example.com" required>
-          </div>
-          <div class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">
-            <i class="bi bi-exclamation-circle"></i> Email không hợp lệ.
-          </div>
-        </div>
+        <div th:if="${globalError != null}" class="auth-notice auth-notice-error" role="alert" th:text="${globalError}">Something went wrong during registration.</div>
 
-        <div class="mb-3">
-          <label for="password" class="form-label">Mật khẩu</label>
-          <div class="input-group-custom">
-            <i class="bi bi-shield-lock input-icon"></i>
-            <input type="password" id="password" th:field="*{password}" 
-                   class="form-control-custom" th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''"
-                   placeholder="Tối thiểu 6 ký tự" required>
-          </div>
-          <div class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">
-            <i class="bi bi-exclamation-circle"></i> Mật khẩu không hợp lệ.
-          </div>
-        </div>
+        <form class="auth-form" th:action="@{/register}" th:object="${user}" method="post">
 
-        <div class="mb-3">
-          <label for="confirmPassword" class="form-label">Xác nhận mật khẩu</label>
-          <div class="input-group-custom">
-            <i class="bi bi-shield-check input-icon"></i>
-            <input type="password" id="confirmPassword" th:field="*{confirmPassword}" 
-                   class="form-control-custom" th:classappend="${#fields.hasErrors('confirmPassword')} ? 'is-invalid' : ''"
-                   placeholder="Nhập lại mật khẩu" required>
-          </div>
-          <div class="field-error" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}">
-            <i class="bi bi-exclamation-circle"></i> Mật khẩu xác nhận không khớp.
-          </div>
-        </div>
+          <div class="auth-fields">
+            <div class="auth-field">
+              <label for="fullName" class="auth-label">Full name *</label>
+              <div class="auth-input-box" th:classappend="${#fields.hasErrors('fullName')} ? 'has-error'">
+                <input type="text" id="fullName" th:field="*{fullName}" class="auth-input" placeholder="Your full name" autocomplete="name" required>
+              </div>
+              <p class="auth-field-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}">Full name is invalid.</p>
+            </div>
 
-        <div class="mb-4">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" th:field="*{termsAccepted}" id="termsAccepted">
-            <label class="form-check-label" for="termsAccepted">
-              Tôi đồng ý với <a href="#" target="_blank">Điều khoản sử dụng</a> và <a href="#" target="_blank">Quy chế mượn trả</a> của BookNet.
+            <div class="auth-field-row">
+              <div class="auth-field">
+                <label for="email" class="auth-label">Email *</label>
+                <div class="auth-input-box" th:classappend="${#fields.hasErrors('email')} ? 'has-error'">
+                  <input type="email" id="email" th:field="*{email}" class="auth-input" placeholder="name@example.com" autocomplete="email" required>
+                </div>
+                <p class="auth-field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Email is invalid.</p>
+              </div>
+
+              <div class="auth-field">
+                <label for="phone" class="auth-label">Phone number *</label>
+                <!--/* Not saved yet: UserRegisterDto has no phone field. See docs/auth-pages-backend-handoff.md. */-->
+                <div class="auth-input-box">
+                  <input type="tel" id="phone" name="phone" th:value="${param.phone}" class="auth-input" placeholder="0912 345 678" autocomplete="tel" pattern="[+]?[0-9 \(\)\-]{8,19}" title="Enter a valid phone number" required>
+                </div>
+              </div>
+            </div>
+
+            <div class="auth-field">
+              <label for="password" class="auth-label">Password *</label>
+              <div class="auth-input-box" th:classappend="${#fields.hasErrors('password')} ? 'has-error'">
+                <input type="password" id="password" th:field="*{password}" class="auth-input" autocomplete="new-password" minlength="8" maxlength="32" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*" title="At least 8 characters, including uppercase, lowercase and numbers" required>
+                <button th:replace="~{authFragments :: passwordToggle}"></button>
+              </div>
+              <p class="auth-field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Password is invalid.</p>
+              <p class="auth-field-hint" th:unless="${#fields.hasErrors('password')}">At least 8 characters, including uppercase, lowercase and numbers.</p>
+            </div>
+
+            <div class="auth-strength" id="password-strength" aria-hidden="true">
+              <span></span><span></span><span></span><span></span>
+            </div>
+
+            <div class="auth-field">
+              <label for="confirmPassword" class="auth-label">Confirm password *</label>
+              <div class="auth-input-box" th:classappend="${#fields.hasErrors('confirmPassword')} ? 'has-error'">
+                <input type="password" id="confirmPassword" th:field="*{confirmPassword}" class="auth-input" autocomplete="new-password" required>
+                <button th:replace="~{authFragments :: passwordToggle}"></button>
+              </div>
+              <p class="auth-field-error" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}">Passwords do not match.</p>
+            </div>
+          </div>
+
+          <div class="auth-field">
+            <label class="auth-check">
+              <input type="checkbox" th:field="*{termsAccepted}" class="auth-checkbox" required>
+              <span>I agree to booknet Library's Terms of use, Privacy policy and Borrowing policy.</span>
             </label>
+            <p class="auth-field-error" th:if="${#fields.hasErrors('termsAccepted')}" th:errors="*{termsAccepted}">You must accept the terms.</p>
           </div>
-          <div class="field-error" th:if="${#fields.hasErrors('termsAccepted')}" th:errors="*{termsAccepted}">
-            <i class="bi bi-exclamation-circle"></i> Bạn cần đồng ý với điều khoản.
+
+          <div class="auth-actions">
+            <button type="submit" class="auth-btn auth-btn-primary">
+              <img th:src="@{/images/auth/arrow-right.svg}" width="17" height="17" alt="">
+              <span>Create member account</span>
+            </button>
+            <a th:replace="~{authFragments :: googleButton}"></a>
+          </div>
+
+        </form>
+
+        <div class="auth-message">
+          <img th:src="@{/images/auth/info.svg}" width="21" height="21" alt="">
+          <div class="auth-message-body">
+            <p class="auth-message-title">One small step before borrowing</p>
+            <p class="auth-message-text">Verify your email, then bring your ID to the desk to activate your card. Each member may borrow up to 5 books.</p>
           </div>
         </div>
 
-        <button type="submit" class="btn btn-submit">
-          <span>Tạo tài khoản</span>
-          <i class="bi bi-check2-circle ms-2"></i>
-        </button>
+        <p class="auth-switch auth-switch-small">
+          <span>Already have an account?</span>
+          <a th:href="@{/login}" class="auth-link">Sign in now →</a>
+        </p>
 
-      </form>
-
-      <div class="auth-footer">
-        Đã có tài khoản thư viện? 
-        <a th:href="@{/login}" href="/login">Đăng nhập ngay</a>
       </div>
-
-    </div>
+    </main>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script th:src="@{/js/auth.js}" src="/js/auth.js"></script>
 </body>
 </html>

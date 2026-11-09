@@ -26,10 +26,9 @@
           <p class="auth-subtitle">Sign in to continue your reading journey with booknet.</p>
         </header>
 
-        <div th:if="${param.registered != null}" class="auth-notice auth-notice-success" role="status">Registration successful! Sign in to get started.</div>
-        <div th:if="${param.reset != null}" class="auth-notice auth-notice-success" role="status">Your password has been updated. Sign in with your new password.</div>
-        <div th:if="${param.logout != null}" class="auth-notice auth-notice-success" role="status">You have signed out successfully.</div>
-        <div th:if="${param.oauth2_error != null}" class="auth-notice auth-notice-error" role="alert">Google sign-in failed or was cancelled. If this email already has a booknet account, sign in with your email and password, then link Google from the Home page.</div>
+        <div th:if="${successMessage != null}" th:text="${successMessage}" class="auth-notice auth-notice-success" role="status"></div>
+        <div th:if="${logoutMessage != null}" th:text="${logoutMessage}" class="auth-notice auth-notice-success" role="status"></div>
+        <div th:if="${errorMessage != null and param.error == null}" th:text="${errorMessage}" class="auth-notice auth-notice-error" role="alert"></div>
 
         <div class="auth-tabs" role="group" aria-label="Account type">
           <button type="button" class="auth-tab active" aria-pressed="true">Member</button>
@@ -53,7 +52,7 @@
                      th:attr="aria-invalid=${loginFailed},aria-describedby=${loginFailed} ? 'password-error'">
               <button th:replace="~{authFragments :: passwordToggle}"></button>
             </div>
-            <p class="auth-field-error" id="password-error" role="alert" th:if="${loginFailed}">Incorrect email or password. Please try again.</p>
+            <p class="auth-field-error" id="password-error" role="alert" th:if="${loginFailed}" th:text="${errorMessage}">Unable to sign in. Check your credentials and verify your email.</p>
           </div>
 
           <div class="auth-options">
@@ -82,6 +81,9 @@
         <p class="auth-switch">
           <span>Don't have an account?</span>
           <a th:href="@{/register}" class="auth-link auth-link-large">Become a member →</a>
+        </p>
+        <p class="auth-switch auth-switch-small">
+          <a th:href="@{/verification/resend}" class="auth-link">Resend verification email</a>
         </p>
 
       </div>

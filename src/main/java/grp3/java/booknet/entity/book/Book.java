@@ -3,6 +3,7 @@ package grp3.java.booknet.entity.book;
 import grp3.java.booknet.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 
 import java.time.LocalDateTime;

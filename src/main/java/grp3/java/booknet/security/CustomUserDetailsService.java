@@ -2,6 +2,8 @@ package grp3.java.booknet.security;
 
 import grp3.java.booknet.entity.user.User;
 import grp3.java.booknet.repository.user.UserRepository;
+import grp3.java.booknet.service.AccountService;
+import grp3.java.booknet.enums.user.AuthProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,7 +20,8 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmail(AccountService.normalizeEmail(email))
+                .filter(account -> account.getProvider() == AuthProvider.LOCAL && account.getPassword() != null)
                 .orElseThrow(() -> new UsernameNotFoundException("Tài khoản không tồn tại với email: " + email));
         return new CustomUserDetails(user);
     }

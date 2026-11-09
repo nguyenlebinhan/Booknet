@@ -6,6 +6,7 @@ import grp3.java.booknet.enums.book_service.FineReason;
 import grp3.java.booknet.enums.book_service.FineStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

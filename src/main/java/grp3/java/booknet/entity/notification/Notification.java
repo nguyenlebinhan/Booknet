@@ -7,6 +7,7 @@ import grp3.java.booknet.entity.user.User;
 import grp3.java.booknet.enums.notification.NotificationType;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 
 @Entity

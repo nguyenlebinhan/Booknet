@@ -17,9 +17,9 @@
 
     <nav aria-label="Main navigation">
       <ul class="bn-nav-links" id="bn-nav-links">
-        <li><a href="#" class="bn-nav-link">Explore books</a></li>
-        <li sec:authorize="isAnonymous()"><a href="#" class="bn-nav-link">About the library</a></li>
-        <li sec:authorize="isAnonymous()"><a href="#" class="bn-nav-link">Events</a></li>
+        <li><a th:href="@{/catalog}" href="/catalog" class="bn-nav-link" th:classappend="${activePage == 'catalog'} ? ' is-active' : ''">Explore books</a></li>
+        <li><a th:href="@{/about}" href="/about" class="bn-nav-link" th:classappend="${activePage == 'about'} ? ' is-active' : ''">About the library</a></li>
+        <li><a th:href="@{/contact}" href="/contact" class="bn-nav-link" th:classappend="${activePage == 'contact'} ? ' is-active' : ''">Contact</a></li>
         <li sec:authorize="isAuthenticated()"><a href="#" class="bn-nav-link">My books</a></li>
         <li sec:authorize="isAuthenticated()"><a href="#" class="bn-nav-link">Reservations</a></li>
       </ul>

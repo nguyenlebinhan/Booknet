@@ -63,6 +63,8 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/",
                     "/home",
+                    "/about",
+                    "/contact",
                     "/login",
                     "/register",
                     "/forgot-password", "/reset-password", "/verify-email", "/verification/resend",

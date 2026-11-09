@@ -2,6 +2,7 @@ package grp3.java.booknet.controller;
 
 import grp3.java.booknet.dto.UserRegisterDto;
 import grp3.java.booknet.service.UserService;
+import grp3.java.booknet.exception.AccountException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ public class AuthController {
             @RequestParam(value = "error", required = false) String error,
             @RequestParam(value = "logout", required = false) String logout,
             @RequestParam(value = "registered", required = false) String registered,
+            @RequestParam(value = "reset", required = false) String reset,
             @RequestParam(value = "oauth2_error", required = false) String oauth2Error,
             Model model) {
 
@@ -38,13 +40,16 @@ public class AuthController {
         }
 
         if (error != null) {
-            model.addAttribute("errorMessage", "Email hoặc mật khẩu không chính xác. Vui lòng thử lại!");
+            model.addAttribute("errorMessage", "Không thể đăng nhập. Kiểm tra email, mật khẩu và xác thực email; tài khoản phải đang hoạt động.");
         }
         if (logout != null) {
             model.addAttribute("logoutMessage", "Bạn đã đăng xuất thành công khỏi hệ thống.");
         }
         if (registered != null) {
-            model.addAttribute("successMessage", "Đăng ký tài khoản thành công! Hãy đăng nhập để trải nghiệm.");
+            model.addAttribute("successMessage", "Đăng ký thành công! Vui lòng kiểm tra email và xác thực tài khoản trước khi đăng nhập.");
+        }
+        if (reset != null) {
+            model.addAttribute("successMessage", "Đã đặt lại mật khẩu. Vui lòng đăng nhập bằng mật khẩu mới.");
         }
         if (oauth2Error != null) {
             model.addAttribute("errorMessage", "Đăng nhập Google thất bại hoặc bị hủy. Nếu email đã có tài khoản BookNet, hãy đăng nhập bằng email và mật khẩu rồi liên kết Google từ trang Home.");
@@ -87,11 +92,14 @@ public class AuthController {
 
         try {
             userService.registerNewUser(registerDto);
-            redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công! Vui lòng đăng nhập.");
+            redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.");
             return "redirect:/login?registered=true";
+        } catch (AccountException e) {
+            model.addAttribute("globalError", e.getMessage());
+            return "register";
         } catch (Exception e) {
             log.error("Lỗi trong quá trình đăng ký tài khoản: ", e);
-            model.addAttribute("globalError", "Đã xảy ra lỗi trong quá trình đăng ký: " + e.getMessage());
+            model.addAttribute("globalError", "Chưa thể đăng ký tài khoản. Vui lòng thử lại sau.");
             return "register";
         }
     }

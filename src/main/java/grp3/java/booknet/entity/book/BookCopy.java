@@ -4,6 +4,7 @@ import grp3.java.booknet.entity.BaseEntity;
 import grp3.java.booknet.enums.book.CopyStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 

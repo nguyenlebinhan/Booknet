@@ -50,10 +50,10 @@
 
               <div class="auth-field">
                 <label for="phone" class="auth-label">Phone number *</label>
-                <!--/* Not saved yet: UserRegisterDto has no phone field. See docs/auth-pages-backend-handoff.md. */-->
-                <div class="auth-input-box">
-                  <input type="tel" id="phone" name="phone" th:value="${param.phone}" class="auth-input" placeholder="0912 345 678" autocomplete="tel" pattern="[+]?[0-9 \(\)\-]{8,19}" title="Enter a valid phone number" required>
+                <div class="auth-input-box" th:classappend="${#fields.hasErrors('phone')} ? 'has-error'">
+                  <input type="tel" id="phone" th:field="*{phone}" class="auth-input" placeholder="0912 345 678" autocomplete="tel" pattern="[+]?[0-9 \(\)\-]{8,19}" title="Enter a valid phone number" required>
                 </div>
+                <p class="auth-field-error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}">Phone number is invalid.</p>
               </div>
             </div>
 

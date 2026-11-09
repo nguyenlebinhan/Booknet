@@ -62,6 +62,9 @@ public class User extends BaseEntity {
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified;
 
+    @Column(name = "auth_version", nullable = false, columnDefinition = "bigint default 0")
+    private long authVersion;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private UserStatus status;
@@ -82,7 +85,5 @@ public class User extends BaseEntity {
         if (this.role == null) this.role = UserRole.ROLE_USER;
         if (this.provider == null) this.provider = AuthProvider.LOCAL;
         if (this.status == null) this.status = UserStatus.ACTIVE;
-        this.enabled = true;
-        this.emailVerified = true;
     }
 }

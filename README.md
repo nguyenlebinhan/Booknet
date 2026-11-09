@@ -1,5 +1,9 @@
 # 📚 Booknet
 
+Context để đọc/mention khi giao việc tiếp theo: [docs/project-context.md](docs/project-context.md).
+
+Tài liệu luồng tài khoản Thymeleaf, API bổ sung, SMTP và kiểm thử: [docs/account-api.md](docs/account-api.md).
+
 > Hệ thống quản lý và chia sẻ sách trực tuyến được phát triển trên nền tảng **Spring Boot** và **Thymeleaf**.
 
 ---

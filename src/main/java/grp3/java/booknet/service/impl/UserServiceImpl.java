@@ -43,6 +43,7 @@ public class UserServiceImpl implements UserService {
         User newUser = User.builder()
                 .fullName(registerDto.getFullName().trim())
                 .email(normalizedEmail)
+                .phone(registerDto.getPhone() == null ? null : registerDto.getPhone().trim())
                 .username(defaultUsername.substring(0, Math.min(50, defaultUsername.length())))
                 .password(passwordEncoder.encode(registerDto.getPassword()))
                 .role(UserRole.ROLE_USER)

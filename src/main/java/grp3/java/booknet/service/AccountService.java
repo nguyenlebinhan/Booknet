@@ -1,6 +1,7 @@
 package grp3.java.booknet.service;
 
 import grp3.java.booknet.dto.AccountRequests;
+import grp3.java.booknet.config.AccountPolicy;
 import grp3.java.booknet.dto.ProfileResponse;
 import grp3.java.booknet.entity.user.AccountToken;
 import grp3.java.booknet.entity.user.User;
@@ -47,9 +48,11 @@ public class AccountService {
     }
 
     public static void validateNewPassword(String password, String confirmation) {
-        if (password == null || password.isBlank() || password.length() < 6 || password.length() > 32
+        if (password == null || password.length() < AccountPolicy.PASSWORD_MIN_LENGTH
+                || password.length() > AccountPolicy.PASSWORD_MAX_LENGTH
+                || !password.matches(AccountPolicy.PASSWORD_PATTERN)
                 || password.getBytes(StandardCharsets.UTF_8).length > 72 || !password.equals(confirmation)) {
-            throw new AccountException(HttpStatus.BAD_REQUEST, "Mật khẩu phải từ 6–32 ký tự, tối đa 72 byte và xác nhận phải trùng khớp.");
+            throw new AccountException(HttpStatus.BAD_REQUEST, AccountPolicy.PASSWORD_MESSAGE + " Xác nhận phải trùng khớp.");
         }
     }
 
@@ -163,7 +166,8 @@ public class AccountService {
         byte[] bytes = new byte[32];
         RANDOM.nextBytes(bytes);
         String rawToken = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-        Duration lifetime = purpose == AccountTokenPurpose.VERIFY_EMAIL ? Duration.ofHours(24) : Duration.ofMinutes(30);
+        Duration lifetime = purpose == AccountTokenPurpose.VERIFY_EMAIL
+                ? AccountPolicy.VERIFICATION_TOKEN_LIFETIME : AccountPolicy.RESET_TOKEN_LIFETIME;
         tokens.save(AccountToken.builder().user(user).purpose(purpose).tokenHash(hash(rawToken))
                 .issuedAt(now).expiresAt(now.plus(lifetime)).build());
         mail.send(user.getEmail(), rawToken, purpose);

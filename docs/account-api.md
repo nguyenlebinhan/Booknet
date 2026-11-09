@@ -1,7 +1,34 @@
-# Account backend
+# Account flows: Spring MVC and Thymeleaf
 
-Các thay đổi này không thêm hoặc sửa giao diện HTML/CSS. API trả JSON và dùng chung phiên
-Spring Security với form đăng nhập hiện tại.
+Luồng người dùng chính dùng `@Controller`, form HTML Thymeleaf, `BindingResult`, `Model`,
+flash message và redirect. Các trang dùng cùng service và phiên Spring Security với API
+JSON bổ sung. Giữ nguyên bố cục và CSS; template chỉ được nối form, dữ liệu và thông báo.
+
+## Luồng HTML chính
+
+| Route | Xử lý |
+| --- | --- |
+| `GET/POST /register` | Render/bind form đăng ký; lưu điện thoại, gửi xác thực, redirect Login |
+| `GET/POST /login` | Render Login / Spring Security xác thực form |
+| `GET/POST /forgot-password` | Render form, gửi email reset, redirect lại với thông báo chung |
+| `GET /reset-password?token=...` | Kiểm tra token và render form hoặc thông báo link hết hạn |
+| `POST /reset-password` | Nhận `token`, `password`, `confirmPassword`; lỗi render lại; thành công redirect `/login?reset=true` |
+| `GET /verify-email?token=...` | Xác thực rồi redirect Login với flash message thành công/lỗi |
+| `GET/POST /verification/resend` | Dùng lại bố cục form email, gửi lại xác thực, hiển thị kết quả chung |
+| `POST /account/link/google` | Bắt đầu liên kết Google qua form có CSRF |
+| `POST /logout` | Xóa phiên đăng nhập và redirect Login |
+
+Email gửi link `/verify-email` hoặc `/reset-password`, người dùng mở trang HTML và hoàn tất
+trên trình duyệt; không cần tự gọi JSON API. POST thành công dùng redirect để tránh gửi lại
+form khi refresh; lỗi validation render lại đúng view với thông báo. Các form `th:action`
+tự render trường CSRF ẩn, không cần JavaScript fetch để thực hiện luồng tài khoản.
+
+Đăng ký và mật khẩu mới theo cùng quy tắc với template: 8–32 ký tự, chữ hoa, chữ thường,
+chữ số, tối đa 72 byte UTF-8. Đăng nhập vẫn chấp nhận mật khẩu hiện có, kể cả tài khoản cũ
+có mật khẩu ngắn hơn quy tắc tạo mới. Reset token có hiệu lực 15 phút; xác thực email 24 giờ.
+
+Dự án hiện chưa có template hồ sơ/đổi mật khẩu. Service và JSON API cho hai phần này vẫn
+có sẵn; chưa coi đó là luồng Thymeleaf hoàn chỉnh và không tự thêm thiết kế trang mới.
 
 ## Cấu hình và chạy
 
@@ -24,7 +51,9 @@ Spring Security với form đăng nhập hiện tại.
   là `{APP_BASE_URL}/login/oauth2/code/google`. Scope `openid,profile,email` đi qua
   `CustomOidcUserService` và cùng logic tài khoản với OAuth2 thường.
 
-Chạy `mvn test` bằng JDK 21 để kiểm thử trên H2 với SMTP giả lập. Các test không kết nối
+Chạy `mvn test` bằng JDK 21 để kiểm thử trên H2 với SMTP giả lập. Bộ test gồm cả HTML
+Thymeleaf được render, form POST bằng tên trường thật, CSRF, model/flash errors, redirect,
+token trong email, service/API và redirect/callback Google. Các test không kết nối
 database thư viện thực và không gửi email ra ngoài. Maven Wrapper có sẵn có thể được dùng
 nếu môi trường hỗ trợ script của wrapper.
 
@@ -42,7 +71,7 @@ Các API bảo vệ trả 401 nếu chưa đăng nhập/phiên bị thu hồi; t
 Các response dùng header không cache mặc định của Spring Security. Response chứa token qua
 query string thêm `Referrer-Policy: no-referrer`.
 
-## API công khai
+## API JSON bổ sung (không phải đường dẫn người dùng trong email)
 
 | Method | Endpoint | Dữ liệu | Kết quả |
 | --- | --- | --- | --- |
@@ -60,6 +89,7 @@ Ví dụ đăng ký:
 {
   "fullName": "Nguyen Van A",
   "email": "reader@example.com",
+  "phone": "0912345678",
   "password": "Secret123",
   "confirmPassword": "Secret123",
   "termsAccepted": true
@@ -80,22 +110,18 @@ Ví dụ đặt lại mật khẩu:
 }
 ```
 
-Link đặt lại mật khẩu mở endpoint kiểm tra JSON vì chưa tích hợp API với UI. Để hoàn tất, gọi POST
-với token nhận qua email và mật khẩu mới. Link xác thực email hoàn tất trực tiếp qua GET.
-
-Các trang forgot/reset password mới từ PR #18 trên `main` vẫn là phần giao diện riêng.
-`POST /forgot-password` hiện trả redirect `?unavailable=true`, chưa gọi API gửi email;
-template reset-password chưa được nối vào luồng token. Commit backend này không sửa các trang đó.
+Các endpoint `/api/auth/...` vẫn có thể dùng cho client JSON và kiểm thử. Chúng dùng chung
+service với controller Thymeleaf; email mặc định hướng người dùng tới route HTML ở trên.
 
 - Token ngẫu nhiên 256 bit, chỉ lưu SHA-256 trong database, dùng một lần.
-- Xác thực email hết hạn sau 24 giờ, đặt lại mật khẩu sau 30 phút.
+- Xác thực email hết hạn sau 24 giờ, đặt lại mật khẩu sau 15 phút.
 - Mỗi loại email giới hạn một lần/60 giây/tài khoản; gửi lại sau thời gian này hủy link cũ.
 - Forgot/resend luôn trả cùng nội dung cho tài khoản không tồn tại, không đủ điều kiện hoặc
   SMTP lỗi. Khi SMTP lỗi, token vừa tạo được vô hiệu hóa và ghi cảnh báo không chứa token/email.
 - Đăng ký gặp SMTP lỗi trả 503 và rollback tài khoản/token, có thể đăng ký lại sau khi sửa SMTP.
 - Reset chỉ áp dụng cho tài khoản LOCAL đang hoạt động, đã xác thực email. Tài khoản Google-only
   tiếp tục đăng nhập Google. Local chưa xác thực dùng chức năng gửi lại email xác thực trước.
-- Mật khẩu từ 6–32 ký tự, tối đa 72 byte UTF-8 theo giới hạn BCrypt; xác nhận phải trùng khớp.
+- Mật khẩu từ 8–32 ký tự, có chữ hoa, chữ thường và số, tối đa 72 byte UTF-8; xác nhận phải trùng khớp.
 - Dữ liệu sai/token hết hạn/đã dùng trả 400; đăng ký trùng email trả 409. API không trả token
   bí mật hoặc chi tiết lỗi database/SMTP cho client.
 

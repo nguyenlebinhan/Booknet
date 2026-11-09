@@ -65,6 +65,7 @@ public class SecurityConfig {
                     "/home",
                     "/login",
                     "/register",
+                    "/forgot-password", "/reset-password", "/verify-email", "/verification/resend",
                     "/css/**",
                     "/js/**",
                     "/images/**",

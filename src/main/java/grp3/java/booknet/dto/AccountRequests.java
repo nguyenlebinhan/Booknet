@@ -1,6 +1,7 @@
 package grp3.java.booknet.dto;
 
 import jakarta.validation.constraints.*;
+import grp3.java.booknet.config.AccountPolicy;
 
 public final class AccountRequests {
     private AccountRequests() { }
@@ -9,7 +10,8 @@ public final class AccountRequests {
 
     public record ResetPassword(
             @NotBlank @Size(max = 200) String token,
-            @NotBlank @Size(min = 6, max = 32) String newPassword,
+            @NotBlank @Size(min = AccountPolicy.PASSWORD_MIN_LENGTH, max = AccountPolicy.PASSWORD_MAX_LENGTH)
+            @Pattern(regexp = AccountPolicy.PASSWORD_PATTERN, message = AccountPolicy.PASSWORD_MESSAGE) String newPassword,
             @NotBlank String confirmPassword) {
         @AssertTrue(message = "Mật khẩu xác nhận không trùng khớp")
         public boolean isPasswordConfirmed() {
@@ -19,7 +21,8 @@ public final class AccountRequests {
 
     public record ChangePassword(
             @NotBlank @Size(max = 200) String currentPassword,
-            @NotBlank @Size(min = 6, max = 32) String newPassword,
+            @NotBlank @Size(min = AccountPolicy.PASSWORD_MIN_LENGTH, max = AccountPolicy.PASSWORD_MAX_LENGTH)
+            @Pattern(regexp = AccountPolicy.PASSWORD_PATTERN, message = AccountPolicy.PASSWORD_MESSAGE) String newPassword,
             @NotBlank String confirmPassword) {
         @AssertTrue(message = "Mật khẩu xác nhận không trùng khớp")
         public boolean isPasswordConfirmed() {

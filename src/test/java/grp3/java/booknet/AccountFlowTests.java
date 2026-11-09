@@ -90,7 +90,7 @@ class AccountFlowTests {
         mvc.perform(post("/api/auth/register").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {"fullName":"Test Reader","email":"Reader@Example.com","password":"Secret123",
-                         "confirmPassword":"Secret123","termsAccepted":true}
+                         "confirmPassword":"Secret123","phone":"0912345678","termsAccepted":true}
                         """)).andExpect(status().isCreated());
         User user = users.findByEmail("reader@example.com").orElseThrow();
         assertThat(user.isEmailVerified()).isFalse();
@@ -111,18 +111,18 @@ class AccountFlowTests {
         mvc.perform(post("/api/auth/register").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {"fullName":"Test Reader","email":"reader@example.com","password":"Secret123",
-                         "confirmPassword":"Different123","termsAccepted":true}
+                         "confirmPassword":"Different123","phone":"0912345678","termsAccepted":true}
                         """)).andExpect(status().isBadRequest());
         mvc.perform(post("/api/auth/register").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {"fullName":"Test Reader","email":"reader@example.com","password":"Secret123",
-                         "confirmPassword":"Secret123","termsAccepted":false}
+                         "confirmPassword":"Secret123","phone":"0912345678","termsAccepted":false}
                         """)).andExpect(status().isBadRequest());
         localUser("reader@example.com", true);
         mvc.perform(post("/api/auth/register").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {"fullName":"Test Reader","email":"READER@example.com","password":"Secret123",
-                         "confirmPassword":"Secret123","termsAccepted":true}
+                         "confirmPassword":"Secret123","phone":"0912345678","termsAccepted":true}
                         """)).andExpect(status().isConflict());
         verifyNoInteractions(sender);
     }
@@ -133,7 +133,7 @@ class AccountFlowTests {
         mvc.perform(post("/api/auth/register").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {"fullName":"Test Reader","email":"reader@example.com","password":"Secret123",
-                         "confirmPassword":"Secret123","termsAccepted":true}
+                         "confirmPassword":"Secret123","phone":"0912345678","termsAccepted":true}
                         """)).andExpect(status().isServiceUnavailable());
         assertThat(users.count()).isZero();
         assertThat(tokens.count()).isZero();

@@ -30,6 +30,7 @@ public class AuthController {
             @RequestParam(value = "error", required = false) String error,
             @RequestParam(value = "logout", required = false) String logout,
             @RequestParam(value = "registered", required = false) String registered,
+            @RequestParam(value = "reset", required = false) String reset,
             @RequestParam(value = "oauth2_error", required = false) String oauth2Error,
             Model model) {
 
@@ -46,6 +47,9 @@ public class AuthController {
         }
         if (registered != null) {
             model.addAttribute("successMessage", "Đăng ký thành công! Vui lòng kiểm tra email và xác thực tài khoản trước khi đăng nhập.");
+        }
+        if (reset != null) {
+            model.addAttribute("successMessage", "Đã đặt lại mật khẩu. Vui lòng đăng nhập bằng mật khẩu mới.");
         }
         if (oauth2Error != null) {
             model.addAttribute("errorMessage", "Đăng nhập Google thất bại hoặc bị hủy. Nếu email đã có tài khoản BookNet, hãy đăng nhập bằng email và mật khẩu rồi liên kết Google từ trang Home.");

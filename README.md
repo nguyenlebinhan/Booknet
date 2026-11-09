@@ -1,6 +1,6 @@
 # 📚 Booknet
 
-Tài liệu backend tài khoản, API, SMTP và kiểm thử: [docs/account-api.md](docs/account-api.md).
+Tài liệu luồng tài khoản Thymeleaf, API bổ sung, SMTP và kiểm thử: [docs/account-api.md](docs/account-api.md).
 
 > Hệ thống quản lý và chia sẻ sách trực tuyến được phát triển trên nền tảng **Spring Boot** và **Thymeleaf**.
 

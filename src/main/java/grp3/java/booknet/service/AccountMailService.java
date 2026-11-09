@@ -21,7 +21,7 @@ public class AccountMailService {
     public void send(String email, String token, AccountTokenPurpose purpose) {
         boolean verification = purpose == AccountTokenPurpose.VERIFY_EMAIL;
         String url = UriComponentsBuilder.fromUriString(baseUrl)
-                .path(verification ? "/api/auth/verify-email" : "/api/auth/reset-password")
+                .path(verification ? "/verify-email" : "/reset-password")
                 .queryParam("token", token).build().encode().toUriString();
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(from);
@@ -29,7 +29,7 @@ public class AccountMailService {
         message.setSubject(verification ? "BookNet - Xác thực email" : "BookNet - Đặt lại mật khẩu");
         message.setText(verification
                 ? "Xác thực email BookNet bằng liên kết sau (hiệu lực 24 giờ, dùng một lần):\n" + url
-                : "Yêu cầu đặt lại mật khẩu BookNet (hiệu lực 30 phút, dùng một lần):\n" + url
+                : "Yêu cầu đặt lại mật khẩu BookNet (hiệu lực 15 phút, dùng một lần):\n" + url
                     + "\nMã đặt lại mật khẩu: " + token
                     + "\nNếu bạn không yêu cầu, hãy bỏ qua email này.");
         mailSender.send(message);

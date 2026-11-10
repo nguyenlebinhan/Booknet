@@ -10,10 +10,10 @@ public final class AccountPrincipal {
     public static Long id(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()
                 || authentication instanceof AnonymousAuthenticationToken) {
-            throw new InsufficientAuthenticationException("Vui lòng đăng nhập.");
+            throw new InsufficientAuthenticationException("Please sign in.");
         }
         if (authentication.getPrincipal() instanceof CustomUserDetails local) return local.getId();
         if (authentication.getPrincipal() instanceof CustomOAuth2User oauth) return oauth.getId();
-        throw new InsufficientAuthenticationException("Vui lòng đăng nhập lại.");
+        throw new InsufficientAuthenticationException("Please sign in again.");
     }
 }

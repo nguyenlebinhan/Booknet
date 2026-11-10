@@ -1,5 +1,19 @@
 package grp3.java.booknet.controller;
 
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.logout.CookieClearingLogoutHandler;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import grp3.java.booknet.dto.AccountRequests;
 import grp3.java.booknet.dto.PasswordResetForm;
 import grp3.java.booknet.enums.user.AccountTokenPurpose;
@@ -9,21 +23,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.security.web.authentication.logout.CookieClearingLogoutHandler;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 
 @Controller
 @RequiredArgsConstructor
 public class PasswordRecoveryController {
-
     private final AccountService accounts;
 
     @GetMapping("/forgot-password")
@@ -45,7 +48,7 @@ public class PasswordRecoveryController {
         model.addAttribute("requestSubmitted", false);
         model.addAttribute("submittedEmail", form.email());
         if (errors.hasErrors()) {
-            model.addAttribute("emailError", "Vui lòng nhập email hợp lệ, tối đa 120 ký tự.");
+            model.addAttribute("emailError", "Please enter a valid email address of up to 120 characters.");
             return "forgot-password";
         }
         accounts.requestEmail(form.email(), AccountTokenPurpose.RESET_PASSWORD);
@@ -70,7 +73,7 @@ public class PasswordRecoveryController {
         response.setHeader("Referrer-Policy", "no-referrer");
         if (!populateResetToken(form.getToken(), model)) return "reset-password";
         if (form.getPassword() != null && !form.getPassword().equals(form.getConfirmPassword())) {
-            errors.rejectValue("confirmPassword", "password.mismatch", "Mật khẩu xác nhận không trùng khớp.");
+            errors.rejectValue("confirmPassword", "password.mismatch", "Passwords do not match.");
         }
         if (errors.hasErrors()) {
             if (errors.hasFieldErrors("password")) model.addAttribute("passwordError", errors.getFieldError("password").getDefaultMessage());

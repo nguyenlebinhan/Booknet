@@ -72,21 +72,21 @@
 
     <section class="home-account" aria-label="Account messages">
       <div class="home-notice success" role="status" th:if="${googleLinkedMessage}">
-        Google đã được liên kết với tài khoản BookNet này.
+        Google has been linked to this BookNet account.
       </div>
       <div class="home-notice success" role="status" th:if="${googleLinked}">
-        Tài khoản Google đã liên kết.
+        Your Google account is linked.
       </div>
       <div class="home-notice" role="alert" th:if="${googleLinkError}" th:text="${googleLinkError}"></div>
       <div class="home-notice" role="status" th:if="${googleLinkInfo}" th:text="${googleLinkInfo}"></div>
 
       <div class="google-link-card" sec:authorize="isAuthenticated()" th:if="${showGoogleLink}">
         <div>
-          <h3>Liên kết tài khoản Google</h3>
-          <p>Đăng nhập Google để liên kết với tài khoản BookNet đang sử dụng. Tài khoản và mật khẩu hiện tại sẽ được giữ nguyên.</p>
+          <h3>Link your Google account</h3>
+          <p>Sign in with Google to link it to your current BookNet account. Your existing account and password will stay the same.</p>
         </div>
         <form th:action="@{/account/link/google}" method="post">
-          <button class="google-link-button" type="submit">Liên kết Google</button>
+          <button class="google-link-button" type="submit">Link Google</button>
         </form>
       </div>
     </section>

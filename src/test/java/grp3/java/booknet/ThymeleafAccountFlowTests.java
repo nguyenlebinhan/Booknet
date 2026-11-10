@@ -64,6 +64,29 @@ class ThymeleafAccountFlowTests {
         mvc.perform(get("/verification/resend")).andExpect(view().name("forgot-password"))
                 .andExpect(content().string(containsString("action=\"/verification/resend\"")));
         mvc.perform(get("/")).andExpect(status().isOk()).andExpect(view().name("home"));
+        for (String path : new String[]{"/", "/about", "/contact"}) {
+            MvcResult rendered = mvc.perform(get(path)).andExpect(status().isOk()).andReturn();
+            String html = rendered.getResponse().getContentAsString();
+            assertThat(html).contains("id=\"booknet-navbar\"", "class=\"bn-footer\"",
+                    "id=\"bn-menu-toggle\"", "id=\"bn-nav-links\"",
+                    "href=\"/css/tokens.css\"", "href=\"/css/navbar.css\"", "href=\"/css/footer.css\"");
+            assertThat(html.indexOf("/css/tokens.css")).isLessThan(html.indexOf("/css/navbar.css"));
+        }
+        for (String path : new String[]{"/login", "/register", "/forgot-password"}) {
+            mvc.perform(get(path)).andExpect(content().string(containsString("class=\"auth-aside\"")))
+                    .andExpect(content().string(containsString("class=\"auth-aside-photo\"")))
+                    .andExpect(content().string(containsString("href=\"/css/auth.css\"")));
+        }
+        mvc.perform(get("/about").header("Accept-Language", "vi-VN")).andExpect(status().isOk()).andExpect(view().name("about"))
+                .andExpect(content().string(containsString("lang=\"en\"")))
+                .andExpect(content().string(containsString("About booknet")))
+                .andExpect(content().string(containsString("Explore the catalog")))
+                .andExpect(content().string(containsString("Selected with care")))
+                .andExpect(content().string(containsString("Become a member for free")));
+        FormPage contact = formPage("/contact");
+        assertThat(contact.html()).contains("lang=\"en\"", "Contact & Support", "Send us a message",
+                "Full name", "Email address", "Borrowing & renewals", "How are overdue fines calculated?",
+                "Get directions on Google Maps", "action=\"/contact\"", "/js/auth.js").doesNotContain("th:action");
         mvc.perform(get("/reset-password")).andExpect(status().isOk()).andExpect(view().name("reset-password"))
                 .andExpect(model().attribute("tokenValid", false))
                 .andExpect(content().string(containsString("This link has expired.")));
@@ -80,18 +103,22 @@ class ThymeleafAccountFlowTests {
         assertThat(saved.getPhone()).isEqualTo("0912345678");
         assertThat(saved.isEmailVerified()).isFalse();
         mvc.perform(get("/login").param("registered", "true").flashAttrs(registered.getFlashMap()))
-                .andExpect(status().isOk()).andExpect(content().string(containsString("xác thực tài khoản trước khi đăng nhập")));
+                .andExpect(status().isOk()).andExpect(content().string(containsString("verify your account before signing in")));
         assertThat(deliveredMessage().getText()).contains("/verify-email?token=").doesNotContain("/api/auth/");
+        assertThat(deliveredMessage().getSubject()).isEqualTo("BookNet - Verify your email");
+        assertThat(deliveredMessage().getText()).contains("valid for 24 hours, one use only");
     }
 
     @Test
     void invalidRegistrationRendersBoundErrorsWithoutCreatingAccount() throws Exception {
-        mvc.perform(post("/register").with(csrf()).param("fullName", "Form Reader")
+        mvc.perform(post("/register").with(csrf()).header("Accept-Language", "vi-VN").param("fullName", "Form Reader")
                 .param("email", "reader@example.com").param("phone", "not-a-phone")
                 .param("password", "weakpass").param("confirmPassword", "different").param("termsAccepted", "true"))
                 .andExpect(status().isOk()).andExpect(view().name("register"))
                 .andExpect(model().attributeHasFieldErrors("user", "phone", "password", "confirmPassword"))
-                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML));
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
+                .andExpect(content().string(containsString("Please enter a valid phone number.")))
+                .andExpect(content().string(containsString("Passwords do not match.")));
         assertThat(users.count()).isZero();
         verifyNoInteractions(sender);
     }
@@ -113,7 +140,7 @@ class ThymeleafAccountFlowTests {
                 .param("token", token).param("password", NEW_PASSWORD).param("confirmPassword", NEW_PASSWORD))
                 .andExpect(redirectedUrl("/login?reset=true"));
         mvc.perform(get("/login").param("reset", "true")).andExpect(status().isOk())
-                .andExpect(content().string(containsString("đăng nhập bằng mật khẩu mới")));
+                .andExpect(content().string(containsString("sign in with your new password")));
         mvc.perform(get("/reset-password").param("token", token)).andExpect(status().isOk())
                 .andExpect(model().attribute("tokenValid", false));
         mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com").param("password", INITIAL_PASSWORD))
@@ -158,14 +185,112 @@ class ThymeleafAccountFlowTests {
         MvcResult verified = mvc.perform(get("/verify-email").param("token", token))
                 .andExpect(redirectedUrl("/login")).andExpect(flash().attributeExists("successMessage")).andReturn();
         mvc.perform(get("/login").flashAttrs(verified.getFlashMap())).andExpect(status().isOk())
-                .andExpect(content().string(containsString("Xác thực email thành công")));
+                .andExpect(content().string(containsString("Email verified successfully")));
         MvcResult reused = mvc.perform(get("/verify-email").param("token", token))
                 .andExpect(redirectedUrl("/login")).andExpect(flash().attributeExists("errorMessage")).andReturn();
         mvc.perform(get("/login").flashAttrs(reused.getFlashMap())).andExpect(status().isOk())
-                .andExpect(content().string(containsString("Liên kết xác thực không hợp lệ")))
+                .andExpect(content().string(containsString("This verification link is invalid")))
                 .andExpect(content().string(containsString("href=\"/verification/resend\"")));
         mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com").param("password", INITIAL_PASSWORD))
                 .andExpect(redirectedUrl("/"));
+    }
+
+    @Test
+    void profileAndPasswordFormsSubmitRenderedCsrfAndShowFlashMessages() throws Exception {
+        localUser(true);
+        MockHttpSession session = login();
+        FormPage profile = formPage("/account/profile", session);
+        assertThat(profile.html()).contains("action=\"/account/profile\"", "name=\"fullName\"", "name=\"phone\"",
+                "name=\"address\"", "name=\"avatarUrl\"").doesNotContain("th:field", "name=\"password\"");
+        MvcResult updated = mvc.perform(post("/account/profile").session(session).param("_csrf", profile.csrf())
+                .param("fullName", "Updated Reader").param("phone", "0912345678").param("address", "HCM"))
+                .andExpect(redirectedUrl("/account/profile")).andReturn();
+        mvc.perform(get("/account/profile").session(session).flashAttrs(updated.getFlashMap()))
+                .andExpect(content().string(containsString("Your profile has been updated")))
+                .andExpect(content().string(containsString("value=\"Updated Reader\"")));
+        FormPage password = formPage("/account/change-password", session);
+        assertThat(password.html()).contains("action=\"/account/change-password\"", "name=\"currentPassword\"",
+                "name=\"newPassword\"", "name=\"confirmPassword\"");
+        MvcResult changed = mvc.perform(post("/account/change-password").session(session).param("_csrf", password.csrf())
+                .param("currentPassword", INITIAL_PASSWORD).param("newPassword", NEW_PASSWORD).param("confirmPassword", NEW_PASSWORD))
+                .andExpect(redirectedUrl("/login")).andReturn();
+        assertThat(session.isInvalid()).isTrue();
+        assertThat(changed.getResponse().getCookie("remember-me").getMaxAge()).isZero();
+        mvc.perform(get("/login").flashAttrs(changed.getFlashMap()))
+                .andExpect(content().string(containsString("Your password has been changed")));
+    }
+
+    @Test
+    void accountFormsRenderErrorsWithoutEchoingPasswordsAndRejectMissingCsrf() throws Exception {
+        localUser(true);
+        MockHttpSession session = login();
+        mvc.perform(post("/account/profile").session(session).param("fullName", "Changed"))
+                .andExpect(status().isForbidden());
+        mvc.perform(post("/account/change-password").session(session).param("currentPassword", INITIAL_PASSWORD))
+                .andExpect(status().isForbidden());
+        mvc.perform(post("/account/profile").session(session).with(csrf()).param("fullName", "X"))
+                .andExpect(view().name("profile")).andExpect(model().attributeHasFieldErrors("profileForm", "fullName"))
+                .andExpect(content().string(containsString("role=\"alert\"")))
+                .andExpect(content().string(containsString("Full name must be between 2 and 120 characters.")));
+        mvc.perform(post("/account/change-password").session(session).with(csrf()).param("currentPassword", INITIAL_PASSWORD)
+                .param("newPassword", NEW_PASSWORD).param("confirmPassword", OTHER_PASSWORD))
+                .andExpect(view().name("change-password")).andExpect(model().attributeHasErrors("passwordForm"))
+                .andExpect(content().string(containsString("Passwords do not match")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("value=\"" + INITIAL_PASSWORD + "\""))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("value=\"" + NEW_PASSWORD + "\""))));
+        assertThat(passwords.matches(INITIAL_PASSWORD, users.findByEmail("reader@example.com").orElseThrow().getPassword())).isTrue();
+    }
+
+    @Test
+    void googleOnlyAccountCanEditProfileButCannotCreateLocalPassword() throws Exception {
+        localUser(true);
+        User user = users.findByEmail("reader@example.com").orElseThrow();
+        user.setProvider(AuthProvider.GOOGLE);
+        user.setPassword(null);
+        users.saveAndFlush(user);
+        var google = new grp3.java.booknet.security.CustomOAuth2User(
+                new org.springframework.security.oauth2.core.user.DefaultOAuth2User(
+                        java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER")),
+                        java.util.Map.of("sub", "google-only", "email", user.getEmail()), "sub"), user);
+        var authentication = org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login().oauth2User(google);
+        mvc.perform(get("/account/profile").with(authentication)).andExpect(view().name("profile"));
+        mvc.perform(post("/account/profile").with(authentication).with(csrf()).param("fullName", "Google Reader"))
+                .andExpect(redirectedUrl("/account/profile"));
+        mvc.perform(get("/account/change-password").with(authentication))
+                .andExpect(content().string(containsString("This account uses Google sign-in")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("name=\"currentPassword\""))));
+        mvc.perform(post("/account/change-password").with(authentication).with(csrf()).param("currentPassword", INITIAL_PASSWORD)
+                .param("newPassword", NEW_PASSWORD).param("confirmPassword", NEW_PASSWORD))
+                .andExpect(view().name("change-password"));
+        assertThat(users.findById(user.getId()).orElseThrow().getPassword()).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"Short1A", "lowercase123", "UPPERCASE123", "MissingDigits", "Ab1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "Ab1漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢"})
+    void registrationRejectsInvalidPasswordsWithoutCreatingUser(String password) throws Exception {
+        mvc.perform(post("/register").with(csrf()).param("fullName", "Form Reader")
+                .param("email", "reader@example.com").param("phone", "0912345678").param("termsAccepted", "true")
+                .param("password", password).param("confirmPassword", password))
+                .andExpect(view().name("register")).andExpect(content().string(containsString("72 UTF-8 bytes")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("value=\"" + password + "\""))));
+        assertThat(users.count()).isZero();
+        verifyNoInteractions(sender);
+    }
+
+    @Test
+    void registrationRequiresCsrfAndLengthLimitsMatchServerValidation() throws Exception {
+        mvc.perform(post("/register").param("email", "reader@example.com")).andExpect(status().isForbidden());
+        mvc.perform(post("/register").with(csrf()).param("fullName", "X".repeat(121))
+                .param("email", "x".repeat(110) + "@example.com").param("phone", "0912345678")
+                .param("password", INITIAL_PASSWORD).param("confirmPassword", INITIAL_PASSWORD).param("termsAccepted", "true"))
+                .andExpect(view().name("register")).andExpect(model().attributeHasFieldErrors("user", "fullName", "email"));
+        assertThat(users.count()).isZero();
+        verifyNoInteractions(sender);
+    }
+
+    private MockHttpSession login() throws Exception {
+        return (MockHttpSession) mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com")
+                .param("password", INITIAL_PASSWORD)).andExpect(redirectedUrl("/")).andReturn().getRequest().getSession(false);
     }
 
     private String requestResetThroughForm() throws Exception {
@@ -175,11 +300,19 @@ class ThymeleafAccountFlowTests {
         mvc.perform(get("/forgot-password").flashAttrs(sent.getFlashMap())).andExpect(status().isOk())
                 .andExpect(content().string(containsString("Request submitted")));
         assertThat(deliveredMessage().getText()).contains("/reset-password?token=").doesNotContain("/api/auth/");
+        assertThat(deliveredMessage().getSubject()).isEqualTo("BookNet - Reset your password");
+        assertThat(deliveredMessage().getText()).contains("valid for 15 minutes, one use only", "If you did not request this");
         return deliveredToken();
     }
 
     private FormPage formPage(String path) throws Exception {
-        MvcResult result = mvc.perform(get(path)).andExpect(status().isOk())
+        return formPage(path, null);
+    }
+
+    private FormPage formPage(String path, MockHttpSession session) throws Exception {
+        var request = get(path);
+        if (session != null) request.session(session);
+        MvcResult result = mvc.perform(request).andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML)).andReturn();
         String html = result.getResponse().getContentAsString();
         var matcher = Pattern.compile("name=\"_csrf\"[^>]*value=\"([^\"]+)\"").matcher(html);

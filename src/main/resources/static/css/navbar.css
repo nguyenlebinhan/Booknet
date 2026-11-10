@@ -151,7 +151,9 @@
   box-shadow: 0 6px 16px rgba(41, 52, 41, 0.13);
 }
 
-.bn-user-menu button {
+.bn-user-menu button,
+.bn-user-menu a {
+  display: block;
   width: 100%;
   padding: 8px 10px;
   background: none;
@@ -161,9 +163,11 @@
   cursor: pointer;
   font: 400 13px var(--bn-font-sans);
   text-align: left;
+  text-decoration: none;
 }
 
-.bn-user-menu button:hover {
+.bn-user-menu button:hover,
+.bn-user-menu a:hover {
   background: var(--bn-sage);
 }
 

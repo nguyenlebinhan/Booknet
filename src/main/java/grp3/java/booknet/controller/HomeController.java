@@ -10,7 +10,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequiredArgsConstructor
@@ -42,6 +44,7 @@ public class HomeController {
         boolean linked = userId != null
                 && oauthIdentityRepository.existsByUser_IdAndProvider(userId, AuthProvider.GOOGLE);
 
+        model.addAttribute("activePage", "home");
         model.addAttribute("showGoogleLink", canStartLink && localAccount && !linked);
         model.addAttribute("googleLinked", localAccount && linked && googleLinked == null);
         model.addAttribute("googleLinkedMessage", googleLinked != null);
@@ -50,5 +53,29 @@ public class HomeController {
                     "Không thể liên kết Google. Tài khoản Google có thể đã thuộc tài khoản BookNet khác, hoặc thao tác đã hết hạn.");
         }
         return "home";
+    }
+
+    @GetMapping("/about")
+    public String about(Model model) {
+        model.addAttribute("activePage", "about");
+        return "about";
+    }
+
+    @GetMapping("/contact")
+    public String contact(Model model) {
+        model.addAttribute("activePage", "contact");
+        return "contact";
+    }
+
+    @PostMapping("/contact")
+    public String handleContactSubmit(
+            @RequestParam("fullName") String fullName,
+            @RequestParam("email") String email,
+            @RequestParam(value = "subject", required = false) String subject,
+            @RequestParam("message") String message,
+            RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("contactSuccess",
+                "Cảm ơn bạn (" + fullName + ")! Tin nhắn của bạn đã được gửi thành công đến ban thủ thư BookNet. Chúng tôi sẽ phản hồi sớm nhất qua email " + email + ".");
+        return "redirect:/contact";
     }
 }

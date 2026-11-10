@@ -1,185 +1,88 @@
 # Account flows: Spring MVC and Thymeleaf
 
-Luồng người dùng chính dùng `@Controller`, form HTML Thymeleaf, `BindingResult`, `Model`,
-flash message và redirect. Các trang dùng cùng service và phiên Spring Security với API
-JSON bổ sung. Giữ nguyên bố cục và CSS; template chỉ được nối form, dữ liệu và thông báo.
+Luồng tài khoản dùng `@Controller`, form HTML Thymeleaf, `BindingResult`, `Model`,
+flash message và redirect. Đã bỏ `AccountAuthApiController`, `AccountApiController`
+và `AccountApiExceptionHandler`; các endpoint `/api/auth/**`, `/api/account/**` không còn được hỗ trợ.
+Giữ tên tài liệu này để các liên kết hiện có tiếp tục hoạt động.
 
-## Luồng HTML chính
+## Routes và form
 
 | Route | Xử lý |
 | --- | --- |
-| `GET/POST /register` | Render/bind form đăng ký; lưu điện thoại, gửi xác thực, redirect Login |
-| `GET/POST /login` | Render Login / Spring Security xác thực form |
-| `GET/POST /forgot-password` | Render form, gửi email reset, redirect lại với thông báo chung |
-| `GET /reset-password?token=...` | Kiểm tra token và render form hoặc thông báo link hết hạn |
-| `POST /reset-password` | Nhận `token`, `password`, `confirmPassword`; lỗi render lại; thành công redirect `/login?reset=true` |
+| `GET/POST /register` | Form `user`: `fullName`, `email`, `phone`, `password`, `confirmPassword`, `termsAccepted`; thành công redirect `/login?registered=true` |
+| `GET/POST /login` | Render Login / Spring Security xác thực `email`, `password`, tùy chọn `remember-me` |
+| `GET/POST /forgot-password` | Form email; redirect lại với thông báo chung |
+| `GET /reset-password?token=...` | Kiểm tra token, render form hoặc thông báo link không hợp lệ |
+| `POST /reset-password` | `token`, `password`, `confirmPassword`; thành công xóa phiên và redirect `/login?reset=true` |
 | `GET /verify-email?token=...` | Xác thực rồi redirect Login với flash message thành công/lỗi |
-| `GET/POST /verification/resend` | Dùng lại bố cục form email, gửi lại xác thực, hiển thị kết quả chung |
+| `GET/POST /verification/resend` | Dùng lại form email, gửi lại xác thực, thông báo chung |
+| `GET/POST /account/profile` | Form `profileForm`: `fullName`, `phone`, `address`, `avatarUrl`; thành công redirect lại với flash message |
+| `GET/POST /account/change-password` | Form `passwordForm`: `currentPassword`, `newPassword`, `confirmPassword`; thành công đăng xuất và redirect Login với flash message |
 | `POST /account/link/google` | Bắt đầu liên kết Google qua form có CSRF |
-| `POST /logout` | Xóa phiên đăng nhập và redirect Login |
+| `POST /logout` | Xóa phiên và redirect `/login?logout=true` |
 
-Email gửi link `/verify-email` hoặc `/reset-password`, người dùng mở trang HTML và hoàn tất
-trên trình duyệt; không cần tự gọi JSON API. POST thành công dùng redirect để tránh gửi lại
-form khi refresh; lỗi validation render lại đúng view với thông báo. Các form `th:action`
-tự render trường CSRF ẩn, không cần JavaScript fetch để thực hiện luồng tài khoản.
+Email chỉ gửi link HTML `/verify-email` hoặc `/reset-password`. Không cần JavaScript fetch
+hay JSON client để hoàn tất các luồng. POST thành công redirect để tránh gửi lại form;
+lỗi validation render lại view cùng dữ liệu và thông báo. Không điền lại mật khẩu vào HTML.
+Hồ sơ và đổi mật khẩu truy cập từ menu tài khoản Home, dùng lại `auth.css` và `authFragments`.
+Toàn bộ thông báo tài khoản, validation DTO và email xác thực/reset dùng tiếng Anh.
+`auth.js` đặt thông báo HTML validation bằng tiếng Anh cho form đăng nhập, đăng ký, email,
+reset, hồ sơ và đổi mật khẩu; lỗi custom validity được xóa khi input/change.
 
-Đăng ký và mật khẩu mới theo cùng quy tắc với template: 8–32 ký tự, chữ hoa, chữ thường,
-chữ số, tối đa 72 byte UTF-8. Đăng nhập vẫn chấp nhận mật khẩu hiện có, kể cả tài khoản cũ
-có mật khẩu ngắn hơn quy tắc tạo mới. Reset token có hiệu lực 15 phút; xác thực email 24 giờ.
+## Đăng ký và mật khẩu
 
-Dự án hiện chưa có template hồ sơ/đổi mật khẩu. Service và JSON API cho hai phần này vẫn
-có sẵn; chưa coi đó là luồng Thymeleaf hoàn chỉnh và không tự thêm thiết kế trang mới.
+- Local mới có role USER, enabled, status ACTIVE, **chưa xác thực email**. Phải xác thực trước khi đăng nhập.
+- Email đăng nhập được trim/chuyển chữ thường; tài khoản phải enabled, đã xác thực và ACTIVE.
+- Đăng ký kiểm tra họ tên 2–120 ký tự, email tối đa 120, điện thoại hợp lệ, xác nhận và điều khoản.
+- Mật khẩu mới 8–32 ký tự, có chữ hoa, chữ thường, số; tối đa 72 byte UTF-8. Mật khẩu xác nhận phải trùng.
+  Quy tắc tạo mới không chặn mật khẩu cũ khi đăng nhập.
+- Token ngẫu nhiên 256 bit, chỉ lưu SHA-256, dùng một lần. Xác thực email 24 giờ, reset 15 phút.
+- Mỗi loại email có cooldown 60 giây/tài khoản; cấp lại sau cooldown vô hiệu hóa link cũ.
+- Forgot/resend trả kết quả chung cho tài khoản không tồn tại, không đủ điều kiện hoặc SMTP lỗi.
+  SMTP lỗi làm token vừa tạo bị vô hiệu hóa; log không chứa token/email.
+- Đăng ký lỗi SMTP rollback cả user/token và render lại lỗi trên form; có thể đăng ký lại.
+- Reset chỉ dành cho LOCAL đang hoạt động, đã xác thực. Google-only không tạo mật khẩu qua reset/đổi mật khẩu.
+- Đổi mật khẩu kiểm tra mật khẩu hiện tại và không cho dùng lại mật khẩu cũ.
+  Đổi/reset tăng `users.auth_version`, hủy token reset, thu hồi phiên local/Google cũ ở request tiếp theo.
+  Phiên thực hiện được xóa ngay, cookie `JSESSIONID`/`remember-me` bị xóa. Remember-me cũ hết hiệu lực theo hash mật khẩu.
 
-## Cấu hình và chạy
+## Hồ sơ, phiên và CSRF
 
-- Dùng JDK 21. Nếu Maven đang chọn JDK 17, đặt `JAVA_HOME` về JDK 21 trước khi chạy.
-- Cấu hình database như trước. Với môi trường local, `DB_DDL_AUTO=update` bổ sung bảng
-  `account_tokens`, cột `users.auth_version` (mặc định 0), và ràng buộc duy nhất
-  `(user_id, provider)` trên `oauth_identities`. Không dùng `create` trên database có dữ liệu.
-- Nếu triển khai với `ddl-auto=validate`/`none`, cần áp dụng các thay đổi schema này qua
-  quy trình migration của môi trường trước khi khởi động. Kiểm tra và xử lý bản ghi
-  OAuth trùng `(user_id, provider)` trước khi tạo ràng buộc.
-- Cấu hình SMTP trong `.env` theo `.env.example`. Mặc định trỏ tới SMTP local
-  `localhost:1025` (ví dụ Mailpit); ứng dụng không tự khởi động SMTP server.
-  Đặt `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`,
-  `MAIL_AUTH`, `MAIL_STARTTLS` theo nhà cung cấp. Không commit mật khẩu SMTP.
-- Đặt `APP_BASE_URL` về URL tin cậy của ứng dụng, dùng HTTPS khi triển khai. Link trong email
-  được tạo từ cấu hình này, không dùng Host header của request.
-- `BOOKNET_REMEMBER_ME_KEY` là chuỗi ngẫu nhiên dài, dùng ổn định giữa các instance/restart.
-  Nếu để trống, ứng dụng tạo khóa ngẫu nhiên cho mỗi lần chạy và cookie remember-me cũ hết hiệu lực.
-- Google vẫn dùng `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`; cấu hình redirect URI trên Google
-  là `{APP_BASE_URL}/login/oauth2/code/google`. Scope `openid,profile,email` đi qua
-  `CustomOidcUserService` và cùng logic tài khoản với OAuth2 thường.
+- `AccountController` dùng lại `AccountService`, `AccountRequests` và DTO `ProfileResponse` an toàn.
+- Hồ sơ chỉ cập nhật họ tên, điện thoại, địa chỉ, avatar HTTP(S). Không bind Entity.
+  Form record dùng constructor binding; email, role, provider, status, ID, memberCode, password không được sửa.
+- Họ tên bắt buộc 2–120 ký tự, điện thoại tối đa 20, địa chỉ tối đa 255, URL avatar HTTP(S) tối đa 500.
+  Trường tùy chọn để trống sẽ xóa giá trị cũ. Họ tên và trường tùy chọn được trim khi lưu.
+- Người chưa đăng nhập vào trang bảo vệ được redirect Login. Phiên bị thu hồi redirect `/login?error=true`.
+- CSRF bật cho mọi POST. Lấy `_csrf` từ form HTML render và gửi cùng cookie phiên;
+  `th:action` tự thêm trường ẩn. Thiếu/sai CSRF trả 403. Không còn endpoint JSON lấy CSRF.
+- Remember-me tối đa 7 ngày. Response dùng header không cache của Spring Security;
+  route token thêm `Referrer-Policy: no-referrer`.
 
-Chạy `mvn test` bằng JDK 21 để kiểm thử trên H2 với SMTP giả lập. Bộ test gồm cả HTML
-Thymeleaf được render, form POST bằng tên trường thật, CSRF, model/flash errors, redirect,
-token trong email, service/API và redirect/callback Google. Các test không kết nối
-database thư viện thực và không gửi email ra ngoài. Maven Wrapper có sẵn có thể được dùng
-nếu môi trường hỗ trợ script của wrapper.
+## Google và liên kết tài khoản
 
-## Phiên đăng nhập và CSRF
+- Scope `openid,profile,email`, hỗ trợ cả OAuth2/OIDC. `sub` xác định identity, không tự gộp theo email.
+- Google mới tạo user GOOGLE đã xác thực; Google trùng email LOCAL chưa liên kết phải đăng nhập local rồi liên kết chủ động.
+- `POST /account/link/google` cần phiên local đăng nhập bằng mật khẩu và CSRF, không chấp nhận phiên chỉ remember-me.
+  Ý định liên kết gắn user ID, phiên và thời hạn 10 phút.
+- Có thể liên kết Google khác email local; giữ nguyên mật khẩu, role và dữ liệu local.
+  Một identity chỉ thuộc một user; mỗi user tối đa một identity Google.
+- Sai state, hết hạn, sai chủ sở hữu, phiên cũ hoặc tài khoản ngừng hoạt động đều bị từ chối.
+  Hủy/lỗi OAuth có thể yêu cầu đăng nhập lại. Chưa có chức năng hủy liên kết.
 
-1. Gọi `GET /api/auth/csrf`, giữ cookie `JSESSIONID` trả về.
-2. Đọc `headerName` và `token` từ JSON, gửi header đó cùng cookie trên mọi POST/PUT.
-   Mặc định header là `X-CSRF-TOKEN`. CSRF vẫn được bật cho cả API.
-3. Đăng nhập qua `POST /login` với `application/x-www-form-urlencoded`: `email`, `password`,
-   và tùy chọn `remember-me=on`. Giữ cookie phiên sau redirect. Email đăng nhập được trim
-   và chuyển chữ thường. Gọi lại `/api/auth/csrf` sau đăng nhập để lấy token của phiên mới.
-4. Đăng xuất qua `POST /logout` kèm CSRF.
+## Cấu hình và kiểm thử
 
-Các API bảo vệ trả 401 nếu chưa đăng nhập/phiên bị thu hồi; thiếu CSRF trả 403.
-Các response dùng header không cache mặc định của Spring Security. Response chứa token qua
-query string thêm `Referrer-Policy: no-referrer`.
-
-## API JSON bổ sung (không phải đường dẫn người dùng trong email)
-
-| Method | Endpoint | Dữ liệu | Kết quả |
-| --- | --- | --- | --- |
-| GET | `/api/auth/csrf` | Không | 200: thông tin CSRF |
-| POST | `/api/auth/register` | JSON đăng ký bên dưới | 201: đã gửi email xác thực |
-| POST | `/api/auth/verification/resend` | `{"email":"reader@example.com"}` | 202: phản hồi chung |
-| GET | `/api/auth/verify-email?token=...` | Token trong email | 200: đã xác thực |
-| POST | `/api/auth/forgot-password` | `{"email":"reader@example.com"}` | 202: phản hồi chung |
-| GET | `/api/auth/reset-password?token=...` | Token trong email | 200: kiểm tra link, chưa đổi mật khẩu |
-| POST | `/api/auth/reset-password` | JSON mật khẩu bên dưới | 200: đã đặt lại mật khẩu |
-
-Ví dụ đăng ký:
-
-```json
-{
-  "fullName": "Nguyen Van A",
-  "email": "reader@example.com",
-  "phone": "0912345678",
-  "password": "Secret123",
-  "confirmPassword": "Secret123",
-  "termsAccepted": true
-}
-```
-
-Form `POST /register` hiện có cũng gửi email xác thực theo cùng quy trình. Tài khoản local mới
-chưa được đăng nhập cho đến khi xác thực email. Các tài khoản cũ đã lưu `email_verified=true`
-được giữ nguyên; thay đổi này không chứng minh lại email lịch sử.
-
-Ví dụ đặt lại mật khẩu:
-
-```json
-{
-  "token": "token-lay-tu-email",
-  "newPassword": "NewSecret123",
-  "confirmPassword": "NewSecret123"
-}
-```
-
-Các endpoint `/api/auth/...` vẫn có thể dùng cho client JSON và kiểm thử. Chúng dùng chung
-service với controller Thymeleaf; email mặc định hướng người dùng tới route HTML ở trên.
-
-- Token ngẫu nhiên 256 bit, chỉ lưu SHA-256 trong database, dùng một lần.
-- Xác thực email hết hạn sau 24 giờ, đặt lại mật khẩu sau 15 phút.
-- Mỗi loại email giới hạn một lần/60 giây/tài khoản; gửi lại sau thời gian này hủy link cũ.
-- Forgot/resend luôn trả cùng nội dung cho tài khoản không tồn tại, không đủ điều kiện hoặc
-  SMTP lỗi. Khi SMTP lỗi, token vừa tạo được vô hiệu hóa và ghi cảnh báo không chứa token/email.
-- Đăng ký gặp SMTP lỗi trả 503 và rollback tài khoản/token, có thể đăng ký lại sau khi sửa SMTP.
-- Reset chỉ áp dụng cho tài khoản LOCAL đang hoạt động, đã xác thực email. Tài khoản Google-only
-  tiếp tục đăng nhập Google. Local chưa xác thực dùng chức năng gửi lại email xác thực trước.
-- Mật khẩu từ 8–32 ký tự, có chữ hoa, chữ thường và số, tối đa 72 byte UTF-8; xác nhận phải trùng khớp.
-- Dữ liệu sai/token hết hạn/đã dùng trả 400; đăng ký trùng email trả 409. API không trả token
-  bí mật hoặc chi tiết lỗi database/SMTP cho client.
-
-## API cần đăng nhập (local hoặc Google)
-
-| Method | Endpoint | Chức năng |
-| --- | --- | --- |
-| GET | `/api/account/profile` | Hồ sơ của chính người đăng nhập |
-| PUT | `/api/account/profile` | Thay thế các trường hồ sơ được phép |
-| POST | `/api/account/change-password` | Đổi mật khẩu local, yêu cầu mật khẩu hiện tại |
-
-Ví dụ cập nhật hồ sơ:
-
-```json
-{
-  "fullName": "Nguyen Van A",
-  "phone": "+84 912345678",
-  "address": "Ho Chi Minh City",
-  "avatarUrl": "https://example.com/avatar.png"
-}
-```
-
-`fullName` bắt buộc, 2–120 ký tự sau trim; điện thoại tối đa 20 ký tự, địa chỉ 255 ký tự,
-URL avatar HTTP(S) tối đa 500 ký tự. Trường tùy chọn null/rỗng sẽ xóa giá trị cũ (PUT).
-Không hỗ trợ thay đổi email, role, provider, status, memberCode hay mật khẩu qua API hồ sơ.
-Response chỉ chứa các trường công khai của hồ sơ và `googleLinked`, không trả entity/password/hash token.
-
-Ví dụ đổi mật khẩu:
-
-```json
-{
-  "currentPassword": "Secret123",
-  "newPassword": "NewSecret123",
-  "confirmPassword": "NewSecret123"
-}
-```
-
-Đổi mật khẩu không cho dùng lại mật khẩu hiện tại. Đổi hoặc reset mật khẩu hủy các token reset
-còn lại, tăng `auth_version`; các phiên local/Google cũ bị từ chối ở request kế tiếp. Phiên
-thực hiện đổi mật khẩu được đăng xuất ngay. Cookie remember-me cũ không còn hợp lệ vì hash mật khẩu đã đổi.
-Tài khoản Google-only không được đặt/đổi mật khẩu local qua các endpoint này.
-
-## Liên kết Google
-
-1. Đăng nhập bằng email/mật khẩu vào tài khoản local đã xác thực và đang hoạt động.
-2. `POST /account/link/google` kèm CSRF. Phiên chỉ khôi phục qua remember-me không được phép
-   bắt đầu liên kết; người dùng cần đăng xuất rồi đăng nhập lại bằng mật khẩu.
-3. Theo redirect sang Google. Ý định liên kết lưu trong cùng phiên, ràng buộc user ID và có
-   hiệu lực 10 phút. Callback kiểm tra lại người đăng nhập, trạng thái và phiên bản xác thực.
-4. Google phải cung cấp email đã xác thực và `sub`. `sub` xác định tài khoản Google, không tự
-   gộp tài khoản chỉ vì trùng email. Liên kết thủ công có thể dùng email Google khác email local.
-5. Mỗi Google identity chỉ thuộc một user; mỗi user chỉ có một identity Google. Có khóa
-   database và unique constraint chống ghi trùng khi request đồng thời. Thử lại cùng identity
-   trên cùng user là thao tác idempotent.
-6. Sau liên kết, Google đăng nhập vào đúng user local, giữ nguyên mật khẩu, role và dữ liệu.
-   Tài khoản bị khóa, hết hạn hoặc ngừng hoạt động không thể đăng nhập qua cả hai cách.
-
-Hủy/lỗi callback xóa trạng thái liên kết và chuyển về Home với `google_link_error=true`.
-Spring Security có thể xóa phiên xác thực khi OAuth thất bại; người dùng đăng nhập lại nếu cần.
-Chưa có chức năng hủy liên kết. Kiểm thử tự động mô phỏng Google/OIDC; cần thử vòng OAuth thực
-trên môi trường có client ID/secret và redirect URI hợp lệ trước khi triển khai.
+- Ngày 10/11/2026: **47/47 test đạt**, không lỗi/skip; gồm 20 AccountFlow, 6 OAuthCallback,
+  20 ThymeleafAccountFlow và 1 application context. Baseline trước chuyển đổi: 37/37 đạt.
+- Dùng JDK 21 cho Maven. Chạy `mvn test` hoặc `./mvnw.cmd test`.
+- Test dùng profile `test`, H2 riêng với `create-drop`, mock SMTP/Google; không xóa dữ liệu DB thật.
+- Local dùng MySQL, mặc định `ddl-auto=update`. Môi trường `validate`/`none` cần migration
+  `account_tokens`, `users.auth_version`, unique `(user_id, provider)` và `(provider, provider_user_id)` của OAuth.
+- SMTP đọc `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`, `MAIL_AUTH`, `MAIL_STARTTLS`.
+  Mặc định `localhost:1025`; ứng dụng không tự chạy SMTP server. Không commit credentials.
+- `APP_BASE_URL` quyết định link email, không dùng Host header; dùng HTTPS khi triển khai.
+  Google dùng `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, redirect `{APP_BASE_URL}/login/oauth2/code/google`.
+- `BOOKNET_REMEMBER_ME_KEY` cần ổn định giữa restart/instances; bỏ trống sẽ tạo khóa ngẫu nhiên mỗi lần chạy.
+- Test bao gồm HTML render, tên field, CSRF lấy từ form thật, lỗi model/flash, redirect,
+  đăng ký/xác thực, SMTP rollback, token hết hạn/dùng lại/concurrency, phiên, hồ sơ và callback Google.
+  Test giả lập **không chứng minh** SMTP/Google thật hay concurrency/migration trên MySQL thực tế.

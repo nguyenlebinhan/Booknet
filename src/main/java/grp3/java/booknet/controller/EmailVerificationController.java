@@ -24,9 +24,9 @@ public class EmailVerificationController {
         response.setHeader("Referrer-Policy", "no-referrer");
         try {
             accounts.verifyEmail(token);
-            redirect.addFlashAttribute("successMessage", "Xác thực email thành công. Bạn có thể đăng nhập.");
+            redirect.addFlashAttribute("successMessage", "Email verified successfully. You can now sign in.");
         } catch (AccountException ex) {
-            redirect.addFlashAttribute("errorMessage", "Liên kết xác thực không hợp lệ, hết hạn hoặc đã dùng. Vui lòng yêu cầu email xác thực mới.");
+            redirect.addFlashAttribute("errorMessage", "This verification link is invalid, has expired, or has already been used. Please request a new verification email.");
         }
         return "redirect:/login";
     }
@@ -45,7 +45,7 @@ public class EmailVerificationController {
         model.addAttribute("requestSubmitted", false);
         model.addAttribute("submittedEmail", form.email());
         if (errors.hasErrors()) {
-            model.addAttribute("emailError", "Vui lòng nhập email hợp lệ, tối đa 120 ký tự.");
+            model.addAttribute("emailError", "Please enter a valid email address of up to 120 characters.");
             return "forgot-password";
         }
         accounts.requestEmail(form.email(), AccountTokenPurpose.VERIFY_EMAIL);

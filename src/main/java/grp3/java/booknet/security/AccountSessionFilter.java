@@ -45,13 +45,7 @@ public class AccountSessionFilter extends OncePerRequestFilter {
                 cookie.setSecure(request.isSecure());
                 cookie.setMaxAge(0);
                 response.addCookie(cookie);
-                if (request.getServletPath().startsWith("/api/") || request.getRequestURI().startsWith(request.getContextPath() + "/api/")) {
-                    response.setStatus(401);
-                    response.setContentType("application/json;charset=UTF-8");
-                    response.getWriter().write("{\"message\":\"Phiên đăng nhập đã hết hiệu lực. Vui lòng đăng nhập lại.\"}");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/login?error=true");
-                }
+                response.sendRedirect(request.getContextPath() + "/login?error=true");
                 return;
             }
         }

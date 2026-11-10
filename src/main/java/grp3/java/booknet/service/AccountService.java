@@ -52,7 +52,7 @@ public class AccountService {
                 || password.length() > AccountPolicy.PASSWORD_MAX_LENGTH
                 || !password.matches(AccountPolicy.PASSWORD_PATTERN)
                 || password.getBytes(StandardCharsets.UTF_8).length > 72 || !password.equals(confirmation)) {
-            throw new AccountException(HttpStatus.BAD_REQUEST, AccountPolicy.PASSWORD_MESSAGE + " Xác nhận phải trùng khớp.");
+            throw new AccountException(HttpStatus.BAD_REQUEST, AccountPolicy.PASSWORD_MESSAGE + " Password confirmation must match.");
         }
     }
 
@@ -62,7 +62,7 @@ public class AccountService {
             issueToken(user, AccountTokenPurpose.VERIFY_EMAIL);
         } catch (MailException ex) {
             throw new AccountException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "Chưa thể gửi email xác thực. Vui lòng thử lại sau.");
+                    "Unable to send the verification email right now. Please try again later.");
         }
     }
 
@@ -121,10 +121,10 @@ public class AccountService {
         requireLocalActive(user);
         if (!user.isEmailVerified() || user.getPassword() == null
                 || !passwords.matches(request.currentPassword(), user.getPassword())) {
-            throw new AccountException(HttpStatus.BAD_REQUEST, "Mật khẩu hiện tại không chính xác.");
+            throw new AccountException(HttpStatus.BAD_REQUEST, "Your current password is incorrect.");
         }
         if (passwords.matches(request.newPassword(), user.getPassword())) {
-            throw new AccountException(HttpStatus.BAD_REQUEST, "Mật khẩu mới phải khác mật khẩu hiện tại.");
+            throw new AccountException(HttpStatus.BAD_REQUEST, "Your new password must be different from your current password.");
         }
         replacePassword(user, request.newPassword());
     }
@@ -132,7 +132,7 @@ public class AccountService {
     @Transactional(readOnly = true)
     public ProfileResponse profile(Long userId) {
         User user = users.findById(userId).orElseThrow(() ->
-                new AccountException(HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập lại."));
+                new AccountException(HttpStatus.UNAUTHORIZED, "Please sign in again."));
         return ProfileResponse.from(user, identities.existsByUser_IdAndProvider(userId, AuthProvider.GOOGLE));
     }
 
@@ -141,7 +141,7 @@ public class AccountService {
         User user = lockUser(userId);
         String name = request.fullName().trim();
         if (name.length() < 2) {
-            throw new AccountException(HttpStatus.BAD_REQUEST, "Họ tên phải có ít nhất 2 ký tự.");
+            throw new AccountException(HttpStatus.BAD_REQUEST, "Full name must contain at least 2 characters.");
         }
         // Explicit allowlist: email, password, role, provider and status cannot be changed here.
         user.setFullName(name);
@@ -191,12 +191,12 @@ public class AccountService {
 
     private User lockUser(Long id) {
         return users.findLockedById(id).orElseThrow(() ->
-                new AccountException(HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập lại."));
+                new AccountException(HttpStatus.UNAUTHORIZED, "Please sign in again."));
     }
 
     private void requireLocalActive(User user) {
         if (user.getProvider() != AuthProvider.LOCAL || !user.isEnabled() || user.getStatus() != UserStatus.ACTIVE) {
-            throw new AccountException(HttpStatus.BAD_REQUEST, "Tài khoản không đủ điều kiện thực hiện thao tác này.");
+            throw new AccountException(HttpStatus.BAD_REQUEST, "This account is not eligible for this action.");
         }
     }
 
@@ -216,7 +216,7 @@ public class AccountService {
     }
 
     private static AccountException invalidToken() {
-        return new AccountException(HttpStatus.BAD_REQUEST, "Liên kết không hợp lệ, đã hết hạn hoặc đã được sử dụng.");
+        return new AccountException(HttpStatus.BAD_REQUEST, "This link is invalid, has expired, or has already been used.");
     }
 
     private static String trimNullable(String value) {

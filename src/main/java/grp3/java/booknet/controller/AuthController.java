@@ -40,19 +40,19 @@ public class AuthController {
         }
 
         if (error != null) {
-            model.addAttribute("errorMessage", "Không thể đăng nhập. Kiểm tra email, mật khẩu và xác thực email; tài khoản phải đang hoạt động.");
+            model.addAttribute("errorMessage", "Unable to sign in. Check your email and password, verify your email address, and make sure your account is active.");
         }
         if (logout != null) {
-            model.addAttribute("logoutMessage", "Bạn đã đăng xuất thành công khỏi hệ thống.");
+            model.addAttribute("logoutMessage", "You have signed out successfully.");
         }
         if (registered != null) {
-            model.addAttribute("successMessage", "Đăng ký thành công! Vui lòng kiểm tra email và xác thực tài khoản trước khi đăng nhập.");
+            model.addAttribute("successMessage", "Registration successful! Please check your email and verify your account before signing in.");
         }
         if (reset != null) {
-            model.addAttribute("successMessage", "Đã đặt lại mật khẩu. Vui lòng đăng nhập bằng mật khẩu mới.");
+            model.addAttribute("successMessage", "Your password has been reset. Please sign in with your new password.");
         }
         if (oauth2Error != null) {
-            model.addAttribute("errorMessage", "Đăng nhập Google thất bại hoặc bị hủy. Nếu email đã có tài khoản BookNet, hãy đăng nhập bằng email và mật khẩu rồi liên kết Google từ trang Home.");
+            model.addAttribute("errorMessage", "Google sign-in failed or was canceled. If you already have a BookNet account with this email, sign in with your email and password, then link Google from the home page.");
         }
 
         return "login";
@@ -79,11 +79,11 @@ public class AuthController {
             RedirectAttributes redirectAttributes) {
 
         if (registerDto.getPassword() != null && !registerDto.getPassword().equals(registerDto.getConfirmPassword())) {
-            bindingResult.rejectValue("confirmPassword", "password.mismatch", "Mật khẩu xác nhận không trùng khớp!");
+            bindingResult.rejectValue("confirmPassword", "password.mismatch", "Passwords do not match.");
         }
 
         if (registerDto.getEmail() != null && userService.existsByEmail(registerDto.getEmail())) {
-            bindingResult.rejectValue("email", "email.duplicate", "Địa chỉ email này đã được sử dụng!");
+            bindingResult.rejectValue("email", "email.duplicate", "This email address is already registered.");
         }
 
         if (bindingResult.hasErrors()) {
@@ -92,14 +92,14 @@ public class AuthController {
 
         try {
             userService.registerNewUser(registerDto);
-            redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.");
+            redirectAttributes.addFlashAttribute("successMessage", "Registration successful! Please check your email to verify your account.");
             return "redirect:/login?registered=true";
         } catch (AccountException e) {
             model.addAttribute("globalError", e.getMessage());
             return "register";
         } catch (Exception e) {
-            log.error("Lỗi trong quá trình đăng ký tài khoản: ", e);
-            model.addAttribute("globalError", "Chưa thể đăng ký tài khoản. Vui lòng thử lại sau.");
+            log.error("Account registration failed: ", e);
+            model.addAttribute("globalError", "Unable to register your account right now. Please try again later.");
             return "register";
         }
     }

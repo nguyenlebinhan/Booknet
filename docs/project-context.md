@@ -1,7 +1,7 @@
 # Context dự án Booknet
 
 > Tài liệu để mention khi giao việc tiếp theo: `@docs/project-context.md`.
-> Cập nhật ngày 09/11/2026, theo source tại commit `bab1cb6` trên nhánh `HaiQH`.
+> Cập nhật ngày 10/11/2026, theo source chuyển REST sang MVC và thông báo tiếng Anh trên nhánh `HaiQuach`.
 > Đây là ảnh chụp trạng thái dự án, không xác nhận nhánh đã merge vào `main`.
 > Trước mỗi công việc, đọc lại source liên quan và Git diff vì dự án có thể đã thay đổi.
 
@@ -10,10 +10,12 @@
 - Booknet là ứng dụng quản lý thư viện của Group 3, package gốc `grp3.java.booknet`.
 - Kiến trúc chính là **Spring MVC + Thymeleaf**, render HTML từ server.
 - Luồng người dùng dùng `@Controller`, form DTO, `BindingResult`, `Model`, flash message
-  và redirect. JSON API chỉ bổ sung, không thay thế form Thymeleaf đang có.
+  và redirect. Đã bỏ các controller JSON tài khoản; không còn endpoint `/api/auth/**`, `/api/account/**`.
 - Đọc [AGENTS.md](../AGENTS.md), controller, service, security, DTO, template và test của
   tính năng trước khi sửa. Không chỉ dựa vào tài liệu hoặc tên Entity để kết luận đã có chức năng.
 - Giữ thiết kế và CSS hiện tại khi nối backend; chỉ thay đổi giao diện trong phạm vi yêu cầu.
+- Thông báo UI, validation và email tài khoản dùng tiếng Anh. DTO khai báo message tiếng Anh;
+  `auth.js` đặt thông báo HTML validation bằng tiếng Anh và xóa lỗi khi người dùng sửa input.
 - Phân biệt rõ: có Entity/Repository, có xử lý backend, có trang sử dụng được và đã kiểm thử
   môi trường thật là các mức hoàn thành khác nhau.
 - Chi tiết tài khoản, request và cấu hình: [account-api.md](account-api.md).
@@ -42,7 +44,7 @@ nhưng cấu hình/dependency hiện tại dùng MySQL; chưa coi SQL Server là
 src/main/java/grp3/java/booknet/
   BooknetApplication.java       # Entry point, bật JPA auditing
   config/                      # Security, Clock, quy tắc tài khoản
-  controller/                  # MVC HTML và JSON API bổ sung
+  controller/                  # MVC HTML, form và redirect
   dto/                         # Form/request/response; không bind trực tiếp Entity
   service/                     # Nghiệp vụ tài khoản, token, email và Google
   security/                    # Principal local/OAuth/OIDC, kiểm tra phiên
@@ -68,7 +70,7 @@ docs/                          # Context dự án và tài liệu luồng tài k
 ```
 
 Template hiện có: `home.html`, `login.html`, `register.html`, `forgot-password.html`,
-`reset-password.html`, `authFragments.html`, `Navbar.html`, `footer.html`.
+`reset-password.html`, `profile.html`, `change-password.html`, `authFragments.html`, `Navbar.html`, `footer.html`.
 Giữ đúng tên và chữ hoa/thường khi tham chiếu fragment để tránh lỗi khi đóng gói/chạy Linux.
 
 ## 4. Chức năng hiện có và phần còn thiếu
@@ -78,8 +80,8 @@ Giữ đúng tên và chữ hoa/thường khi tham chiếu fragment để tránh
 | Đăng ký local | Form Thymeleaf, validation, lưu điện thoại, BCrypt, gửi xác thực | Gửi email thật phụ thuộc SMTP |
 | Đăng nhập local | Email/mật khẩu, phiên, remember-me, logout, kiểm tra trạng thái | Chưa xác nhận triển khai thực tế |
 | Google | Tạo tài khoản, đăng nhập, liên kết local, xử lý OAuth2/OIDC | Chưa có hủy liên kết; cần thử Google thật |
-| Email và mật khẩu | Xác thực/gửi lại email, quên/reset qua form, đổi mật khẩu qua API | Đổi mật khẩu chưa có template riêng |
-| Hồ sơ cá nhân | Service, DTO và API xem/cập nhật hồ sơ | Chưa có template/form hồ sơ |
+| Email và mật khẩu | Xác thực/gửi lại email, quên/reset và đổi mật khẩu qua form Thymeleaf | SMTP thật cần kiểm tra môi trường |
+| Hồ sơ cá nhân | Service, DTO, form Thymeleaf xem/cập nhật hồ sơ và link menu | Chưa xác nhận triển khai thực tế |
 | Home | Có giao diện, dữ liệu sách mẫu, trạng thái/liên kết Google | Chưa nối catalog/tìm kiếm sách thực |
 | Quản lý sách | Entity và Repository cho sách, bản sao, tác giả, thể loại, NXB | Chưa có đầy đủ service/controller/trang CRUD |
 | Mượn/trả/gia hạn | Entity và Repository `Loan` | Chưa có luồng nghiệp vụ hoàn chỉnh |
@@ -104,7 +106,7 @@ Các đường dẫn catalog/search/services/about/contact cần được đối
 | Google adapters | `CustomOAuth2UserService`, `CustomOidcUserService` và các principal tương ứng |
 | Phân quyền, phiên | [SecurityConfig.java](../src/main/java/grp3/java/booknet/config/SecurityConfig.java), `AccountSessionFilter`, `CustomUserDetailsService` |
 | Chính sách mật khẩu/thời hạn | [AccountPolicy.java](../src/main/java/grp3/java/booknet/config/AccountPolicy.java) |
-| API JSON bổ sung | `AccountAuthApiController`, `AccountApiController`, `AccountApiExceptionHandler` |
+| Hồ sơ/đổi mật khẩu qua HTML | [AccountController.java](../src/main/java/grp3/java/booknet/controller/AccountController.java), `AccountRequests`, `ProfileResponse`, `profile.html`, `change-password.html` |
 
 ### Đăng ký và đăng nhập local
 
@@ -122,7 +124,8 @@ Các đường dẫn catalog/search/services/about/contact cần được đối
   hoặc không đủ điều kiện. Link email mở `/reset-password?token=...` và render HTML.
 - `POST /reset-password` nhận **`token`, `password`, `confirmPassword`**. Sai dữ liệu
   render lại với lỗi; thành công xóa phiên hiện tại và redirect `/login?reset=true`.
-- JSON API reset dùng **`newPassword`**, khác tên trường `password` của form HTML.
+- `GET/POST /account/change-password` dùng `currentPassword`, `newPassword`, `confirmPassword`;
+  yêu cầu đăng nhập, lỗi render lại, thành công xóa phiên/cookie và redirect Login với flash message.
 - Token reset có hiệu lực **15 phút**, token xác thực email **24 giờ**, dùng một lần.
   Mỗi loại email có cooldown 60 giây/tài khoản; gửi lại hợp lệ hủy token cũ.
 - Token ngẫu nhiên 256 bit; database chỉ lưu SHA-256. Dùng transaction và khóa khi
@@ -153,10 +156,10 @@ Các đường dẫn catalog/search/services/about/contact cần được đối
 - Role hiện có: `ROLE_GUEST`, `ROLE_USER`, `ROLE_ADMIN`. Chưa có role LIBRARIAN riêng;
   tab Member/Librarian trên Login không phải cơ chế gán quyền.
 - Status user: `ACTIVE`, `SUSPENDED`, `EXPIRED`; provider: `LOCAL`, `GOOGLE`.
-- API hồ sơ chỉ cho sửa họ tên, điện thoại, địa chỉ, avatar HTTP(S). Email, mật khẩu,
+- Form `GET/POST /account/profile` chỉ cho sửa họ tên, điện thoại, địa chỉ, avatar HTTP(S). Email, mật khẩu,
   role, provider, status và memberCode không được sửa qua request hồ sơ.
-- Khi làm template hồ sơ/đổi mật khẩu, dùng lại service/DTO và bổ sung MVC form handler;
-  không trả trực tiếp Entity chứa dữ liệu nhạy cảm vào JSON.
+- Hồ sơ dùng DTO an toàn để render; form dùng constructor binding của record và validation.
+  Đổi mật khẩu không điền lại giá trị mật khẩu trong HTML lỗi. Google-only chỉ thấy hướng dẫn đăng nhập Google.
 
 ## 6. Dữ liệu và cấu hình cần lưu ý
 
@@ -200,19 +203,24 @@ mvn test
 mvn spring-boot:run
 ```
 
-Lần xác nhận gần nhất tại mốc source trên: **37 test đạt, không lỗi/skip**.
+Xác nhận ngày 10/11/2026 bằng JDK 21 và Maven, profile `test`: **47 test đạt, không lỗi/skip**.
+Trước chuyển đổi MVC: 37/37 test đạt. Sau chuyển đổi đã bổ sung 10 trường hợp kiểm thử HTML,
+form hồ sơ/đổi mật khẩu, CSRF và giới hạn validation đăng ký.
+Sau chuyển thông báo sang tiếng Anh: chạy lại 47/47 test đạt, gồm kiểm tra HTML lỗi với
+`Accept-Language: vi-VN` và tiêu đề/nội dung email. JavaScript qua kiểm tra cú pháp và 8 ca smoke
+cho message validation cùng việc xóa custom validity khi input/change; chưa kiểm tra popup trên trình duyệt thật.
 
 | Bộ test | Số test tại mốc này | Phạm vi |
 | --- | --- | --- |
 | `BooknetApplicationTests` | 1 | Khởi tạo application context |
-| `AccountFlowTests` | 20 | Tài khoản, API, token, race reset, phiên, quyền hồ sơ, CSRF |
+| `AccountFlowTests` | 20 | Form tài khoản, token, race reset, phiên, quyền hồ sơ, CSRF |
 | `OAuthCallbackTests` | 6 | Filter chain thật, redirect/callback/state của Google |
-| `ThymeleafAccountFlowTests` | 10 | HTML render, tên field, CSRF từ form thật, lỗi/flash/redirect, email link |
+| `ThymeleafAccountFlowTests` | 20 | HTML render, tên field, CSRF từ form thật, lỗi/flash/redirect, email link, hồ sơ/đổi mật khẩu, validation đăng ký |
 
 Test dùng profile `test`, H2 riêng và mock SMTP/Google. Kết quả này **không xác nhận**
 Google client, gửi email thật, migration hoặc concurrency trên MySQL triển khai thực.
 Thay đổi tài liệu đơn thuần không cần chạy lại toàn bộ test; sửa luồng tài khoản phải
-kiểm thử cả controller/template, không chỉ gọi service hoặc JSON API.
+kiểm thử cả controller/template, không chỉ gọi service.
 
 ## 8. Cách dùng context cho công việc tiếp theo
 

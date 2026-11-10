@@ -42,6 +42,8 @@
           <img th:src="@{/images/home/chevron-down.svg}" width="15" height="15" alt="">
         </button>
         <div class="bn-user-menu" id="bn-user-menu" hidden>
+          <a th:href="@{/account/profile}">My profile</a>
+          <a th:href="@{/account/change-password}">Change password</a>
           <form th:action="@{/logout}" method="post">
             <button type="submit">Sign out</button>
           </form>

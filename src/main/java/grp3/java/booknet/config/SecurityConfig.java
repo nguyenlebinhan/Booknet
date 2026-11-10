@@ -70,9 +70,7 @@ public class SecurityConfig {
                     "/js/**",
                     "/images/**",
                     "/favicon.ico",
-                    "/oauth2/**",
-                    "/api/auth/csrf", "/api/auth/register", "/api/auth/forgot-password",
-                    "/api/auth/reset-password", "/api/auth/verify-email", "/api/auth/verification/resend"
+                    "/oauth2/**"
                 ).permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
@@ -109,13 +107,6 @@ public class SecurityConfig {
                 })
             )
             .addFilterAfter(new AccountSessionFilter(userRepository), RememberMeAuthenticationFilter.class)
-            .exceptionHandling(errors -> errors
-                .defaultAuthenticationEntryPointFor((request, response, exception) -> {
-                    response.setStatus(401);
-                    response.setContentType("application/json;charset=UTF-8");
-                    response.getWriter().write("{\"message\":\"Vui lòng đăng nhập.\"}");
-                }, request -> request.getRequestURI().startsWith(request.getContextPath() + "/api/"))
-            )
             .rememberMe(remember -> remember
                 .key(configuredRememberMeKey.isBlank() ? ephemeralRememberMeKey : configuredRememberMeKey)
                 .tokenValiditySeconds(7 * 24 * 60 * 60)

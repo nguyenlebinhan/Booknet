@@ -22,7 +22,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(AccountService.normalizeEmail(email))
                 .filter(account -> account.getProvider() == AuthProvider.LOCAL && account.getPassword() != null)
-                .orElseThrow(() -> new UsernameNotFoundException("Tài khoản không tồn tại với email: " + email));
+                .orElseThrow(() -> new UsernameNotFoundException("No account was found for email: " + email));
         return new CustomUserDetails(user);
     }
 }

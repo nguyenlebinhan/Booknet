@@ -87,11 +87,7 @@ class AccountFlowTests {
 
     @Test
     void registrationRequiresVerificationThenAllowsNormalizedEmailLogin() throws Exception {
-        mvc.perform(post("/api/auth/register").with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                        {"fullName":"Test Reader","email":"Reader@Example.com","password":"Secret123",
-                         "confirmPassword":"Secret123","phone":"0912345678","termsAccepted":true}
-                        """)).andExpect(status().isCreated());
+        register("Reader@Example.com", "Secret123", true).andExpect(redirectedUrl("/login?registered=true"));
         User user = users.findByEmail("reader@example.com").orElseThrow();
         assertThat(user.isEmailVerified()).isFalse();
         assertThat(user.isEnabled()).isTrue();
@@ -101,40 +97,31 @@ class AccountFlowTests {
                 .andExpect(redirectedUrl("/login?error=true"));
         String token = deliveredToken();
         assertThat(tokens.findAll().getFirst().getTokenHash()).isNotEqualTo(token).hasSize(64);
-        mvc.perform(get("/api/auth/verify-email").param("token", token)).andExpect(status().isOk());
-        mvc.perform(get("/api/auth/verify-email").param("token", token)).andExpect(status().isBadRequest());
+        mvc.perform(get("/verify-email").param("token", token)).andExpect(redirectedUrl("/login"))
+                .andExpect(flash().attributeExists("successMessage"));
+        mvc.perform(get("/verify-email").param("token", token)).andExpect(redirectedUrl("/login"))
+                .andExpect(flash().attributeExists("errorMessage"));
         login("  READER@EXAMPLE.COM  ", "Secret123");
     }
 
     @Test
     void registrationValidatesConfirmationTermsLengthAndDuplicateEmail() throws Exception {
-        mvc.perform(post("/api/auth/register").with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                        {"fullName":"Test Reader","email":"reader@example.com","password":"Secret123",
-                         "confirmPassword":"Different123","phone":"0912345678","termsAccepted":true}
-                        """)).andExpect(status().isBadRequest());
-        mvc.perform(post("/api/auth/register").with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                        {"fullName":"Test Reader","email":"reader@example.com","password":"Secret123",
-                         "confirmPassword":"Secret123","phone":"0912345678","termsAccepted":false}
-                        """)).andExpect(status().isBadRequest());
+        register("reader@example.com", "Different123", true)
+                .andExpect(view().name("register")).andExpect(model().attributeHasFieldErrors("user", "confirmPassword"));
+        register("reader@example.com", "Secret123", false)
+                .andExpect(view().name("register")).andExpect(model().attributeHasFieldErrors("user", "termsAccepted"));
         localUser("reader@example.com", true);
-        mvc.perform(post("/api/auth/register").with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                        {"fullName":"Test Reader","email":"READER@example.com","password":"Secret123",
-                         "confirmPassword":"Secret123","phone":"0912345678","termsAccepted":true}
-                        """)).andExpect(status().isConflict());
+        register("READER@example.com", "Secret123", true)
+                .andExpect(view().name("register")).andExpect(model().attributeHasFieldErrors("user", "email"));
         verifyNoInteractions(sender);
     }
 
     @Test
     void failedRegistrationMailRollsBackUserAndToken() throws Exception {
         doThrow(new MailSendException("SMTP unavailable")).when(sender).send(any(SimpleMailMessage.class));
-        mvc.perform(post("/api/auth/register").with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                        {"fullName":"Test Reader","email":"reader@example.com","password":"Secret123",
-                         "confirmPassword":"Secret123","phone":"0912345678","termsAccepted":true}
-                        """)).andExpect(status().isServiceUnavailable());
+        register("reader@example.com", "Secret123", true).andExpect(view().name("register"))
+                .andExpect(model().attributeExists("globalError"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Unable to send the verification email")));
         assertThat(users.count()).isZero();
         assertThat(tokens.count()).isZero();
     }
@@ -142,21 +129,21 @@ class AccountFlowTests {
     @Test
     void verificationExpiresAndResendInvalidatesPriorLinkWithCooldown() throws Exception {
         localUser("reader@example.com", false);
-        requestEmail("/api/auth/verification/resend", "reader@example.com");
+        requestEmail("/verification/resend", "reader@example.com");
         String original = deliveredToken();
-        requestEmail("/api/auth/verification/resend", "reader@example.com");
+        requestEmail("/verification/resend", "reader@example.com");
         verify(sender, times(1)).send(any(SimpleMailMessage.class));
         AccountToken token = tokens.findAll().getFirst();
         token.setIssuedAt(Instant.now().minusSeconds(120));
         tokens.saveAndFlush(token);
-        requestEmail("/api/auth/verification/resend", "reader@example.com");
+        requestEmail("/verification/resend", "reader@example.com");
         String replacement = deliveredToken();
         assertThat(replacement).isNotEqualTo(original);
-        mvc.perform(get("/api/auth/verify-email").param("token", original)).andExpect(status().isBadRequest());
+        mvc.perform(get("/verify-email").param("token", original)).andExpect(flash().attributeExists("errorMessage"));
         AccountToken latest = tokens.findAll().stream().filter(t -> t.getUsedAt() == null).findFirst().orElseThrow();
         latest.setExpiresAt(Instant.now().minusSeconds(1));
         tokens.saveAndFlush(latest);
-        mvc.perform(get("/api/auth/verify-email").param("token", replacement)).andExpect(status().isBadRequest());
+        mvc.perform(get("/verify-email").param("token", replacement)).andExpect(flash().attributeExists("errorMessage"));
         assertThat(users.findByEmail("reader@example.com").orElseThrow().isEmailVerified()).isFalse();
     }
 
@@ -168,11 +155,11 @@ class AccountFlowTests {
         google.setProvider(AuthProvider.GOOGLE);
         google.setPassword(null);
         users.saveAndFlush(google);
-        String known = requestEmail("/api/auth/forgot-password", "reader@example.com");
-        assertThat(requestEmail("/api/auth/forgot-password", "missing@example.com")).isEqualTo(known);
-        assertThat(requestEmail("/api/auth/forgot-password", "google@example.com")).isEqualTo(known);
-        assertThat(requestEmail("/api/auth/forgot-password", "unverified@example.com")).isEqualTo(known);
-        requestEmail("/api/auth/forgot-password", "reader@example.com");
+        String known = requestEmail("/forgot-password", "reader@example.com");
+        assertThat(requestEmail("/forgot-password", "missing@example.com")).isEqualTo(known);
+        assertThat(requestEmail("/forgot-password", "google@example.com")).isEqualTo(known);
+        assertThat(requestEmail("/forgot-password", "unverified@example.com")).isEqualTo(known);
+        requestEmail("/forgot-password", "reader@example.com");
         verify(sender, times(1)).send(any(SimpleMailMessage.class));
     }
 
@@ -180,8 +167,8 @@ class AccountFlowTests {
     void smtpFailureDuringForgotStillReturnsGenericResponse() throws Exception {
         localUser("reader@example.com", true);
         doThrow(new MailSendException("SMTP unavailable")).when(sender).send(any(SimpleMailMessage.class));
-        String known = requestEmail("/api/auth/forgot-password", "reader@example.com");
-        assertThat(requestEmail("/api/auth/forgot-password", "missing@example.com")).isEqualTo(known);
+        String known = requestEmail("/forgot-password", "reader@example.com");
+        assertThat(requestEmail("/forgot-password", "missing@example.com")).isEqualTo(known);
         assertThat(tokens.findAll()).allMatch(token -> token.getUsedAt() != null);
     }
 
@@ -193,20 +180,18 @@ class AccountFlowTests {
                 .param("password", "Secret123").param("remember-me", "on"))
                 .andExpect(redirectedUrl("/")).andReturn().getResponse().getCookie("remember-me");
         CustomOAuth2User googlePrincipal = new CustomOAuth2User(google("google-sub", "google@example.com", true), user);
-        requestEmail("/api/auth/forgot-password", user.getEmail());
+        requestEmail("/forgot-password", user.getEmail());
         String token = deliveredToken();
-        mvc.perform(get("/api/auth/reset-password").param("token", token)).andExpect(status().isOk());
-        mvc.perform(post("/api/auth/reset-password").with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content(resetBody(token, "NewSecret123", "Mismatch123"))).andExpect(status().isBadRequest());
-        mvc.perform(post("/api/auth/reset-password").with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content(resetBody(token, "NewSecret123", "NewSecret123"))).andExpect(status().isOk());
-        mvc.perform(post("/api/auth/reset-password").with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content(resetBody(token, "Another123", "Another123"))).andExpect(status().isBadRequest());
-        mvc.perform(get("/api/account/profile").session(previous)).andExpect(status().isUnauthorized());
-        mvc.perform(get("/api/account/profile").with(oauth2Login().oauth2User(googlePrincipal)))
-                .andExpect(status().isUnauthorized());
+        mvc.perform(get("/reset-password").param("token", token)).andExpect(model().attribute("tokenValid", true));
+        resetPassword(token, "NewSecret123", "Mismatch123").andExpect(view().name("reset-password"))
+                .andExpect(model().attributeExists("confirmPasswordError"));
+        resetPassword(token, "NewSecret123", "NewSecret123").andExpect(redirectedUrl("/login?reset=true"));
+        resetPassword(token, "Another123", "Another123").andExpect(model().attribute("tokenValid", false));
+        mvc.perform(get("/account/profile").session(previous)).andExpect(redirectedUrl("/login?error=true"));
+        mvc.perform(get("/account/profile").with(oauth2Login().oauth2User(googlePrincipal)))
+                .andExpect(redirectedUrl("/login?error=true"));
         assertThat(remembered).isNotNull();
-        mvc.perform(get("/api/account/profile").cookie(remembered)).andExpect(status().isUnauthorized());
+        mvc.perform(get("/account/profile").cookie(remembered)).andExpect(redirectedUrl("/login"));
         mvc.perform(post("/login").with(csrf()).param("email", user.getEmail()).param("password", "Secret123"))
                 .andExpect(redirectedUrl("/login?error=true"));
         login(user.getEmail(), "NewSecret123");
@@ -215,28 +200,26 @@ class AccountFlowTests {
     @Test
     void resetRejectsExpiredWrongPurposeAndInvalidTokens() throws Exception {
         User user = localUser("reader@example.com", false);
-        requestEmail("/api/auth/verification/resend", user.getEmail());
+        requestEmail("/verification/resend", user.getEmail());
         String verification = deliveredToken();
-        mvc.perform(post("/api/auth/reset-password").with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content(resetBody(verification, "NewSecret123", "NewSecret123"))).andExpect(status().isBadRequest());
-        mvc.perform(get("/api/auth/verify-email").param("token", verification)).andExpect(status().isOk());
-        requestEmail("/api/auth/forgot-password", user.getEmail());
+        resetPassword(verification, "NewSecret123", "NewSecret123").andExpect(model().attribute("tokenValid", false));
+        mvc.perform(get("/verify-email").param("token", verification)).andExpect(flash().attributeExists("successMessage"));
+        requestEmail("/forgot-password", user.getEmail());
         String reset = deliveredToken();
-        mvc.perform(get("/api/auth/verify-email").param("token", reset)).andExpect(status().isBadRequest());
+        mvc.perform(get("/verify-email").param("token", reset)).andExpect(flash().attributeExists("errorMessage"));
         AccountToken token = tokens.findAll().stream().filter(t -> t.getPurpose() == AccountTokenPurpose.RESET_PASSWORD)
                 .findFirst().orElseThrow();
         token.setExpiresAt(Instant.now().minusSeconds(1));
         tokens.saveAndFlush(token);
-        mvc.perform(post("/api/auth/reset-password").with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content(resetBody(reset, "NewSecret123", "NewSecret123"))).andExpect(status().isBadRequest());
-        mvc.perform(get("/api/auth/reset-password").param("token", "invalid")).andExpect(status().isBadRequest());
+        resetPassword(reset, "NewSecret123", "NewSecret123").andExpect(model().attribute("tokenValid", false));
+        mvc.perform(get("/reset-password").param("token", "invalid")).andExpect(model().attribute("tokenValid", false));
         assertThat(passwords.matches("Secret123", users.findById(user.getId()).orElseThrow().getPassword())).isTrue();
     }
 
     @Test
     void concurrentResetConsumesTokenOnlyOnce() throws Exception {
         User user = localUser("reader@example.com", true);
-        requestEmail("/api/auth/forgot-password", user.getEmail());
+        requestEmail("/forgot-password", user.getEmail());
         var request = new AccountRequests.ResetPassword(deliveredToken(), "NewSecret123", "NewSecret123");
         ExecutorService executor = Executors.newFixedThreadPool(2);
         CountDownLatch start = new CountDownLatch(1);
@@ -258,23 +241,27 @@ class AccountFlowTests {
     @Test
     void profileIsPrivateAndOnlyAllowedFieldsCanBeUpdated() throws Exception {
         User user = localUser("reader@example.com", true);
-        mvc.perform(get("/api/account/profile")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/account/profile")).andExpect(redirectedUrl("/login"));
         MockHttpSession session = login(user.getEmail(), "Secret123");
-        mvc.perform(get("/api/account/profile").session(session))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.email").value(user.getEmail()))
-                .andExpect(jsonPath("$.password").doesNotExist()).andExpect(jsonPath("$.authVersion").doesNotExist());
-        mvc.perform(put("/api/account/profile").session(session).with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                        {"fullName":"  Updated Reader  ","phone":"+84 123456789","address":"HCM",
-                         "avatarUrl":"https://example.com/avatar.png","role":"ROLE_ADMIN","email":"other@example.com"}
-                        """))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.fullName").value("Updated Reader"))
-                .andExpect(jsonPath("$.role").value("ROLE_USER")).andExpect(jsonPath("$.email").value(user.getEmail()));
-        assertThat(users.findById(user.getId()).orElseThrow().getFullName()).isEqualTo("Updated Reader");
-        mvc.perform(put("/api/account/profile").session(session).with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                        {"fullName":"Updated Reader","avatarUrl":"javascript:alert(1)"}
-                        """)).andExpect(status().isBadRequest());
+        mvc.perform(get("/account/profile").session(session)).andExpect(status().isOk()).andExpect(view().name("profile"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML));
+        mvc.perform(post("/account/profile").session(session).with(csrf())
+                .param("fullName", "  Updated Reader  ").param("phone", "+84 123456789").param("address", "HCM")
+                .param("avatarUrl", "https://example.com/avatar.png").param("role", "ROLE_ADMIN")
+                .param("email", "other@example.com").param("id", "999").param("password", "Injected123")
+                .param("provider", "GOOGLE").param("status", "SUSPENDED").param("memberCode", "injected"))
+                .andExpect(redirectedUrl("/account/profile")).andExpect(flash().attributeExists("successMessage"));
+        User updated = users.findById(user.getId()).orElseThrow();
+        assertThat(updated.getFullName()).isEqualTo("Updated Reader");
+        assertThat(updated.getEmail()).isEqualTo(user.getEmail());
+        assertThat(updated.getRole()).isEqualTo(UserRole.ROLE_USER);
+        assertThat(updated.getProvider()).isEqualTo(AuthProvider.LOCAL);
+        assertThat(updated.getStatus()).isEqualTo(UserStatus.ACTIVE);
+        assertThat(updated.getMemberCode()).isNull();
+        assertThat(updated.getPassword()).isEqualTo(user.getPassword());
+        mvc.perform(post("/account/profile").session(session).with(csrf())
+                .param("fullName", "Updated Reader").param("avatarUrl", "javascript:alert(1)"))
+                .andExpect(view().name("profile")).andExpect(model().attributeHasFieldErrors("profileForm", "avatarUrl"));
     }
 
     @Test
@@ -282,30 +269,22 @@ class AccountFlowTests {
         User user = localUser("reader@example.com", true);
         MockHttpSession session = login(user.getEmail(), "Secret123");
         MockHttpSession other = login(user.getEmail(), "Secret123");
-        mvc.perform(post("/api/account/change-password").session(session).with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                        {"currentPassword":"wrong","newPassword":"NewSecret123","confirmPassword":"NewSecret123"}
-                        """)).andExpect(status().isBadRequest());
-        mvc.perform(post("/api/account/change-password").session(session).with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                        {"currentPassword":"Secret123","newPassword":"Secret123","confirmPassword":"Secret123"}
-                        """)).andExpect(status().isBadRequest());
-        mvc.perform(post("/api/account/change-password").session(session).with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                        {"currentPassword":"Secret123","newPassword":"NewSecret123","confirmPassword":"NewSecret123"}
-                        """)).andExpect(status().isOk());
+        changePassword(session, "wrong", "NewSecret123").andExpect(view().name("change-password"))
+                .andExpect(model().attributeHasErrors("passwordForm"));
+        changePassword(session, "Secret123", "Secret123").andExpect(view().name("change-password"))
+                .andExpect(model().attributeHasErrors("passwordForm"));
+        changePassword(session, "Secret123", "NewSecret123").andExpect(redirectedUrl("/login"))
+                .andExpect(flash().attributeExists("successMessage"));
         assertThat(session.isInvalid()).isTrue();
-        mvc.perform(get("/api/account/profile").session(other)).andExpect(status().isUnauthorized());
+        mvc.perform(get("/account/profile").session(other)).andExpect(redirectedUrl("/login?error=true"));
         login(user.getEmail(), "NewSecret123");
     }
 
     @Test
-    void csrfIsRequiredAndPublicTokenEndpointSupportsApiClients() throws Exception {
-        mvc.perform(post("/api/auth/forgot-password").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"reader@example.com\"}")).andExpect(status().isForbidden());
-        mvc.perform(get("/api/auth/csrf")).andExpect(status().isOk())
-                .andExpect(jsonPath("$.headerName").value("X-CSRF-TOKEN"))
-                .andExpect(jsonPath("$.token").isNotEmpty());
+    void csrfIsRequiredAndRenderedFormsContainToken() throws Exception {
+        mvc.perform(post("/forgot-password").param("email", "reader@example.com")).andExpect(status().isForbidden());
+        mvc.perform(get("/login")).andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"_csrf\"")));
     }
 
     @ParameterizedTest
@@ -328,7 +307,7 @@ class AccountFlowTests {
         user.setEnabled(false);
         users.saveAndFlush(user);
         identity(user, "disabled-google");
-        mvc.perform(get("/api/account/profile").session(session)).andExpect(status().isUnauthorized());
+        mvc.perform(get("/account/profile").session(session)).andExpect(redirectedUrl("/login?error=true"));
         assertThatThrownBy(() -> oauthAccounts.authenticate(google("disabled-google", user.getEmail(), true)))
                 .isInstanceOf(OAuth2AuthenticationException.class);
     }
@@ -440,9 +419,25 @@ class AccountFlowTests {
     }
 
     private String requestEmail(String path, String email) throws Exception {
-        return mvc.perform(post(path).with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"" + email + "\"}"))
-                .andExpect(status().isAccepted()).andReturn().getResponse().getContentAsString();
+        var result = mvc.perform(post(path).with(csrf()).param("email", email))
+                .andExpect(redirectedUrl(path)).andExpect(flash().attribute("requestSubmitted", true)).andReturn();
+        return result.getFlashMap().get("requestSubmitted").toString();
+    }
+
+    private org.springframework.test.web.servlet.ResultActions register(String email, String confirmation, boolean terms) throws Exception {
+        return mvc.perform(post("/register").with(csrf()).param("fullName", "Test Reader").param("email", email)
+                .param("phone", "0912345678").param("password", "Secret123").param("confirmPassword", confirmation)
+                .param("termsAccepted", Boolean.toString(terms)));
+    }
+
+    private org.springframework.test.web.servlet.ResultActions resetPassword(String token, String password, String confirmation) throws Exception {
+        return mvc.perform(post("/reset-password").with(csrf()).param("token", token)
+                .param("password", password).param("confirmPassword", confirmation));
+    }
+
+    private org.springframework.test.web.servlet.ResultActions changePassword(MockHttpSession session, String current, String password) throws Exception {
+        return mvc.perform(post("/account/change-password").session(session).with(csrf()).param("currentPassword", current)
+                .param("newPassword", password).param("confirmPassword", password));
     }
 
     private String deliveredToken() {
@@ -453,10 +448,6 @@ class AccountFlowTests {
         var matcher = Pattern.compile("[?&]token=([A-Za-z0-9_-]+)").matcher(text);
         assertThat(matcher.find()).isTrue();
         return matcher.group(1);
-    }
-
-    private String resetBody(String token, String password, String confirm) {
-        return "{\"token\":\"" + token + "\",\"newPassword\":\"" + password + "\",\"confirmPassword\":\"" + confirm + "\"}";
     }
 
     private OAuth2User google(String sub, String email, boolean verified) {

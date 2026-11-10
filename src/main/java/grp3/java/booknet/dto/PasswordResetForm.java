@@ -8,7 +8,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PasswordResetForm {
-    @NotBlank @Size(max = 200)
+    @NotBlank(message = "A password reset token is required.")
+    @Size(max = 200, message = "This password reset token is invalid.")
     private String token;
 
     @NotBlank(message = AccountPolicy.PASSWORD_MESSAGE)
@@ -16,6 +17,6 @@ public class PasswordResetForm {
     @Pattern(regexp = AccountPolicy.PASSWORD_PATTERN, message = AccountPolicy.PASSWORD_MESSAGE)
     private String password;
 
-    @NotBlank(message = "Vui lòng xác nhận mật khẩu")
+    @NotBlank(message = "Please confirm your password.")
     private String confirmPassword;
 }

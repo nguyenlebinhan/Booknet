@@ -30,12 +30,12 @@ public class UserServiceImpl implements UserService {
     public User registerNewUser(UserRegisterDto registerDto) {
         AccountService.validateNewPassword(registerDto.getPassword(), registerDto.getConfirmPassword());
         if (registerDto.getFullName() == null || registerDto.getFullName().trim().length() < 2) {
-            throw new AccountException(HttpStatus.BAD_REQUEST, "Họ tên phải có ít nhất 2 ký tự.");
+            throw new AccountException(HttpStatus.BAD_REQUEST, "Full name must contain at least 2 characters.");
         }
         String normalizedEmail = AccountService.normalizeEmail(registerDto.getEmail());
 
         if (userRepository.existsByEmail(normalizedEmail)) {
-            throw new AccountException(HttpStatus.CONFLICT, "Email này đã được đăng ký trong hệ thống.");
+            throw new AccountException(HttpStatus.CONFLICT, "This email address is already registered.");
         }
 
         String defaultUsername = normalizedEmail.split("@")[0];

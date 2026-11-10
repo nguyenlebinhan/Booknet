@@ -47,7 +47,7 @@ public class HomeController {
         model.addAttribute("googleLinkedMessage", googleLinked != null);
         if (googleLinkError != null) {
             model.addAttribute("googleLinkError",
-                    "Không thể liên kết Google. Tài khoản Google có thể đã thuộc tài khoản BookNet khác, hoặc thao tác đã hết hạn.");
+                    "Unable to link Google. This Google account may belong to another BookNet account, or the linking request has expired.");
         }
         return "home";
     }

@@ -19,29 +19,29 @@ import lombok.Setter;
 @Builder
 public class UserRegisterDto {
 
-    @NotBlank(message = "Họ và tên không được để trống")
-    @Size(min = 2, max = 120, message = "Họ và tên phải từ 2 đến 120 ký tự")
+    @NotBlank(message = "Please enter your full name.")
+    @Size(min = 2, max = 120, message = "Full name must be between 2 and 120 characters.")
     private String fullName;
 
-    @NotBlank(message = "Email không được để trống")
-    @Email(message = "Email không đúng định dạng")
-    @Size(max = 120, message = "Email tối đa 120 ký tự")
+    @NotBlank(message = "Please enter your email address.")
+    @Email(message = "Please enter a valid email address.")
+    @Size(max = 120, message = "Email address must not exceed 120 characters.")
     private String email;
 
-    @NotBlank(message = "Mật khẩu không được để trống")
+    @NotBlank(message = "Please enter your password.")
     @Size(min = AccountPolicy.PASSWORD_MIN_LENGTH, max = AccountPolicy.PASSWORD_MAX_LENGTH, message = AccountPolicy.PASSWORD_MESSAGE)
     @Pattern(regexp = AccountPolicy.PASSWORD_PATTERN, message = AccountPolicy.PASSWORD_MESSAGE)
     private String password;
 
-    @NotBlank(message = "Vui lòng nhập số điện thoại")
-    @Size(max = 20, message = "Số điện thoại tối đa 20 ký tự")
-    @Pattern(regexp = "[+]?[0-9 ()\\-]{8,19}", message = "Số điện thoại không hợp lệ")
+    @NotBlank(message = "Please enter your phone number.")
+    @Size(max = 20, message = "Phone number must not exceed 20 characters.")
+    @Pattern(regexp = "[+]?[0-9 ()\\-]{8,19}", message = "Please enter a valid phone number.")
     private String phone;
 
-    @NotBlank(message = "Vui lòng xác nhận lại mật khẩu")
+    @NotBlank(message = "Please confirm your password.")
     private String confirmPassword;
 
-    @AssertTrue(message = "Bạn cần đồng ý với Điều khoản sử dụng của thư viện")
+    @AssertTrue(message = "You must accept the library terms of use.")
     @Builder.Default
     private boolean termsAccepted = false;
 }

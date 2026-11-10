@@ -57,6 +57,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class AccountFlowTests {
+    private static final String INITIAL_PASSWORD = TestPasswords.valid();
+    private static final String NEW_PASSWORD = TestPasswords.valid();
+    private static final String OTHER_PASSWORD = TestPasswords.valid();
+
     @Autowired MockMvc mvc;
     @Autowired UserRepository users;
     @Autowired AccountTokenRepository tokens;
@@ -87,13 +91,13 @@ class AccountFlowTests {
 
     @Test
     void registrationRequiresVerificationThenAllowsNormalizedEmailLogin() throws Exception {
-        register("Reader@Example.com", "Secret123", true).andExpect(redirectedUrl("/login?registered=true"));
+        register("Reader@Example.com", INITIAL_PASSWORD, true).andExpect(redirectedUrl("/login?registered=true"));
         User user = users.findByEmail("reader@example.com").orElseThrow();
         assertThat(user.isEmailVerified()).isFalse();
         assertThat(user.isEnabled()).isTrue();
-        assertThat(passwords.matches("Secret123", user.getPassword())).isTrue();
+        assertThat(passwords.matches(INITIAL_PASSWORD, user.getPassword())).isTrue();
         assertThat(user.getRole()).isEqualTo(UserRole.ROLE_USER);
-        mvc.perform(post("/login").with(csrf()).param("email", user.getEmail()).param("password", "Secret123"))
+        mvc.perform(post("/login").with(csrf()).param("email", user.getEmail()).param("password", INITIAL_PASSWORD))
                 .andExpect(redirectedUrl("/login?error=true"));
         String token = deliveredToken();
         assertThat(tokens.findAll().getFirst().getTokenHash()).isNotEqualTo(token).hasSize(64);
@@ -101,17 +105,17 @@ class AccountFlowTests {
                 .andExpect(flash().attributeExists("successMessage"));
         mvc.perform(get("/verify-email").param("token", token)).andExpect(redirectedUrl("/login"))
                 .andExpect(flash().attributeExists("errorMessage"));
-        login("  READER@EXAMPLE.COM  ", "Secret123");
+        login("  READER@EXAMPLE.COM  ", INITIAL_PASSWORD);
     }
 
     @Test
     void registrationValidatesConfirmationTermsLengthAndDuplicateEmail() throws Exception {
-        register("reader@example.com", "Different123", true)
+        register("reader@example.com", OTHER_PASSWORD, true)
                 .andExpect(view().name("register")).andExpect(model().attributeHasFieldErrors("user", "confirmPassword"));
-        register("reader@example.com", "Secret123", false)
+        register("reader@example.com", INITIAL_PASSWORD, false)
                 .andExpect(view().name("register")).andExpect(model().attributeHasFieldErrors("user", "termsAccepted"));
         localUser("reader@example.com", true);
-        register("READER@example.com", "Secret123", true)
+        register("READER@example.com", INITIAL_PASSWORD, true)
                 .andExpect(view().name("register")).andExpect(model().attributeHasFieldErrors("user", "email"));
         verifyNoInteractions(sender);
     }
@@ -119,7 +123,7 @@ class AccountFlowTests {
     @Test
     void failedRegistrationMailRollsBackUserAndToken() throws Exception {
         doThrow(new MailSendException("SMTP unavailable")).when(sender).send(any(SimpleMailMessage.class));
-        register("reader@example.com", "Secret123", true).andExpect(view().name("register"))
+        register("reader@example.com", INITIAL_PASSWORD, true).andExpect(view().name("register"))
                 .andExpect(model().attributeExists("globalError"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Unable to send the verification email")));
         assertThat(users.count()).isZero();
@@ -175,26 +179,26 @@ class AccountFlowTests {
     @Test
     void resetPasswordIsSingleUseAndRevokesLocalGoogleAndRememberMeSessions() throws Exception {
         User user = localUser("reader@example.com", true);
-        MockHttpSession previous = login(user.getEmail(), "Secret123");
+        MockHttpSession previous = login(user.getEmail(), INITIAL_PASSWORD);
         var remembered = mvc.perform(post("/login").with(csrf()).param("email", user.getEmail())
-                .param("password", "Secret123").param("remember-me", "on"))
+                .param("password", INITIAL_PASSWORD).param("remember-me", "on"))
                 .andExpect(redirectedUrl("/")).andReturn().getResponse().getCookie("remember-me");
         CustomOAuth2User googlePrincipal = new CustomOAuth2User(google("google-sub", "google@example.com", true), user);
         requestEmail("/forgot-password", user.getEmail());
         String token = deliveredToken();
         mvc.perform(get("/reset-password").param("token", token)).andExpect(model().attribute("tokenValid", true));
-        resetPassword(token, "NewSecret123", "Mismatch123").andExpect(view().name("reset-password"))
+        resetPassword(token, NEW_PASSWORD, OTHER_PASSWORD).andExpect(view().name("reset-password"))
                 .andExpect(model().attributeExists("confirmPasswordError"));
-        resetPassword(token, "NewSecret123", "NewSecret123").andExpect(redirectedUrl("/login?reset=true"));
-        resetPassword(token, "Another123", "Another123").andExpect(model().attribute("tokenValid", false));
+        resetPassword(token, NEW_PASSWORD, NEW_PASSWORD).andExpect(redirectedUrl("/login?reset=true"));
+        resetPassword(token, OTHER_PASSWORD, OTHER_PASSWORD).andExpect(model().attribute("tokenValid", false));
         mvc.perform(get("/account/profile").session(previous)).andExpect(redirectedUrl("/login?error=true"));
         mvc.perform(get("/account/profile").with(oauth2Login().oauth2User(googlePrincipal)))
                 .andExpect(redirectedUrl("/login?error=true"));
         assertThat(remembered).isNotNull();
         mvc.perform(get("/account/profile").cookie(remembered)).andExpect(redirectedUrl("/login"));
-        mvc.perform(post("/login").with(csrf()).param("email", user.getEmail()).param("password", "Secret123"))
+        mvc.perform(post("/login").with(csrf()).param("email", user.getEmail()).param("password", INITIAL_PASSWORD))
                 .andExpect(redirectedUrl("/login?error=true"));
-        login(user.getEmail(), "NewSecret123");
+        login(user.getEmail(), NEW_PASSWORD);
     }
 
     @Test
@@ -202,7 +206,7 @@ class AccountFlowTests {
         User user = localUser("reader@example.com", false);
         requestEmail("/verification/resend", user.getEmail());
         String verification = deliveredToken();
-        resetPassword(verification, "NewSecret123", "NewSecret123").andExpect(model().attribute("tokenValid", false));
+        resetPassword(verification, NEW_PASSWORD, NEW_PASSWORD).andExpect(model().attribute("tokenValid", false));
         mvc.perform(get("/verify-email").param("token", verification)).andExpect(flash().attributeExists("successMessage"));
         requestEmail("/forgot-password", user.getEmail());
         String reset = deliveredToken();
@@ -211,16 +215,16 @@ class AccountFlowTests {
                 .findFirst().orElseThrow();
         token.setExpiresAt(Instant.now().minusSeconds(1));
         tokens.saveAndFlush(token);
-        resetPassword(reset, "NewSecret123", "NewSecret123").andExpect(model().attribute("tokenValid", false));
+        resetPassword(reset, NEW_PASSWORD, NEW_PASSWORD).andExpect(model().attribute("tokenValid", false));
         mvc.perform(get("/reset-password").param("token", "invalid")).andExpect(model().attribute("tokenValid", false));
-        assertThat(passwords.matches("Secret123", users.findById(user.getId()).orElseThrow().getPassword())).isTrue();
+        assertThat(passwords.matches(INITIAL_PASSWORD, users.findById(user.getId()).orElseThrow().getPassword())).isTrue();
     }
 
     @Test
     void concurrentResetConsumesTokenOnlyOnce() throws Exception {
         User user = localUser("reader@example.com", true);
         requestEmail("/forgot-password", user.getEmail());
-        var request = new AccountRequests.ResetPassword(deliveredToken(), "NewSecret123", "NewSecret123");
+        var request = new AccountRequests.ResetPassword(deliveredToken(), NEW_PASSWORD, NEW_PASSWORD);
         ExecutorService executor = Executors.newFixedThreadPool(2);
         CountDownLatch start = new CountDownLatch(1);
         Callable<Boolean> attempt = () -> {
@@ -242,13 +246,13 @@ class AccountFlowTests {
     void profileIsPrivateAndOnlyAllowedFieldsCanBeUpdated() throws Exception {
         User user = localUser("reader@example.com", true);
         mvc.perform(get("/account/profile")).andExpect(redirectedUrl("/login"));
-        MockHttpSession session = login(user.getEmail(), "Secret123");
+        MockHttpSession session = login(user.getEmail(), INITIAL_PASSWORD);
         mvc.perform(get("/account/profile").session(session)).andExpect(status().isOk()).andExpect(view().name("profile"))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML));
         mvc.perform(post("/account/profile").session(session).with(csrf())
                 .param("fullName", "  Updated Reader  ").param("phone", "+84 123456789").param("address", "HCM")
                 .param("avatarUrl", "https://example.com/avatar.png").param("role", "ROLE_ADMIN")
-                .param("email", "other@example.com").param("id", "999").param("password", "Injected123")
+                .param("email", "other@example.com").param("id", "999").param("password", OTHER_PASSWORD)
                 .param("provider", "GOOGLE").param("status", "SUSPENDED").param("memberCode", "injected"))
                 .andExpect(redirectedUrl("/account/profile")).andExpect(flash().attributeExists("successMessage"));
         User updated = users.findById(user.getId()).orElseThrow();
@@ -267,17 +271,17 @@ class AccountFlowTests {
     @Test
     void changePasswordRequiresCurrentPasswordAndLogsOutOtherSessions() throws Exception {
         User user = localUser("reader@example.com", true);
-        MockHttpSession session = login(user.getEmail(), "Secret123");
-        MockHttpSession other = login(user.getEmail(), "Secret123");
-        changePassword(session, "wrong", "NewSecret123").andExpect(view().name("change-password"))
+        MockHttpSession session = login(user.getEmail(), INITIAL_PASSWORD);
+        MockHttpSession other = login(user.getEmail(), INITIAL_PASSWORD);
+        changePassword(session, "wrong", NEW_PASSWORD).andExpect(view().name("change-password"))
                 .andExpect(model().attributeHasErrors("passwordForm"));
-        changePassword(session, "Secret123", "Secret123").andExpect(view().name("change-password"))
+        changePassword(session, INITIAL_PASSWORD, INITIAL_PASSWORD).andExpect(view().name("change-password"))
                 .andExpect(model().attributeHasErrors("passwordForm"));
-        changePassword(session, "Secret123", "NewSecret123").andExpect(redirectedUrl("/login"))
+        changePassword(session, INITIAL_PASSWORD, NEW_PASSWORD).andExpect(redirectedUrl("/login"))
                 .andExpect(flash().attributeExists("successMessage"));
         assertThat(session.isInvalid()).isTrue();
         mvc.perform(get("/account/profile").session(other)).andExpect(redirectedUrl("/login?error=true"));
-        login(user.getEmail(), "NewSecret123");
+        login(user.getEmail(), NEW_PASSWORD);
     }
 
     @Test
@@ -294,7 +298,7 @@ class AccountFlowTests {
         user.setStatus(status);
         user = users.saveAndFlush(user);
         identity(user, "blocked-google");
-        mvc.perform(post("/login").with(csrf()).param("email", user.getEmail()).param("password", "Secret123"))
+        mvc.perform(post("/login").with(csrf()).param("email", user.getEmail()).param("password", INITIAL_PASSWORD))
                 .andExpect(redirectedUrl("/login?error=true"));
         assertThatThrownBy(() -> oauthAccounts.authenticate(google("blocked-google", "reader@example.com", true)))
                 .isInstanceOf(OAuth2AuthenticationException.class);
@@ -303,7 +307,7 @@ class AccountFlowTests {
     @Test
     void disablingUserRevokesExistingSessionAndBlocksGoogle() throws Exception {
         User user = localUser("reader@example.com", true);
-        MockHttpSession session = login(user.getEmail(), "Secret123");
+        MockHttpSession session = login(user.getEmail(), INITIAL_PASSWORD);
         user.setEnabled(false);
         users.saveAndFlush(user);
         identity(user, "disabled-google");
@@ -409,7 +413,7 @@ class AccountFlowTests {
 
     private User localUser(String email, boolean verified) {
         return users.saveAndFlush(User.builder().fullName("Test Reader").email(email).username("reader")
-                .password(passwords.encode("Secret123")).provider(AuthProvider.LOCAL).role(UserRole.ROLE_USER)
+                .password(passwords.encode(INITIAL_PASSWORD)).provider(AuthProvider.LOCAL).role(UserRole.ROLE_USER)
                 .enabled(true).emailVerified(verified).status(UserStatus.ACTIVE).build());
     }
 
@@ -426,7 +430,7 @@ class AccountFlowTests {
 
     private org.springframework.test.web.servlet.ResultActions register(String email, String confirmation, boolean terms) throws Exception {
         return mvc.perform(post("/register").with(csrf()).param("fullName", "Test Reader").param("email", email)
-                .param("phone", "0912345678").param("password", "Secret123").param("confirmPassword", confirmation)
+                .param("phone", "0912345678").param("password", INITIAL_PASSWORD).param("confirmPassword", confirmation)
                 .param("termsAccepted", Boolean.toString(terms)));
     }
 

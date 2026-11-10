@@ -46,6 +46,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class OAuthCallbackTests {
+    private static final String INITIAL_PASSWORD = TestPasswords.valid();
+
     @Autowired MockMvc mvc;
     @Autowired UserRepository users;
     @Autowired AccountTokenRepository tokens;
@@ -172,13 +174,13 @@ class OAuthCallbackTests {
 
     private User localUser() {
         return users.saveAndFlush(User.builder().fullName("Local Reader").email("local@example.com")
-                .password(passwords.encode("Secret123")).provider(AuthProvider.LOCAL).role(UserRole.ROLE_USER)
+                .password(passwords.encode(INITIAL_PASSWORD)).provider(AuthProvider.LOCAL).role(UserRole.ROLE_USER)
                 .enabled(true).emailVerified(true).status(UserStatus.ACTIVE).build());
     }
 
     private MockHttpSession loginLocal() throws Exception {
         return (MockHttpSession) mvc.perform(post("/login").with(csrf())
-                .param("email", "local@example.com").param("password", "Secret123"))
+                .param("email", "local@example.com").param("password", INITIAL_PASSWORD))
                 .andExpect(redirectedUrl("/")).andReturn().getRequest().getSession(false);
     }
 

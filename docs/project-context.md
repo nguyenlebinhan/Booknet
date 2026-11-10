@@ -71,6 +71,8 @@ docs/                          # Context dự án và tài liệu luồng tài k
 
 Template hiện có: `home.html`, `login.html`, `register.html`, `forgot-password.html`,
 `reset-password.html`, `profile.html`, `change-password.html`, `authFragments.html`, `Navbar.html`, `footer.html`.
+Đã tích hợp thêm `about.html`, `contact.html`, assets và routes tương ứng từ `origin/main` vào `HaiQuach`.
+About/Contact giữ giao diện từ main; form Contact hiện chỉ redirect/flash thông báo, chưa có service gửi/lưu liên hệ.
 Giữ đúng tên và chữ hoa/thường khi tham chiếu fragment để tránh lỗi khi đóng gói/chạy Linux.
 
 ## 4. Chức năng hiện có và phần còn thiếu
@@ -91,7 +93,7 @@ Giữ đúng tên và chữ hoa/thường khi tham chiếu fragment để tránh
 | Quản trị | Rule `/admin/**` yêu cầu ADMIN | Chưa có dashboard/quản lý người dùng/báo cáo |
 
 Không coi nút, link menu hoặc dữ liệu mẫu trên Home là chứng cứ backend đã triển khai.
-Các đường dẫn catalog/search/services/about/contact cần được đối chiếu controller khi làm tiếp.
+Các đường dẫn catalog/search/services cần được đối chiếu controller khi làm tiếp. About/Contact có MVC route công khai.
 
 ## 5. Luồng tài khoản và nơi cần đọc
 
@@ -209,6 +211,8 @@ form hồ sơ/đổi mật khẩu, CSRF và giới hạn validation đăng ký.
 Sau chuyển thông báo sang tiếng Anh: chạy lại 47/47 test đạt, gồm kiểm tra HTML lỗi với
 `Accept-Language: vi-VN` và tiêu đề/nội dung email. JavaScript qua kiểm tra cú pháp và 8 ca smoke
 cho message validation cùng việc xóa custom validity khi input/change; chưa kiểm tra popup trên trình duyệt thật.
+Sau tích hợp `origin/main` tại `fdd22c7` vào `HaiQuach`: chạy lại 47/47 test đạt, gồm render công khai
+About/Contact. Giữ helper `TestPasswords` từ main để tạo mật khẩu ngẫu nhiên cho tài khoản H2 test.
 
 | Bộ test | Số test tại mốc này | Phạm vi |
 | --- | --- | --- |

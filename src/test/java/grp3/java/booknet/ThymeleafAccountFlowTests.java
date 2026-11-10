@@ -35,6 +35,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class ThymeleafAccountFlowTests {
+    private static final String INITIAL_PASSWORD = TestPasswords.valid();
+    private static final String NEW_PASSWORD = TestPasswords.valid();
+    private static final String OTHER_PASSWORD = TestPasswords.valid();
+
     @Autowired MockMvc mvc;
     @Autowired UserRepository users;
     @Autowired AccountTokenRepository tokens;
@@ -60,6 +64,8 @@ class ThymeleafAccountFlowTests {
         mvc.perform(get("/verification/resend")).andExpect(view().name("forgot-password"))
                 .andExpect(content().string(containsString("action=\"/verification/resend\"")));
         mvc.perform(get("/")).andExpect(status().isOk()).andExpect(view().name("home"));
+        mvc.perform(get("/about")).andExpect(status().isOk()).andExpect(view().name("about"));
+        mvc.perform(get("/contact")).andExpect(status().isOk()).andExpect(view().name("contact"));
         mvc.perform(get("/reset-password")).andExpect(status().isOk()).andExpect(view().name("reset-password"))
                 .andExpect(model().attribute("tokenValid", false))
                 .andExpect(content().string(containsString("This link has expired.")));
@@ -70,7 +76,7 @@ class ThymeleafAccountFlowTests {
         FormPage form = formPage("/register");
         MvcResult registered = mvc.perform(post("/register").session(form.session()).param("_csrf", form.csrf())
                 .param("fullName", "Form Reader").param("email", "Form@Example.com").param("phone", "0912345678")
-                .param("password", "Secret123").param("confirmPassword", "Secret123").param("termsAccepted", "true"))
+                .param("password", INITIAL_PASSWORD).param("confirmPassword", INITIAL_PASSWORD).param("termsAccepted", "true"))
                 .andExpect(redirectedUrl("/login?registered=true")).andReturn();
         User saved = users.findByEmail("form@example.com").orElseThrow();
         assertThat(saved.getPhone()).isEqualTo("0912345678");
@@ -105,20 +111,20 @@ class ThymeleafAccountFlowTests {
         FormPage reset = formPage("/reset-password?token=" + token);
         assertThat(reset.html()).contains("action=\"/reset-password\"", "name=\"token\" value=\"" + token + "\"");
         mvc.perform(post("/reset-password").session(reset.session()).param("_csrf", reset.csrf())
-                .param("token", token).param("password", "NewSecret123").param("confirmPassword", "Different123"))
+                .param("token", token).param("password", NEW_PASSWORD).param("confirmPassword", OTHER_PASSWORD))
                 .andExpect(status().isOk()).andExpect(view().name("reset-password"))
                 .andExpect(model().attributeExists("confirmPasswordError"))
-                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("value=\"NewSecret123\""))));
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("value=\"" + NEW_PASSWORD + "\""))));
         mvc.perform(post("/reset-password").session(reset.session()).param("_csrf", reset.csrf())
-                .param("token", token).param("password", "NewSecret123").param("confirmPassword", "NewSecret123"))
+                .param("token", token).param("password", NEW_PASSWORD).param("confirmPassword", NEW_PASSWORD))
                 .andExpect(redirectedUrl("/login?reset=true"));
         mvc.perform(get("/login").param("reset", "true")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("sign in with your new password")));
         mvc.perform(get("/reset-password").param("token", token)).andExpect(status().isOk())
                 .andExpect(model().attribute("tokenValid", false));
-        mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com").param("password", "Secret123"))
+        mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com").param("password", INITIAL_PASSWORD))
                 .andExpect(redirectedUrl("/login?error=true"));
-        mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com").param("password", "NewSecret123"))
+        mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com").param("password", NEW_PASSWORD))
                 .andExpect(redirectedUrl("/"));
     }
 
@@ -132,7 +138,7 @@ class ThymeleafAccountFlowTests {
                 .andExpect(status().isOk()).andExpect(view().name("reset-password"))
                 .andExpect(model().attribute("tokenValid", true)).andExpect(model().attributeExists("passwordError"));
         assertThat(tokens.findAll().getFirst().getUsedAt()).isNull();
-        assertThat(passwords.matches("Secret123", users.findByEmail("reader@example.com").orElseThrow().getPassword())).isTrue();
+        assertThat(passwords.matches(INITIAL_PASSWORD, users.findByEmail("reader@example.com").orElseThrow().getPassword())).isTrue();
     }
 
     @Test
@@ -164,7 +170,7 @@ class ThymeleafAccountFlowTests {
         mvc.perform(get("/login").flashAttrs(reused.getFlashMap())).andExpect(status().isOk())
                 .andExpect(content().string(containsString("This verification link is invalid")))
                 .andExpect(content().string(containsString("href=\"/verification/resend\"")));
-        mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com").param("password", "Secret123"))
+        mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com").param("password", INITIAL_PASSWORD))
                 .andExpect(redirectedUrl("/"));
     }
 
@@ -185,7 +191,7 @@ class ThymeleafAccountFlowTests {
         assertThat(password.html()).contains("action=\"/account/change-password\"", "name=\"currentPassword\"",
                 "name=\"newPassword\"", "name=\"confirmPassword\"");
         MvcResult changed = mvc.perform(post("/account/change-password").session(session).param("_csrf", password.csrf())
-                .param("currentPassword", "Secret123").param("newPassword", "NewSecret123").param("confirmPassword", "NewSecret123"))
+                .param("currentPassword", INITIAL_PASSWORD).param("newPassword", NEW_PASSWORD).param("confirmPassword", NEW_PASSWORD))
                 .andExpect(redirectedUrl("/login")).andReturn();
         assertThat(session.isInvalid()).isTrue();
         assertThat(changed.getResponse().getCookie("remember-me").getMaxAge()).isZero();
@@ -199,19 +205,19 @@ class ThymeleafAccountFlowTests {
         MockHttpSession session = login();
         mvc.perform(post("/account/profile").session(session).param("fullName", "Changed"))
                 .andExpect(status().isForbidden());
-        mvc.perform(post("/account/change-password").session(session).param("currentPassword", "Secret123"))
+        mvc.perform(post("/account/change-password").session(session).param("currentPassword", INITIAL_PASSWORD))
                 .andExpect(status().isForbidden());
         mvc.perform(post("/account/profile").session(session).with(csrf()).param("fullName", "X"))
                 .andExpect(view().name("profile")).andExpect(model().attributeHasFieldErrors("profileForm", "fullName"))
                 .andExpect(content().string(containsString("role=\"alert\"")))
                 .andExpect(content().string(containsString("Full name must be between 2 and 120 characters.")));
-        mvc.perform(post("/account/change-password").session(session).with(csrf()).param("currentPassword", "Secret123")
-                .param("newPassword", "NewSecret123").param("confirmPassword", "Mismatch123"))
+        mvc.perform(post("/account/change-password").session(session).with(csrf()).param("currentPassword", INITIAL_PASSWORD)
+                .param("newPassword", NEW_PASSWORD).param("confirmPassword", OTHER_PASSWORD))
                 .andExpect(view().name("change-password")).andExpect(model().attributeHasErrors("passwordForm"))
                 .andExpect(content().string(containsString("Passwords do not match")))
-                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("value=\"Secret123\""))))
-                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("value=\"NewSecret123\""))));
-        assertThat(passwords.matches("Secret123", users.findByEmail("reader@example.com").orElseThrow().getPassword())).isTrue();
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("value=\"" + INITIAL_PASSWORD + "\""))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("value=\"" + NEW_PASSWORD + "\""))));
+        assertThat(passwords.matches(INITIAL_PASSWORD, users.findByEmail("reader@example.com").orElseThrow().getPassword())).isTrue();
     }
 
     @Test
@@ -232,8 +238,8 @@ class ThymeleafAccountFlowTests {
         mvc.perform(get("/account/change-password").with(authentication))
                 .andExpect(content().string(containsString("This account uses Google sign-in")))
                 .andExpect(content().string(org.hamcrest.Matchers.not(containsString("name=\"currentPassword\""))));
-        mvc.perform(post("/account/change-password").with(authentication).with(csrf()).param("currentPassword", "Secret123")
-                .param("newPassword", "NewSecret123").param("confirmPassword", "NewSecret123"))
+        mvc.perform(post("/account/change-password").with(authentication).with(csrf()).param("currentPassword", INITIAL_PASSWORD)
+                .param("newPassword", NEW_PASSWORD).param("confirmPassword", NEW_PASSWORD))
                 .andExpect(view().name("change-password"));
         assertThat(users.findById(user.getId()).orElseThrow().getPassword()).isNull();
     }
@@ -255,7 +261,7 @@ class ThymeleafAccountFlowTests {
         mvc.perform(post("/register").param("email", "reader@example.com")).andExpect(status().isForbidden());
         mvc.perform(post("/register").with(csrf()).param("fullName", "X".repeat(121))
                 .param("email", "x".repeat(110) + "@example.com").param("phone", "0912345678")
-                .param("password", "Secret123").param("confirmPassword", "Secret123").param("termsAccepted", "true"))
+                .param("password", INITIAL_PASSWORD).param("confirmPassword", INITIAL_PASSWORD).param("termsAccepted", "true"))
                 .andExpect(view().name("register")).andExpect(model().attributeHasFieldErrors("user", "fullName", "email"));
         assertThat(users.count()).isZero();
         verifyNoInteractions(sender);
@@ -263,7 +269,7 @@ class ThymeleafAccountFlowTests {
 
     private MockHttpSession login() throws Exception {
         return (MockHttpSession) mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com")
-                .param("password", "Secret123")).andExpect(redirectedUrl("/")).andReturn().getRequest().getSession(false);
+                .param("password", INITIAL_PASSWORD)).andExpect(redirectedUrl("/")).andReturn().getRequest().getSession(false);
     }
 
     private String requestResetThroughForm() throws Exception {
@@ -307,7 +313,7 @@ class ThymeleafAccountFlowTests {
 
     private void localUser(boolean verified) {
         users.saveAndFlush(User.builder().fullName("Test Reader").email("reader@example.com")
-                .password(passwords.encode("Secret123")).provider(AuthProvider.LOCAL).role(UserRole.ROLE_USER)
+                .password(passwords.encode(INITIAL_PASSWORD)).provider(AuthProvider.LOCAL).role(UserRole.ROLE_USER)
                 .enabled(true).emailVerified(verified).status(UserStatus.ACTIVE).build());
     }
 

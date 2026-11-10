@@ -72,10 +72,11 @@ public class HomeController {
             @RequestParam("fullName") String fullName,
             @RequestParam("email") String email,
             @RequestParam(value = "subject", required = false) String subject,
+            @RequestParam(value = "memberId", required = false) String memberId,
             @RequestParam("message") String message,
             RedirectAttributes redirectAttributes) {
         redirectAttributes.addFlashAttribute("contactSuccess",
-                "Cảm ơn bạn (" + fullName + ")! Tin nhắn của bạn đã được gửi thành công đến ban thủ thư BookNet. Chúng tôi sẽ phản hồi sớm nhất qua email " + email + ".");
+                "Thank you (" + fullName + ")! Your message has been sent to booknet librarians. We will get back to you shortly via " + email + ".");
         return "redirect:/contact";
     }
 }

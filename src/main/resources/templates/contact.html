@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Liên hệ & Hỗ trợ • booknet Library</title>
+  <title>Contact & Support • booknet Library</title>
 
   <!-- Google Fonts: Noto Serif & Inter & Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- Core & Component Stylesheets -->
+  <link rel="stylesheet" th:href="@{/css/tokens.css}" href="/css/tokens.css">
   <link rel="stylesheet" th:href="@{/css/navbar.css}" href="/css/navbar.css">
   <link rel="stylesheet" th:href="@{/css/footer.css}" href="/css/footer.css">
   <link rel="stylesheet" th:href="@{/css/contact.css}" href="/css/contact.css">
@@ -37,7 +38,7 @@
       </h1>
 
       <p class="contact-hero-lead">
-        Có câu hỏi về việc mượn trả sách, gia hạn, đăng ký thẻ bạn đọc hay đề xuất sự kiện? Đội ngũ thủ thư booknet luôn sẵn sàng lắng nghe và hỗ trợ bạn.
+        Have a question about borrowing, returns, renewals, membership or an event idea? Our librarians are here to listen and help.
       </p>
     </section>
 
@@ -53,13 +54,13 @@
             <i class="fas fa-location-dot"></i>
           </div>
           <div class="card-content-area">
-            <span class="card-sub-tag">ĐỊA CHỈ TRỰC TIẾP</span>
+            <span class="card-sub-tag">VISIT US</span>
             <h3 class="card-headline">Come visit booknet.</h3>
             <p class="card-main-text">
-              28 Nguyễn Du, Phường Hàng Bài, Quận Hai Bà Trưng, Hà Nội
+              28 Nguyễn Du, Hàng Bài Ward, Hai Bà Trưng District, Hà Nội
             </p>
             <p class="card-hint-text">
-              <i class="fas fa-tree"></i> Bên cạnh hồ Thiền Quang · Góc đọc thanh tĩnh giữa phố thị
+              <i class="fas fa-tree"></i> Beside Thiền Quang Lake · A quiet reading corner in the city
             </p>
           </div>
         </div>
@@ -70,21 +71,21 @@
             <i class="fas fa-clock"></i>
           </div>
           <div class="card-content-area">
-            <span class="card-sub-tag">GIỜ MỞ CỬA</span>
+            <span class="card-sub-tag">OPENING HOURS</span>
             <h3 class="card-headline">Opening hours</h3>
             
             <div class="hours-schedule-list">
               <div class="hours-row">
-                <span class="day-label">Thứ Hai – Thứ Bảy:</span>
+                <span class="day-label">Monday – Saturday:</span>
                 <span class="time-label">08:00 – 20:00</span>
               </div>
               <div class="hours-row">
-                <span class="day-label">Chủ Nhật:</span>
+                <span class="day-label">Sunday:</span>
                 <span class="time-label">09:00 – 17:00</span>
               </div>
               <div class="hours-row muted">
-                <span class="day-label">Ngày lễ, Tết:</span>
-                <span class="time-label">Theo thông báo trên hệ thống</span>
+                <span class="day-label">Public holidays and Lunar New Year:</span>
+                <span class="time-label">See the latest announcements</span>
               </div>
             </div>
           </div>
@@ -96,16 +97,16 @@
             <i class="fas fa-phone-volume"></i>
           </div>
           <div class="card-content-area">
-            <span class="card-sub-tag">KÊNH LIÊN HỆ NHANH</span>
-            <h3 class="card-headline">Đường dây nóng & Hỗ trợ</h3>
+            <span class="card-sub-tag">GET IN TOUCH</span>
+            <h3 class="card-headline">Phone & Email Support</h3>
             
             <div class="contact-channels-list">
               <div class="channel-item">
-                <span class="channel-title">Hotline bàn trực thủ thư:</span>
+                <span class="channel-title">Library service desk:</span>
                 <a href="tel:02438222026" class="channel-link">024 3822 2026</a>
               </div>
               <div class="channel-item">
-                <span class="channel-title">Hòm thư điện tử nghiệp vụ:</span>
+                <span class="channel-title">Email us:</span>
                 <a href="mailto:hello@booknet.vn" class="channel-link">hello@booknet.vn</a>
               </div>
             </div>
@@ -116,8 +117,8 @@
         <div class="library-notice-banner">
           <i class="fas fa-circle-info"></i>
           <div>
-            <strong>Cần kiểm tra tình trạng phạt hoặc sách quá hạn?</strong>
-            <p>Bạn có thể tra cứu trực tiếp trong mục <a th:href="@{/}" href="/">Tài khoản của tôi</a> hoặc liên hệ thủ thư để được hỗ trợ kiểm tra đối soát hồ sơ mượn.</p>
+            <strong>Need to check a fine or an overdue book?</strong>
+            <p>Check the details in <a th:href="@{/}" href="/">My account</a> or contact a librarian for help reviewing your loans.</p>
           </div>
         </div>
 
@@ -128,10 +129,10 @@
         <div class="form-card-container">
           
           <div class="form-header-area">
-            <span class="section-tag-box">GỬI YÊU CẦU</span>
-            <h2 class="form-title-serif">Gửi tin nhắn đến thủ thư</h2>
+            <span class="section-tag-box">SEND AN ENQUIRY</span>
+            <h2 class="form-title-serif">Send us a message</h2>
             <p class="form-desc">
-              Điền thông tin bên dưới, chúng tôi thường phản hồi trong vòng 1-2 giờ làm việc.
+              Fill in your details below. We usually reply within 1–2 working hours.
             </p>
           </div>
 
@@ -144,50 +145,50 @@
           <form th:action="@{/contact}" method="post" class="bn-contact-form">
             
             <div class="form-group-field">
-              <label for="fullName" class="field-label">Họ và tên bạn đọc <span class="required">*</span></label>
+              <label for="fullName" class="field-label">Full name <span class="required">*</span></label>
               <div class="input-wrapper">
                 <i class="fas fa-user input-icon"></i>
-                <input type="text" id="fullName" name="fullName" class="bn-text-input" placeholder="Ví dụ: Nguyễn Minh Anh" required>
+                <input type="text" id="fullName" name="fullName" class="bn-text-input" placeholder="Your name" required>
               </div>
             </div>
 
             <div class="form-group-field">
-              <label for="email" class="field-label">Địa chỉ email <span class="required">*</span></label>
+              <label for="email" class="field-label">Email address <span class="required">*</span></label>
               <div class="input-wrapper">
                 <i class="fas fa-envelope input-icon"></i>
-                <input type="email" id="email" name="email" class="bn-text-input" placeholder="tenban@domain.com" required>
+                <input type="email" id="email" name="email" class="bn-text-input" placeholder="you@example.com" required>
               </div>
             </div>
 
             <div class="form-group-field">
-              <label for="subject" class="field-label">Chủ đề cần hỗ trợ</label>
+              <label for="subject" class="field-label">Topic</label>
               <div class="input-wrapper">
                 <i class="fas fa-tag input-icon"></i>
                 <select id="subject" name="subject" class="bn-select-input">
-                  <option value="Hỏi đáp mượn & gia hạn sách">Hỏi đáp mượn & gia hạn sách</option>
-                  <option value="Đăng ký & Kích hoạt thẻ thành viên">Đăng ký & Kích hoạt thẻ thành viên</option>
-                  <option value="Tra cứu tài liệu & Đặt trước">Tra cứu tài liệu & Đặt trước</option>
-                  <option value="Đóng góp hoặc quyên tặng sách">Đóng góp hoặc quyên tặng sách</option>
-                  <option value="Hợp tác sự kiện & Phòng đọc">Hợp tác sự kiện & Phòng đọc</option>
-                  <option value="Khác">Chủ đề khác</option>
+                  <option value="Borrowing & renewals">Borrowing & renewals</option>
+                  <option value="Membership & card activation">Membership & card activation</option>
+                  <option value="Catalog searches & reservations">Catalog searches & reservations</option>
+                  <option value="Book donations">Book donations</option>
+                  <option value="Events & reading rooms">Events & reading rooms</option>
+                  <option value="Other">Other enquiries</option>
                 </select>
               </div>
             </div>
 
             <div class="form-group-field">
-              <label for="message" class="field-label">Nội dung tin nhắn <span class="required">*</span></label>
+              <label for="message" class="field-label">Message <span class="required">*</span></label>
               <div class="input-wrapper textarea-wrapper">
-                <textarea id="message" name="message" class="bn-textarea-input" rows="5" placeholder="Chia sẻ chi tiết yêu cầu, tên sách bạn tìm kiếm hoặc nội dung câu hỏi..." required></textarea>
+                <textarea id="message" name="message" class="bn-textarea-input" rows="5" placeholder="Tell us how we can help, which book you are looking for, or what you would like to ask..." required></textarea>
               </div>
             </div>
 
             <button type="submit" class="bn-submit-btn">
-              <span>Gửi tin nhắn</span>
+              <span>Send message</span>
               <i class="fas fa-paper-plane"></i>
             </button>
 
             <p class="form-privacy-note">
-              <i class="fas fa-shield-halved"></i> Thông tin của bạn được bảo mật tuyệt đối theo Quy chế Thư viện booknet.
+              <i class="fas fa-shield-halved"></i> Your information is handled in accordance with the booknet Library privacy policy.
             </p>
           </form>
 
@@ -199,9 +200,9 @@
     <!-- 3. FREQUENTLY ASKED QUESTIONS (FAQ) -->
     <section class="contact-faq-section">
       <div class="faq-header-center">
-        <span class="section-tag-box">HỎI ĐÁP PHỔ BIẾN</span>
-        <h2 class="section-title-serif">Những thắc mắc thường gặp</h2>
-        <p class="faq-lead-sub">Một số giải đáp nhanh giúp bạn tiết kiệm thời gian trước khi gửi liên hệ</p>
+        <span class="section-tag-box">FREQUENTLY ASKED QUESTIONS</span>
+        <h2 class="section-title-serif">A little help, right here.</h2>
+        <p class="faq-lead-sub">A few quick answers before you get in touch</p>
       </div>
 
       <div class="faq-grid">
@@ -209,40 +210,40 @@
         <div class="faq-item-card">
           <div class="faq-question">
             <i class="fas fa-circle-question"></i>
-            <h3>Làm thế nào để đăng ký làm thành viên của booknet?</h3>
+            <h3>How do I become a booknet member?</h3>
           </div>
           <p class="faq-answer">
-            Bạn có thể đăng ký tài khoản trực tuyến miễn phí tại mục <a th:href="@{/register}" href="/register">Đăng ký thành viên</a>. Sau khi đăng ký, thẻ điện tử được cấp ngay lập tức để bạn mượn sách tại thư viện hoặc tra cứu trực tuyến.
+            Create a free account through <a th:href="@{/register}" href="/register">Member registration</a>. After registration, your digital card is issued so you can borrow at the library or browse online.
           </p>
         </div>
 
         <div class="faq-item-card">
           <div class="faq-question">
             <i class="fas fa-circle-question"></i>
-            <h3>Thời hạn mượn một cuốn sách là bao lâu và gia hạn ra sao?</h3>
+            <h3>How long can I borrow a book, and can I renew it?</h3>
           </div>
           <p class="faq-answer">
-            Thời hạn mượn chuẩn là <strong>14 ngày</strong> cho mỗi đầu sách. Nếu không có bạn đọc khác đặt trước, bạn có thể bấm gia hạn thêm 14 ngày trực tiếp trong tài khoản cá nhân trên website.
+            The standard loan period is <strong>14 days</strong> per book. If no other reader has reserved it, you can renew for another 14 days through your online account.
           </p>
         </div>
 
         <div class="faq-item-card">
           <div class="faq-question">
             <i class="fas fa-circle-question"></i>
-            <h3>Nếu quá hạn trả sách thì phí phạt được tính như thế nào?</h3>
+            <h3>How are overdue fines calculated?</h3>
           </div>
           <p class="faq-answer">
-            Phí phạt quá hạn được tính theo quy định minh bạch (2.000 VNĐ / ngày / cuốn). Bạn có thể thanh toán trực tuyến qua mã QR VietQR ngay trên trang cá nhân hoặc tại quầy lễ tân thư viện.
+            Overdue fines are VND 2,000 per book per day. You can pay through VietQR in your account or at the library service desk.
           </p>
         </div>
 
         <div class="faq-item-card">
           <div class="faq-question">
             <i class="fas fa-circle-question"></i>
-            <h3>Thư viện có nhận quyên góp hoặc đóng góp sách không?</h3>
+            <h3>Does the library accept book donations?</h3>
           </div>
           <p class="faq-answer">
-            booknet rất trân trọng những cuốn sách được chia sẻ từ cộng đồng! Sách quyên góp còn nguyên vẹn sẽ được thủ thư thẩm định, biên mục và xếp lên kệ phục vụ hàng ngàn bạn đọc khác.
+            booknet welcomes books shared by the community. Our librarians review and catalog donated books in good condition so that other readers can enjoy them.
           </p>
         </div>
 
@@ -253,34 +254,34 @@
     <section class="contact-map-section">
       <div class="map-container-card">
         <div class="map-details-side">
-          <span class="section-tag-box">HƯỚNG DẪN DI CHUYỂN</span>
-          <h2 class="map-title-serif">Ghé thăm thư viện booknet</h2>
+          <span class="section-tag-box">GETTING HERE</span>
+          <h2 class="map-title-serif">Come by booknet</h2>
           <p class="map-desc">
-            Nằm trên phố Nguyễn Du rợp bóng cây, cạnh hồ Thiền Quang. Thuận tiện di chuyển bằng phương tiện cá nhân hoặc xe buýt công cộng.
+            Find us on tree-lined Nguyễn Du Street beside Thiền Quang Lake, with convenient access by car, motorbike or public bus.
           </p>
           
           <ul class="transit-tips-list">
-            <li><i class="fas fa-bus"></i> <span>Tuyến xe buýt đi qua: 08A, 09B, 30, 31, 35A (Dừng tại trạm phố Nguyễn Du / Quang Trung).</span></li>
-            <li><i class="fas fa-motorcycle"></i> <span>Bãi giữ xe máy miễn phí dành riêng cho bạn đọc ngay tại khuôn viên thư viện.</span></li>
-            <li><i class="fas fa-wheelchair"></i> <span>Lối vào và phòng đọc tầng 1 hỗ trợ xe lăn thuận tiện.</span></li>
+            <li><i class="fas fa-bus"></i> <span>Bus routes: 08A, 09B, 30, 31 and 35A. Get off at the Nguyễn Du / Quang Trung stop.</span></li>
+            <li><i class="fas fa-motorcycle"></i> <span>Free motorbike parking is available for readers on the library grounds.</span></li>
+            <li><i class="fas fa-wheelchair"></i> <span>The entrance and Level 1 reading room are wheelchair accessible.</span></li>
           </ul>
 
           <a href="https://maps.google.com/?q=28+Nguyen+Du+Hai+Ba+Trung+Ha+Noi" target="_blank" rel="noopener noreferrer" class="bn-btn bn-btn-primary">
-            <span>Mở chỉ đường trên Google Maps</span>
+            <span>Get directions on Google Maps</span>
             <i class="fas fa-arrow-up-right-from-square"></i>
           </a>
         </div>
 
         <div class="map-frame-side">
           <iframe 
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.387997935402!2d105.84572237596956!3d21.01715498062991!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ab8e578c2d1b%3A0x6b1f237efb83492!2zMjggTmd1eeG7hW4gRHUsIEjDoG5nIELDoGksIEhhaSBCw6AgVHLGsG5nLCBIw6AgTuG7mWksIFZpZXRuYW0!5e0!3m2!1svi!2s!4v1700000000000!5m2!1svi!2s" 
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.387997935402!2d105.84572237596956!3d21.01715498062991!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ab8e578c2d1b%3A0x6b1f237efb83492!2zMjggTmd1eeG7hW4gRHUsIEjDoG5nIELDoGksIEhhaSBCw6AgVHLGsG5nLCBIw6AgTuG7mWksIFZpZXRuYW0!5e0!3m2!1sen!2s!4v1700000000000!5m2!1sen!2s"
             width="100%" 
             height="100%" 
             style="border:0; min-height: 360px;" 
             allowfullscreen="" 
             loading="lazy" 
             referrerpolicy="no-referrer-when-downgrade"
-            title="Bản đồ chỉ đường đến booknet Library">
+            title="Map and directions to booknet Library">
           </iframe>
         </div>
       </div>
@@ -289,8 +290,9 @@
   </main>
 
   <!-- Footer Fragment -->
-  <footer th:replace="~{Footer :: footer-section}"></footer>
+  <footer th:replace="~{footer :: footer-section}"></footer>
 
+<script th:src="@{/js/auth.js}" src="/js/auth.js"></script>
 </body>
 </html>
 

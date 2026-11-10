@@ -28,12 +28,12 @@ public class AccountLinkController {
         if (!(authentication instanceof UsernamePasswordAuthenticationToken)
                 || user == null || user.getProvider() != AuthProvider.LOCAL || !user.isEnabled()) {
             redirectAttributes.addFlashAttribute("googleLinkError",
-                    "Hãy đăng nhập bằng email và mật khẩu trước khi liên kết Google.");
+                    "Please sign in with your email and password before linking Google.");
             return "redirect:/";
         }
 
         if (oauthIdentityRepository.existsByUser_IdAndProvider(user.getId(), AuthProvider.GOOGLE)) {
-            redirectAttributes.addFlashAttribute("googleLinkInfo", "Tài khoản này đã được liên kết Google.");
+            redirectAttributes.addFlashAttribute("googleLinkInfo", "This account is already linked to Google.");
             return "redirect:/";
         }
 

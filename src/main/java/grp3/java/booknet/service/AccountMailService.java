@@ -26,12 +26,12 @@ public class AccountMailService {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(from);
         message.setTo(email);
-        message.setSubject(verification ? "BookNet - Xác thực email" : "BookNet - Đặt lại mật khẩu");
+        message.setSubject(verification ? "BookNet - Verify your email" : "BookNet - Reset your password");
         message.setText(verification
-                ? "Xác thực email BookNet bằng liên kết sau (hiệu lực 24 giờ, dùng một lần):\n" + url
-                : "Yêu cầu đặt lại mật khẩu BookNet (hiệu lực 15 phút, dùng một lần):\n" + url
-                    + "\nMã đặt lại mật khẩu: " + token
-                    + "\nNếu bạn không yêu cầu, hãy bỏ qua email này.");
+                ? "Verify your BookNet email address using this link (valid for 24 hours, one use only):\n" + url
+                : "Reset your BookNet password using this link (valid for 15 minutes, one use only):\n" + url
+                    + "\nPassword reset code: " + token
+                    + "\nIf you did not request this, please ignore this email.");
         mailSender.send(message);
     }
 }

@@ -50,7 +50,7 @@ public class HomeController {
         model.addAttribute("googleLinkedMessage", googleLinked != null);
         if (googleLinkError != null) {
             model.addAttribute("googleLinkError",
-                    "Không thể liên kết Google. Tài khoản Google có thể đã thuộc tài khoản BookNet khác, hoặc thao tác đã hết hạn.");
+                    "Unable to link Google. This Google account may belong to another BookNet account, or the linking request has expired.");
         }
         return "home";
     }
@@ -75,7 +75,7 @@ public class HomeController {
             @RequestParam("message") String message,
             RedirectAttributes redirectAttributes) {
         redirectAttributes.addFlashAttribute("contactSuccess",
-                "Cảm ơn bạn (" + fullName + ")! Tin nhắn của bạn đã được gửi thành công đến ban thủ thư BookNet. Chúng tôi sẽ phản hồi sớm nhất qua email " + email + ".");
+                "Thank you, " + fullName + "! Your message has been sent to the BookNet librarians. We will reply to " + email + " as soon as possible.");
         return "redirect:/contact";
     }
 }

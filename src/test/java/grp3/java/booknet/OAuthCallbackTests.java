@@ -79,9 +79,11 @@ class OAuthCallbackTests {
         mockClaims(start, "new-google", "google@example.com");
         MvcResult result = callback(start).andExpect(redirectedUrl("/")).andReturn();
         MockHttpSession session = (MockHttpSession) result.getRequest().getSession(false);
-        mvc.perform(get("/api/account/profile").session(session)).andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("google@example.com"))
-                .andExpect(jsonPath("$.provider").value("GOOGLE"));
+        var profile = mvc.perform(get("/account/profile").session(session)).andExpect(status().isOk())
+                .andExpect(view().name("profile")).andReturn();
+        var account = (grp3.java.booknet.dto.ProfileResponse) profile.getModelAndView().getModel().get("profile");
+        assertThat(account.email()).isEqualTo("google@example.com");
+        assertThat(account.provider()).isEqualTo(AuthProvider.GOOGLE);
         SecurityContext context = (SecurityContext) session.getAttribute("SPRING_SECURITY_CONTEXT");
         assertThat(context.getAuthentication().getPrincipal()).isInstanceOf(CustomOidcUser.class);
         assertThat(users.count()).isEqualTo(1);
@@ -99,18 +101,21 @@ class OAuthCallbackTests {
         MvcResult linked = callback(start).andExpect(redirectedUrl("/?google_linked=true")).andReturn();
         MockHttpSession linkedSession = (MockHttpSession) linked.getRequest().getSession(false);
         assertLinkStateCleared(linkedSession);
-        mvc.perform(get("/api/account/profile").session(linkedSession)).andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(local.getId()))
-                .andExpect(jsonPath("$.provider").value("LOCAL"))
-                .andExpect(jsonPath("$.email").value(local.getEmail()))
-                .andExpect(jsonPath("$.googleLinked").value(true));
+        var profile = mvc.perform(get("/account/profile").session(linkedSession)).andExpect(status().isOk()).andReturn();
+        var account = (grp3.java.booknet.dto.ProfileResponse) profile.getModelAndView().getModel().get("profile");
+        assertThat(account.id()).isEqualTo(local.getId());
+        assertThat(account.provider()).isEqualTo(AuthProvider.LOCAL);
+        assertThat(account.email()).isEqualTo(local.getEmail());
+        assertThat(account.googleLinked()).isTrue();
         assertThat(users.findById(local.getId()).orElseThrow().getPassword()).isEqualTo(local.getPassword());
         mvc.perform(post("/logout").session(linkedSession).with(csrf())).andExpect(redirectedUrl("/login?logout=true"));
         Authorization again = startAuthorization(null);
         mockClaims(again, "linked-google", "different@example.com");
         MvcResult loggedIn = callback(again).andExpect(redirectedUrl("/")).andReturn();
-        mvc.perform(get("/api/account/profile").session((MockHttpSession) loggedIn.getRequest().getSession(false)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(local.getId()));
+        var againProfile = mvc.perform(get("/account/profile").session((MockHttpSession) loggedIn.getRequest().getSession(false)))
+                .andExpect(status().isOk()).andReturn();
+        assertThat(((grp3.java.booknet.dto.ProfileResponse) againProfile.getModelAndView().getModel().get("profile")).id())
+                .isEqualTo(local.getId());
         assertThat(users.count()).isEqualTo(1);
     }
 
@@ -120,8 +125,8 @@ class OAuthCallbackTests {
         Authorization start = startAuthorization(null);
         mockClaims(start, "unlinked-google", local.getEmail());
         MvcResult result = callback(start).andExpect(redirectedUrl("/login?oauth2_error=true")).andReturn();
-        mvc.perform(get("/api/account/profile").session((MockHttpSession) result.getRequest().getSession(false)))
-                .andExpect(status().isUnauthorized());
+        mvc.perform(get("/account/profile").session((MockHttpSession) result.getRequest().getSession(false)))
+                .andExpect(redirectedUrl("/login"));
         assertThat(users.count()).isEqualTo(1);
         assertThat(identities.count()).isZero();
     }

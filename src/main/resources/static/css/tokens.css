@@ -1,7 +1,8 @@
 :root {
   --bn-paper: #f8f6f0;
   --bn-surface: #fffefa;
-  --bn-shelf: #efeadf;
+  --bn-shelf: #eeeadf;
+  --bn-shelf-muted: #eeeadf;
   --bn-forest: #173f35;
   --bn-forest-hover: #102d27;
   --bn-sage: #e8eee6;
@@ -12,6 +13,7 @@
   --bn-line: #dfe2d7;
   --bn-ochre: #ae7837;
   --bn-ochre-soft: #f6eddc;
+  --bn-amber: #986c31;
   --bn-danger: #ac4439;
   --bn-font-serif: 'Noto Serif', Georgia, serif;
   --bn-font-sans: 'Inter', system-ui, sans-serif;

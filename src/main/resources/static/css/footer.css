@@ -1,3 +1,5 @@
+@import url('tokens.css');
+
 .bn-footer {
   display: flex;
   flex-direction: column;

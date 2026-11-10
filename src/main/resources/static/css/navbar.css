@@ -1,3 +1,5 @@
+@import url('tokens.css');
+
 .bn-navbar {
   position: relative;
   display: flex;
@@ -58,10 +60,30 @@
   color: var(--bn-muted);
   font-size: 14px;
   text-decoration: none;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  transition: color 0.15s ease;
 }
 
 .bn-nav-link:hover {
   color: var(--bn-forest);
+}
+
+.bn-nav-link.is-active {
+  color: var(--bn-forest);
+  font-weight: 600;
+}
+
+.bn-nav-link.is-active::after {
+  content: "";
+  display: block;
+  width: 28px;
+  height: 2px;
+  background-color: var(--bn-forest);
+  border-radius: 1px;
 }
 
 .bn-account {

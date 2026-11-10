@@ -64,8 +64,29 @@ class ThymeleafAccountFlowTests {
         mvc.perform(get("/verification/resend")).andExpect(view().name("forgot-password"))
                 .andExpect(content().string(containsString("action=\"/verification/resend\"")));
         mvc.perform(get("/")).andExpect(status().isOk()).andExpect(view().name("home"));
-        mvc.perform(get("/about")).andExpect(status().isOk()).andExpect(view().name("about"));
-        mvc.perform(get("/contact")).andExpect(status().isOk()).andExpect(view().name("contact"));
+        for (String path : new String[]{"/", "/about", "/contact"}) {
+            MvcResult rendered = mvc.perform(get(path)).andExpect(status().isOk()).andReturn();
+            String html = rendered.getResponse().getContentAsString();
+            assertThat(html).contains("id=\"booknet-navbar\"", "class=\"bn-footer\"",
+                    "id=\"bn-menu-toggle\"", "id=\"bn-nav-links\"",
+                    "href=\"/css/tokens.css\"", "href=\"/css/navbar.css\"", "href=\"/css/footer.css\"");
+            assertThat(html.indexOf("/css/tokens.css")).isLessThan(html.indexOf("/css/navbar.css"));
+        }
+        for (String path : new String[]{"/login", "/register", "/forgot-password"}) {
+            mvc.perform(get(path)).andExpect(content().string(containsString("class=\"auth-aside\"")))
+                    .andExpect(content().string(containsString("class=\"auth-aside-photo\"")))
+                    .andExpect(content().string(containsString("href=\"/css/auth.css\"")));
+        }
+        mvc.perform(get("/about").header("Accept-Language", "vi-VN")).andExpect(status().isOk()).andExpect(view().name("about"))
+                .andExpect(content().string(containsString("lang=\"en\"")))
+                .andExpect(content().string(containsString("About booknet")))
+                .andExpect(content().string(containsString("Explore the catalog")))
+                .andExpect(content().string(containsString("Selected with care")))
+                .andExpect(content().string(containsString("Become a member for free")));
+        FormPage contact = formPage("/contact");
+        assertThat(contact.html()).contains("lang=\"en\"", "Contact & Support", "Send us a message",
+                "Full name", "Email address", "Borrowing & renewals", "How are overdue fines calculated?",
+                "Get directions on Google Maps", "action=\"/contact\"", "/js/auth.js").doesNotContain("th:action");
         mvc.perform(get("/reset-password")).andExpect(status().isOk()).andExpect(view().name("reset-password"))
                 .andExpect(model().attribute("tokenValid", false))
                 .andExpect(content().string(containsString("This link has expired.")));

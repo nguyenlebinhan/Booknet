@@ -72,7 +72,10 @@ docs/                          # Context dự án và tài liệu luồng tài k
 Template hiện có: `home.html`, `login.html`, `register.html`, `forgot-password.html`,
 `reset-password.html`, `profile.html`, `change-password.html`, `authFragments.html`, `Navbar.html`, `footer.html`.
 Đã tích hợp thêm `about.html`, `contact.html`, assets và routes tương ứng từ `origin/main` vào `HaiQuach`.
-About/Contact giữ giao diện từ main; form Contact hiện chỉ redirect/flash thông báo, chưa có service gửi/lưu liên hệ.
+About/Contact giữ giao diện từ main, đã dịch nội dung, nhãn form, FAQ và mô tả ảnh sang tiếng Anh.
+Hai template dùng `lang="en"`, tham chiếu `footer` đúng chữ thường. Contact dùng `auth.js` cho HTML validation
+tiếng Anh và bản đồ nhúng đặt ngôn ngữ English. Form Contact hiện chỉ redirect/flash thông báo, chưa có service gửi/lưu liên hệ.
+About/Contact phải nạp `tokens.css` trước `navbar.css`/`footer.css` để các biến màu của fragment được định nghĩa.
 Giữ đúng tên và chữ hoa/thường khi tham chiếu fragment để tránh lỗi khi đóng gói/chạy Linux.
 
 ## 4. Chức năng hiện có và phần còn thiếu
@@ -213,6 +216,8 @@ Sau chuyển thông báo sang tiếng Anh: chạy lại 47/47 test đạt, gồm
 cho message validation cùng việc xóa custom validity khi input/change; chưa kiểm tra popup trên trình duyệt thật.
 Sau tích hợp `origin/main` tại `fdd22c7` vào `HaiQuach`: chạy lại 47/47 test đạt, gồm render công khai
 About/Contact. Giữ helper `TestPasswords` từ main để tạo mật khẩu ngẫu nhiên cho tài khoản H2 test.
+Sau dịch About/Contact sang tiếng Anh: 47/47 test đạt; đã kiểm tra HTML render của hai trang,
+`lang="en"`, nhãn/nội dung form Contact, CSRF và script validation. Chưa kiểm tra trực quan trên trình duyệt thật.
 
 | Bộ test | Số test tại mốc này | Phạm vi |
 | --- | --- | --- |

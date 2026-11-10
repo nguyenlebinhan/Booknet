@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Về chúng tôi • booknet Library</title>
+  <title>About booknet • booknet Library</title>
 
   <!-- Google Fonts: Noto Serif & Inter & Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- Core & Component Stylesheets -->
+  <link rel="stylesheet" th:href="@{/css/tokens.css}" href="/css/tokens.css">
   <link rel="stylesheet" th:href="@{/css/navbar.css}" href="/css/navbar.css">
   <link rel="stylesheet" th:href="@{/css/footer.css}" href="/css/footer.css">
   <link rel="stylesheet" th:href="@{/css/about.css}" href="/css/about.css">
@@ -38,16 +39,16 @@
         </h1>
         
         <p class="about-hero-lead">
-          <strong>booknet</strong> là thư viện cộng đồng mở giữa lòng thành phố — góc đọc quen thuộc, không gian tri thức truyền cảm hứng cùng hàng ngàn đầu sách chọn lọc từ văn học kinh điển đến tri thức thời đại.
+          <strong>booknet</strong> is an open community library in the heart of the city — a familiar reading corner, an inspiring space for discovery, and a collection of carefully selected books, from timeless classics to new ideas.
         </p>
 
         <div class="about-hero-actions">
           <a th:href="@{/catalog}" href="/catalog" class="bn-btn bn-btn-primary">
-            <span>Khám phá kho sách</span>
+            <span>Explore the catalog</span>
             <i class="fas fa-arrow-right"></i>
           </a>
           <a th:href="@{/register}" href="/register" class="bn-btn bn-btn-outline">
-            <span>Nhận thẻ thành viên</span>
+            <span>Get a member card</span>
           </a>
         </div>
       </div>
@@ -55,14 +56,14 @@
       <!-- Hero Visual Card with Figma Image -->
       <div class="about-hero-visual">
         <div class="visual-card-frame">
-          <img th:src="@{/images/library-space.jpg}" src="/images/library-space.jpg" alt="Không gian thư viện booknet" class="visual-img">
+          <img th:src="@{/images/library-space.jpg}" src="/images/library-space.jpg" alt="The booknet library space" class="visual-img">
           
           <div class="visual-floating-badge">
             <div class="badge-icon-box">
               <i class="fas fa-sun"></i>
             </div>
             <div class="badge-info-text">
-              <span class="status-live">Đang mở cửa hôm nay đến 20:00</span>
+              <span class="status-live">Open today until 20:00</span>
               <span class="location-label">28 Nguyễn Du, Hà Nội · A quiet corner in the city</span>
             </div>
           </div>
@@ -70,36 +71,36 @@
       </div>
     </section>
 
-    <!-- 2. STATS SECTION (booknet qua những con số) -->
+    <!-- 2. STATS SECTION (booknet in numbers) -->
     <section class="about-stats-strip">
       <div class="stats-header-bar">
-        <span class="strip-label">BOOKNET QUA NHỮNG CON SỐ</span>
+        <span class="strip-label">BOOKNET IN NUMBERS</span>
         <div class="strip-divider-line"></div>
       </div>
 
       <div class="stats-grid">
         <div class="stat-card">
-          <span class="stat-number">12.000+</span>
-          <span class="stat-caption">Đầu sách tuyển chọn kỹ lưỡng</span>
-          <p class="stat-sub">Văn học, triết học, khoa học và nghệ thuật</p>
+          <span class="stat-number">12,000+</span>
+          <span class="stat-caption">Carefully selected titles</span>
+          <p class="stat-sub">Literature, philosophy, science and art</p>
         </div>
 
         <div class="stat-card">
-          <span class="stat-number">3.200+</span>
-          <span class="stat-caption">Bạn đọc đồng hành</span>
-          <p class="stat-sub">Thành viên sinh hoạt và trao đổi tri thức thường xuyên</p>
+          <span class="stat-number">3,200+</span>
+          <span class="stat-caption">Fellow readers</span>
+          <p class="stat-sub">Members who read, connect and share ideas</p>
         </div>
 
         <div class="stat-card">
-          <span class="stat-number">14 ngày</span>
-          <span class="stat-caption">Mỗi lượt mượn tiêu chuẩn</span>
-          <p class="stat-sub">Linh hoạt gia hạn thêm 7-14 ngày trực tuyến</p>
+          <span class="stat-number">14 days</span>
+          <span class="stat-caption">Per standard loan</span>
+          <p class="stat-sub">Flexible online renewals for another 7–14 days</p>
         </div>
 
         <div class="stat-card">
           <span class="stat-number">01</span>
-          <span class="stat-caption">Cộng đồng yêu sách</span>
-          <p class="stat-sub">Cùng nhau xây dựng thói quen đọc bền bỉ mỗi ngày</p>
+          <span class="stat-caption">One community of book lovers</span>
+          <p class="stat-sub">Building a lasting reading habit together</p>
         </div>
       </div>
     </section>
@@ -109,21 +110,21 @@
       <div class="story-container">
         
         <div class="story-left-col">
-          <div class="section-tag-box">CÂU CHUYỆN & SỨ MỆNH</div>
-          <h2 class="section-title-serif">Nơi sách kết nối những tâm hồn đồng điệu</h2>
+          <div class="section-tag-box">OUR STORY & MISSION</div>
+          <h2 class="section-title-serif">Where books bring like-minded readers together</h2>
           <p class="story-p">
-            Tại <strong>booknet</strong>, chúng tôi tin rằng việc lật một trang sách không chỉ đơn thuần là tiếp nhận thông tin, mà còn là khởi đầu của một cuộc đối thoại nội tâm và hành trình mở rộng chân trời suy nghĩ.
+            At <strong>booknet</strong>, we believe that turning a page is more than taking in information. It is the start of a conversation with yourself and a journey towards new perspectives.
           </p>
           <p class="story-p">
-            Thành lập với sứ mệnh đưa văn hóa đọc gần gũi và hiện đại hơn với cuộc sống đô thị, booknet kết hợp hài hòa giữa không gian thư viện tĩnh lặng truyền thống và nền tảng quản lý thư viện số tiên tiến. Dù bạn đến để nghiên cứu chuyên sâu, tìm một cuốn tiểu thuyết cuối tuần, hay tham dự buổi thảo luận sách, booknet luôn có một góc dành riêng cho bạn.
+            Our mission is to make reading a welcoming part of modern city life. booknet brings together the calm of a traditional library and the convenience of digital library services. Whether you are researching, looking for a weekend novel or joining a book discussion, there is a corner here for you.
           </p>
 
           <div class="quote-card-quote">
             <i class="fas fa-quote-left quote-icon"></i>
             <p class="quote-text">
-              "Một cuốn sách mở ra. Một thế giới ở lại với bạn. Một không gian đọc cho tất cả mọi người."
+              "A book opens. A world stays with you. A reading space for everyone."
             </p>
-            <span class="quote-author">— Tuyên ngôn thư viện booknet</span>
+            <span class="quote-author">— The booknet library promise</span>
           </div>
         </div>
 
@@ -135,9 +136,9 @@
                 <i class="fas fa-feather-pointed"></i>
               </div>
               <div class="value-content">
-                <h3 class="value-heading">Tuyển chọn với sự cẩn trọng</h3>
+                <h3 class="value-heading">Selected with care</h3>
                 <p class="value-desc">
-                  Mỗi tác phẩm trên kệ sách booknet đều được thủ thư đánh giá và lựa chọn kỹ càng, đề cao chất lượng nội dung và giá trị tư tưởng lâu bền.
+                  Our librarians carefully review every book on the shelf, choosing thoughtful writing and ideas that stay with readers.
                 </p>
               </div>
             </div>
@@ -147,9 +148,9 @@
                 <i class="fas fa-compass"></i>
               </div>
               <div class="value-content">
-                <h3 class="value-heading">Không gian mở & Bình đẳng</h3>
+                <h3 class="value-heading">An open and inclusive space</h3>
                 <p class="value-desc">
-                  Thư viện chào đón mọi lứa tuổi, từ học sinh, sinh viên, người đi làm đến những độc giả cao niên, tạo nên một môi trường thân thiện và bao dung.
+                  We welcome readers of every age, from students and working adults to older readers, in a friendly and inclusive space.
                 </p>
               </div>
             </div>
@@ -159,9 +160,9 @@
                 <i class="fas fa-microchip"></i>
               </div>
               <div class="value-content">
-                <h3 class="value-heading">Trải nghiệm số thông minh</h3>
+                <h3 class="value-heading">A connected reading experience</h3>
                 <p class="value-desc">
-                  Tích hợp danh mục trực tuyến OPAC, mượn trả bằng mã vạch, thanh toán phí phạt qua QR và trợ lý AI hỗ trợ gợi ý sách theo sở thích đọc cá nhân.
+                  An online catalog, barcode borrowing and returns, QR fine payments and AI-assisted recommendations help readers find their next book.
                 </p>
               </div>
             </div>
@@ -172,12 +173,12 @@
       </div>
     </section>
 
-    <!-- 4. SIMPLE JOURNEY: Hướng dẫn mượn sách -->
+    <!-- 4. SIMPLE JOURNEY: A guide to borrowing -->
     <section class="about-journey-section">
       <div class="journey-header">
         <span class="section-tag-box">A SIMPLE JOURNEY</span>
         <h2 class="journey-title-serif">Bring books home, carry ideas further.</h2>
-        <p class="journey-subtitle">Chỉ 3 bước đơn giản để bắt đầu trải nghiệm đọc sách cùng booknet</p>
+        <p class="journey-subtitle">Three simple steps to start your reading journey with booknet</p>
       </div>
 
       <div class="journey-steps-grid">
@@ -185,7 +186,7 @@
           <div class="step-badge-number">01</div>
           <h3 class="step-title">Become a reader</h3>
           <p class="step-desc">
-            Đăng ký tài khoản miễn phí trên hệ thống, kích hoạt thẻ thành viên số và bắt đầu lập danh sách sách mong muốn.
+            Create a free account, activate your digital member card and start a list of books you would like to read.
           </p>
         </div>
 
@@ -193,7 +194,7 @@
           <div class="step-badge-number">02</div>
           <h3 class="step-title">Choose a book</h3>
           <p class="step-desc">
-            Tìm kiếm theo nhan đề, tác giả hoặc chủ đề, kiểm tra sách có sẵn trên kệ và tạo yêu cầu đặt mượn trước.
+            Search by title, author or topic, check availability and request a loan or reservation.
           </p>
         </div>
 
@@ -201,13 +202,13 @@
           <div class="step-badge-number">03</div>
           <h3 class="step-title">Read your way</h3>
           <p class="step-desc">
-            Nhận sách tại quầy lưu thông số 28 Nguyễn Du, thong thả tận hưởng trang sách và dễ dàng gia hạn trực tuyến.
+            Collect your books at 28 Nguyễn Du, enjoy reading at your own pace and renew online.
           </p>
         </div>
       </div>
     </section>
 
-    <!-- 5. EVENTS AT BOOKNET (Hẹn gặp tại thư viện) -->
+    <!-- 5. EVENTS AT BOOKNET (See you at the library) -->
     <section class="about-events-section">
       <div class="events-top-row">
         <div>
@@ -215,7 +216,7 @@
           <h2 class="section-title-serif">What's on at booknet</h2>
         </div>
         <a th:href="@{/services}" href="/services" class="all-events-link">
-          <span>Xem tất cả sự kiện</span>
+          <span>View all events</span>
           <i class="fas fa-arrow-up-right-from-square"></i>
         </a>
       </div>
@@ -224,16 +225,16 @@
         <div class="event-card-item">
           <div class="event-date-box">
             <span class="date-num">07</span>
-            <span class="date-month">THÁNG 11</span>
+            <span class="date-month">NOVEMBER</span>
           </div>
           <div class="event-details-box">
             <h3 class="event-title">Slow reading together</h3>
             <p class="event-meta">
               <i class="far fa-clock"></i> 09:00 – 11:00 &nbsp;·&nbsp; 
-              <i class="fas fa-location-dot"></i> Phòng đọc chung (Tầng 1)
+              <i class="fas fa-location-dot"></i> Shared reading room (Level 1)
             </p>
             <p class="event-desc">
-              Tạm gác điện thoại và thiết bị công nghệ, cùng ngồi lại trong không gian yên tĩnh để đọc sâu 2 tiếng trọn vẹn.
+              Put your phone aside and join fellow readers for two uninterrupted hours of quiet reading.
             </p>
           </div>
           <div class="event-arrow-box">
@@ -244,16 +245,16 @@
         <div class="event-card-item">
           <div class="event-date-box">
             <span class="date-num">14</span>
-            <span class="date-month">THÁNG 11</span>
+            <span class="date-month">NOVEMBER</span>
           </div>
           <div class="event-details-box">
             <h3 class="event-title">Stories from the pages</h3>
             <p class="event-meta">
               <i class="far fa-clock"></i> 15:00 – 16:30 &nbsp;·&nbsp; 
-              <i class="fas fa-location-dot"></i> Góc thiếu nhi & Gia đình
+              <i class="fas fa-location-dot"></i> Children and family corner
             </p>
             <p class="event-desc">
-              Buổi đọc truyện và đố vui tương tác cho các bạn nhỏ, giúp nuôi dưỡng tình yêu văn học từ những năm tháng đầu đời.
+              Stories and interactive quizzes for young readers, encouraging a love of books from an early age.
             </p>
           </div>
           <div class="event-arrow-box">
@@ -267,27 +268,27 @@
     <section class="about-invitation-cta">
       <div class="invitation-inner-card">
         <div class="invitation-text-col">
-          <span class="invitation-tag">GIA NHẬP BOOKNET</span>
+          <span class="invitation-tag">JOIN BOOKNET</span>
           <h2 class="invitation-heading">
             There's always<br>
             <em>a place for you.</em>
           </h2>
           <p class="invitation-desc">
-            Tham gia cộng đồng bạn đọc booknet để mở khóa kho tàng tri thức, lưu sách yêu thích và không bỏ lỡ những sự kiện văn hóa hấp dẫn.
+            Join the booknet reading community to discover new ideas, save your favorite books and keep up with our cultural events.
           </p>
           <div class="invitation-actions">
             <a th:href="@{/register}" href="/register" class="bn-btn bn-btn-light">
-              <span>Đăng ký thẻ thành viên miễn phí</span>
+              <span>Become a member for free</span>
               <i class="fas fa-arrow-right"></i>
             </a>
             <a th:href="@{/contact}" href="/contact" class="bn-btn bn-btn-link-white">
-              <span>Liên hệ thủ thư hỗ trợ</span>
+              <span>Contact a librarian</span>
             </a>
           </div>
         </div>
 
         <div class="invitation-image-col">
-          <img th:src="@{/images/reading-room.jpg}" src="/images/reading-room.jpg" alt="Phòng đọc sách booknet" class="invitation-space-img">
+          <img th:src="@{/images/reading-room.jpg}" src="/images/reading-room.jpg" alt="The booknet reading room" class="invitation-space-img">
         </div>
       </div>
     </section>
@@ -295,7 +296,7 @@
   </main>
 
   <!-- Footer Fragment -->
-  <footer th:replace="~{Footer :: footer-section}"></footer>
+  <footer th:replace="~{footer :: footer-section}"></footer>
 
 </body>
 </html>

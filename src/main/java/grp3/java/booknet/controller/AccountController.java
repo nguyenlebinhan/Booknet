@@ -85,4 +85,16 @@ public class AccountController {
         model.addAttribute("profile", accounts.profile(userId));
         return "change-password";
     }
+
+    @PostMapping("/set-password")
+    public String requestPasswordSetup(Authentication authentication, RedirectAttributes redirect) {
+        try {
+            accounts.requestPasswordSetup(AccountPrincipal.id(authentication));
+            redirect.addFlashAttribute("successMessage",
+                    "Check your email for a link to set your BookNet password. The link is valid for 15 minutes. You can request another link after 60 seconds.");
+        } catch (AccountException ex) {
+            redirect.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/account/profile";
+    }
 }

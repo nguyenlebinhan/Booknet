@@ -68,12 +68,13 @@ public class AccountService {
 
     @Transactional
     public void requestEmail(String email, AccountTokenPurpose purpose) {
-        // Return the same HTTP result for unknown, Google-only and ineligible accounts.
+        // Keep public responses identical for unknown and ineligible accounts.
         users.findIdByEmail(normalizeEmail(email)).ifPresent(id -> {
             User user = lockUser(id);
-            if (user.getProvider() != AuthProvider.LOCAL || !user.isEnabled()
+            if (!user.isEnabled()
                     || user.getStatus() != UserStatus.ACTIVE
-                    || (purpose == AccountTokenPurpose.VERIFY_EMAIL && user.isEmailVerified())
+                    || (purpose == AccountTokenPurpose.VERIFY_EMAIL
+                        && (user.getProvider() != AuthProvider.LOCAL || user.isEmailVerified()))
                     || (purpose == AccountTokenPurpose.RESET_PASSWORD && !user.isEmailVerified())) {
                 return;
             }
@@ -85,6 +86,25 @@ public class AccountService {
                 invalidateTokens(user.getId(), purpose);
             }
         });
+    }
+
+    @Transactional
+    public void requestPasswordSetup(Long userId) {
+        User user = lockUser(userId);
+        requirePasswordEligible(user);
+        if (user.hasPassword()) {
+            throw new AccountException(HttpStatus.BAD_REQUEST,
+                    "A password is already set. Use Change password instead.");
+        }
+        try {
+            // Reuse the one-use reset token and HTML form for initial password setup.
+            issueToken(user, AccountTokenPurpose.RESET_PASSWORD);
+        } catch (MailException ex) {
+            log.warn("Password setup email delivery failed; check SMTP configuration ({})",
+                    ex.getClass().getSimpleName());
+            throw new AccountException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "Unable to send the password setup email right now. Please try again later.");
+        }
     }
 
     @Transactional
@@ -100,8 +120,7 @@ public class AccountService {
     public void validateResetToken(String rawToken) {
         AccountToken token = tokens.findByTokenHash(hash(rawToken)).orElseThrow(AccountService::invalidToken);
         validateToken(token, AccountTokenPurpose.RESET_PASSWORD);
-        requireLocalActive(token.getUser());
-        if (!token.getUser().isEmailVerified()) throw invalidToken();
+        requirePasswordEligible(token.getUser());
     }
 
     @Transactional
@@ -109,8 +128,7 @@ public class AccountService {
         validateNewPassword(request.newPassword(), request.confirmPassword());
         AccountToken token = lockValidToken(request.token(), AccountTokenPurpose.RESET_PASSWORD);
         User user = token.getUser();
-        requireLocalActive(user);
-        if (!user.isEmailVerified()) throw invalidToken();
+        requirePasswordEligible(user);
         replacePassword(user, request.newPassword());
     }
 
@@ -118,8 +136,8 @@ public class AccountService {
     public void changePassword(Long userId, AccountRequests.ChangePassword request) {
         validateNewPassword(request.newPassword(), request.confirmPassword());
         User user = lockUser(userId);
-        requireLocalActive(user);
-        if (!user.isEmailVerified() || user.getPassword() == null
+        requirePasswordEligible(user);
+        if (!user.hasPassword()
                 || !passwords.matches(request.currentPassword(), user.getPassword())) {
             throw new AccountException(HttpStatus.BAD_REQUEST, "Your current password is incorrect.");
         }
@@ -196,6 +214,12 @@ public class AccountService {
 
     private void requireLocalActive(User user) {
         if (user.getProvider() != AuthProvider.LOCAL || !user.isEnabled() || user.getStatus() != UserStatus.ACTIVE) {
+            throw new AccountException(HttpStatus.BAD_REQUEST, "This account is not eligible for this action.");
+        }
+    }
+
+    private void requirePasswordEligible(User user) {
+        if (!user.isEnabled() || !user.isEmailVerified() || user.getStatus() != UserStatus.ACTIVE) {
             throw new AccountException(HttpStatus.BAD_REQUEST, "This account is not eligible for this action.");
         }
     }

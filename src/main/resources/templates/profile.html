@@ -20,6 +20,7 @@
         <p class="auth-subtitle" th:text="${profile.email}">reader@example.com</p>
       </header>
       <div th:if="${successMessage != null}" th:text="${successMessage}" class="auth-notice auth-notice-success" role="status"></div>
+      <div th:if="${errorMessage != null}" th:text="${errorMessage}" class="auth-notice auth-notice-error" role="alert"></div>
       <form class="auth-form" th:action="@{/account/profile}" th:object="${profileForm}" method="post">
         <div th:if="${#fields.hasAnyErrors()}" class="auth-notice auth-notice-error" role="alert">
           <p th:each="error : ${#fields.allErrors()}" th:text="${error}"></p>
@@ -54,7 +55,11 @@
           <button type="submit" class="auth-btn auth-btn-primary">Save profile</button>
         </div>
       </form>
-      <a th:if="${profile.provider.name() == 'LOCAL'}" th:href="@{/account/change-password}" class="auth-link">Change password</a>
+      <a th:if="${profile.hasPassword}" th:href="@{/account/change-password}" class="auth-link">Change password</a>
+      <form th:unless="${profile.hasPassword}" class="auth-form" th:action="@{/account/set-password}" method="post">
+        <p class="auth-field-hint">Set a separate BookNet password to sign in with your email. You can still use Google sign-in.</p>
+        <button type="submit" class="auth-btn auth-btn-primary">Set password</button>
+      </form>
       <a th:href="@{/}" class="auth-link auth-back">Back to home</a>
     </div>
   </main>

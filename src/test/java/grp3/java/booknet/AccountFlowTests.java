@@ -164,7 +164,7 @@ class AccountFlowTests {
         assertThat(requestEmail("/forgot-password", "google@example.com")).isEqualTo(known);
         assertThat(requestEmail("/forgot-password", "unverified@example.com")).isEqualTo(known);
         requestEmail("/forgot-password", "reader@example.com");
-        verify(sender, times(1)).send(any(SimpleMailMessage.class));
+        verify(sender, times(2)).send(any(SimpleMailMessage.class));
     }
 
     @Test
@@ -331,6 +331,46 @@ class AccountFlowTests {
         assertThat(identities.count()).isEqualTo(1);
         assertThatThrownBy(() -> oauthAccounts.authenticate(google("unverified-google", "new@example.com", false)))
                 .isInstanceOf(OAuth2AuthenticationException.class);
+    }
+
+    @Test
+    void googleSignInStillUsesSameAccountAfterPasswordSetupAndReset() throws Exception {
+        User user = oauthAccounts.authenticate(google("dual-login", "google@example.com", true));
+        accounts.requestPasswordSetup(user.getId());
+        accounts.resetPassword(new AccountRequests.ResetPassword(deliveredToken(), NEW_PASSWORD, NEW_PASSWORD));
+        User googleLogin = oauthAccounts.authenticate(google("dual-login", "google@example.com", true));
+        assertThat(googleLogin.getId()).isEqualTo(user.getId());
+        assertThat(googleLogin.getProvider()).isEqualTo(AuthProvider.GOOGLE);
+        assertThat(identities.count()).isEqualTo(1);
+        MockHttpSession session = login(user.getEmail(), NEW_PASSWORD);
+        mvc.perform(get("/account/profile").session(session)).andExpect(status().isOk());
+        // Forgot password remains available after setup, with the same cooldown and identity.
+        tokens.findAll().forEach(token -> {
+            token.setIssuedAt(Instant.now().minusSeconds(120));
+            tokens.saveAndFlush(token);
+        });
+        requestEmail("/forgot-password", user.getEmail());
+        accounts.resetPassword(new AccountRequests.ResetPassword(deliveredToken(), OTHER_PASSWORD, OTHER_PASSWORD));
+        assertThat(oauthAccounts.authenticate(google("dual-login", "google@example.com", true)).getId()).isEqualTo(user.getId());
+        login(user.getEmail(), OTHER_PASSWORD);
+        assertThat(users.count()).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = UserStatus.class, names = {"SUSPENDED", "EXPIRED"})
+    void googlePasswordSetupAndPreviouslyIssuedTokensRejectInactiveAccounts(UserStatus status) throws Exception {
+        User user = oauthAccounts.authenticate(google("blocked-setup", "google@example.com", true));
+        accounts.requestPasswordSetup(user.getId());
+        String token = deliveredToken();
+        user = users.findById(user.getId()).orElseThrow();
+        user.setStatus(status);
+        users.saveAndFlush(user);
+        Long userId = user.getId();
+        assertThatThrownBy(() -> accounts.requestPasswordSetup(userId)).isInstanceOf(AccountException.class);
+        mvc.perform(get("/reset-password").param("token", token)).andExpect(model().attribute("tokenValid", false));
+        resetPassword(token, NEW_PASSWORD, NEW_PASSWORD).andExpect(model().attribute("tokenValid", false));
+        assertThat(users.findById(userId).orElseThrow().getPassword()).isNull();
+        verify(sender, times(1)).send(any(SimpleMailMessage.class));
     }
 
     @Test

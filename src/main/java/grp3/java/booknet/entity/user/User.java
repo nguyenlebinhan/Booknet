@@ -80,6 +80,10 @@ public class User extends BaseEntity {
 
     private String address;
 
+    public boolean hasPassword() {
+        return password != null && !password.isBlank();
+    }
+
     @PrePersist
     private void initDefaults() {
         if (this.role == null) this.role = UserRole.ROLE_USER;

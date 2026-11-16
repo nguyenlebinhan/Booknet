@@ -242,18 +242,23 @@ class ThymeleafAccountFlowTests {
     }
 
     @Test
-    void googleOnlyAccountCanEditProfileButCannotCreateLocalPassword() throws Exception {
+    void googleAccountSetsPasswordThroughEmailAndKeepsGoogleIdentity() throws Exception {
         localUser(true);
         User user = users.findByEmail("reader@example.com").orElseThrow();
         user.setProvider(AuthProvider.GOOGLE);
         user.setPassword(null);
         users.saveAndFlush(user);
+        identities.saveAndFlush(grp3.java.booknet.entity.user.OAuthIdentity.builder()
+                .user(user).provider(AuthProvider.GOOGLE).providerUserId("google-only")
+                .providerSubject("google-only").email(user.getEmail()).build());
         var google = new grp3.java.booknet.security.CustomOAuth2User(
                 new org.springframework.security.oauth2.core.user.DefaultOAuth2User(
                         java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER")),
                         java.util.Map.of("sub", "google-only", "email", user.getEmail()), "sub"), user);
         var authentication = org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login().oauth2User(google);
-        mvc.perform(get("/account/profile").with(authentication)).andExpect(view().name("profile"));
+        MvcResult profile = mvc.perform(get("/account/profile").with(authentication)).andExpect(view().name("profile"))
+                .andExpect(content().string(containsString("action=\"/account/set-password\"")))
+                .andExpect(content().string(containsString("Set password"))).andReturn();
         mvc.perform(post("/account/profile").with(authentication).with(csrf()).param("fullName", "Google Reader"))
                 .andExpect(redirectedUrl("/account/profile"));
         mvc.perform(get("/account/change-password").with(authentication))
@@ -263,6 +268,120 @@ class ThymeleafAccountFlowTests {
                 .param("newPassword", NEW_PASSWORD).param("confirmPassword", NEW_PASSWORD))
                 .andExpect(view().name("change-password"));
         assertThat(users.findById(user.getId()).orElseThrow().getPassword()).isNull();
+
+        mvc.perform(post("/login").with(csrf()).param("email", user.getEmail()).param("password", INITIAL_PASSWORD))
+                .andExpect(redirectedUrl("/login?error=true"));
+        mvc.perform(post("/account/set-password").with(authentication)).andExpect(status().isForbidden());
+        String html = profile.getResponse().getContentAsString();
+        var csrfToken = Pattern.compile("name=\"_csrf\"[^>]*value=\"([^\"]+)\"").matcher(html);
+        assertThat(csrfToken.find()).isTrue();
+        mvc.perform(post("/account/set-password").with(authentication)
+                        .session((MockHttpSession) profile.getRequest().getSession(false)).param("_csrf", csrfToken.group(1))
+                        .param("email", "attacker@example.com"))
+                .andExpect(redirectedUrl("/account/profile")).andExpect(flash().attributeExists("successMessage"));
+        assertThat(deliveredMessage().getTo()).containsExactly(user.getEmail());
+        String token = deliveredToken();
+        assertThat(tokens.findAll().getFirst().getTokenHash()).isNotEqualTo(token);
+        assertThat(Duration.between(tokens.findAll().getFirst().getIssuedAt(), tokens.findAll().getFirst().getExpiresAt()))
+                .isEqualTo(Duration.ofMinutes(15));
+        mvc.perform(post("/account/set-password").with(authentication).with(csrf()))
+                .andExpect(redirectedUrl("/account/profile"));
+        verify(sender, times(1)).send(any(SimpleMailMessage.class));
+
+        FormPage reset = formPage("/reset-password?token=" + token);
+        mvc.perform(post("/reset-password").session(reset.session()).param("_csrf", reset.csrf())
+                        .param("token", token).param("password", NEW_PASSWORD).param("confirmPassword", OTHER_PASSWORD))
+                .andExpect(model().attributeExists("confirmPasswordError"));
+        mvc.perform(post("/reset-password").session(reset.session()).param("_csrf", reset.csrf())
+                        .param("token", token).param("password", NEW_PASSWORD).param("confirmPassword", NEW_PASSWORD))
+                .andExpect(redirectedUrl("/login?reset=true"));
+        User updated = users.findById(user.getId()).orElseThrow();
+        assertThat(updated.getProvider()).isEqualTo(AuthProvider.GOOGLE);
+        assertThat(passwords.matches(NEW_PASSWORD, updated.getPassword())).isTrue();
+        assertThat(updated.getAuthVersion()).isEqualTo(1);
+        assertThat(identities.findByProviderAndProviderUserId(AuthProvider.GOOGLE, "google-only").orElseThrow().getUser().getId())
+                .isEqualTo(user.getId());
+        mvc.perform(get("/reset-password").param("token", token)).andExpect(model().attribute("tokenValid", false));
+        mvc.perform(get("/account/profile").with(authentication)).andExpect(redirectedUrl("/login?error=true"));
+        MockHttpSession localSession = (MockHttpSession) mvc.perform(post("/login").with(csrf())
+                        .param("email", user.getEmail()).param("password", NEW_PASSWORD))
+                .andExpect(redirectedUrl("/")).andReturn().getRequest().getSession(false);
+        mvc.perform(get("/account/profile").session(localSession))
+                .andExpect(content().string(containsString("Change password")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("action=\"/account/set-password\""))));
+        mvc.perform(post("/account/set-password").session(localSession).with(csrf()))
+                .andExpect(flash().attributeExists("errorMessage"));
+        mvc.perform(post("/account/change-password").session(localSession).with(csrf())
+                        .param("currentPassword", NEW_PASSWORD).param("newPassword", OTHER_PASSWORD).param("confirmPassword", OTHER_PASSWORD))
+                .andExpect(redirectedUrl("/login"));
+    }
+
+    @Test
+    void passwordSetupSmtpFailurePreservesAccountAndAllowsRetry() throws Exception {
+        localUser(true);
+        User user = users.findByEmail("reader@example.com").orElseThrow();
+        user.setProvider(AuthProvider.GOOGLE);
+        user.setPassword(null);
+        users.saveAndFlush(user);
+        var principal = new grp3.java.booknet.security.CustomUserDetails(user);
+        var authentication = org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(principal);
+        doThrow(new org.springframework.mail.MailSendException("SMTP unavailable")).when(sender).send(any(SimpleMailMessage.class));
+        MvcResult failed = mvc.perform(post("/account/set-password").with(authentication).with(csrf()))
+                .andExpect(redirectedUrl("/account/profile")).andExpect(flash().attributeExists("errorMessage"))
+                .andExpect(flash().attributeCount(1)).andReturn();
+        mvc.perform(get("/account/profile").with(authentication).flashAttrs(failed.getFlashMap()))
+                .andExpect(content().string(containsString("Unable to send the password setup email")));
+        assertThat(tokens.count()).isZero();
+        assertThat(users.findById(user.getId()).orElseThrow().getPassword()).isNull();
+        reset(sender);
+        mvc.perform(post("/account/set-password").with(authentication).with(csrf()))
+                .andExpect(flash().attributeExists("successMessage"));
+        verify(sender).send(any(SimpleMailMessage.class));
+    }
+
+    @Test
+    void contactSubmitsRenderedFormAndSendsToLibrariansWithReplyTo() throws Exception {
+        FormPage form = formPage("/contact");
+        MvcResult sent = mvc.perform(post("/contact").session(form.session()).param("_csrf", form.csrf())
+                        .param("fullName", "  Contact Reader  ").param("email", "reader@example.com")
+                        .param("subject", "Book donations").param("message", "I would like to donate books."))
+                .andExpect(redirectedUrl("/contact")).andExpect(flash().attributeExists("contactSuccess")).andReturn();
+        SimpleMailMessage mail = deliveredMessage();
+        assertThat(mail.getTo()).containsExactly("librarians@booknet.test");
+        assertThat(mail.getFrom()).isEqualTo("no-reply@booknet.test");
+        assertThat(mail.getReplyTo()).isEqualTo("reader@example.com");
+        assertThat(mail.getSubject()).isEqualTo("BookNet - Contact: Book donations");
+        assertThat(mail.getText()).contains("Contact Reader", "reader@example.com", "I would like to donate books.");
+        mvc.perform(get("/contact").flashAttrs(sent.getFlashMap()))
+                .andExpect(content().string(containsString("Your message has been submitted")));
+        verify(sender, times(1)).send(any(SimpleMailMessage.class));
+    }
+
+    @Test
+    void contactRejectsMissingCsrfAndInvalidFieldsWithoutSending() throws Exception {
+        mvc.perform(post("/contact").param("fullName", "Reader")).andExpect(status().isForbidden());
+        mvc.perform(post("/contact").with(csrf()).param("fullName", " ").param("email", "invalid")
+                        .param("subject", "Other\r\nBcc: attacker@example.com").param("message", " "))
+                .andExpect(view().name("contact")).andExpect(model().attribute("activePage", "contact"))
+                .andExpect(model().attributeHasFieldErrors("contactForm", "fullName", "email", "subject", "message"))
+                .andExpect(content().string(containsString("Please enter your message.")));
+        mvc.perform(post("/contact").with(csrf()).param("fullName", "X".repeat(121))
+                        .param("email", "x".repeat(110) + "@example.com").param("message", "X".repeat(5001)))
+                .andExpect(model().attributeHasFieldErrors("contactForm", "fullName", "email", "message"));
+        verifyNoInteractions(sender);
+    }
+
+    @Test
+    void contactSmtpFailureRendersErrorAndPreservesEscapedInput() throws Exception {
+        doThrow(new org.springframework.mail.MailSendException("SMTP unavailable")).when(sender).send(any(SimpleMailMessage.class));
+        mvc.perform(post("/contact").with(csrf()).param("fullName", "Reader").param("email", "reader@example.com")
+                        .param("subject", "Other").param("message", "<script>alert('test')</script>"))
+                .andExpect(view().name("contact")).andExpect(model().attributeHasErrors("contactForm"))
+                .andExpect(model().attributeDoesNotExist("contactSuccess"))
+                .andExpect(content().string(containsString("Unable to send your message")))
+                .andExpect(content().string(containsString("value=\"reader@example.com\"")))
+                .andExpect(content().string(containsString("&lt;script&gt;")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("<script>alert"))));
     }
 
     @ParameterizedTest

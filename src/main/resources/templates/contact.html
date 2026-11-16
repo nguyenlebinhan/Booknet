@@ -137,18 +137,21 @@
           </div>
 
           <!-- Success Alert Message -->
-          <div class="bn-alert-success" th:if="${contactSuccess}">
+          <div class="bn-alert-success" th:if="${contactSuccess}" role="status">
             <i class="fas fa-circle-check"></i>
             <span th:text="${contactSuccess}"></span>
           </div>
 
-          <form th:action="@{/contact}" method="post" class="bn-contact-form">
+          <form th:action="@{/contact}" th:object="${contactForm}" method="post" class="bn-contact-form">
+            <div th:if="${#fields.hasAnyErrors()}" class="bn-alert-error" role="alert">
+              <p th:each="error : ${#fields.allErrors()}" th:text="${error}"></p>
+            </div>
             
             <div class="form-group-field">
               <label for="fullName" class="field-label">Full name <span class="required">*</span></label>
               <div class="input-wrapper">
                 <i class="fas fa-user input-icon"></i>
-                <input type="text" id="fullName" name="fullName" class="bn-text-input" placeholder="Your name" required>
+                <input type="text" th:field="*{fullName}" class="bn-text-input" placeholder="Your name" minlength="2" maxlength="120" th:attr="aria-invalid=${#fields.hasErrors('fullName')}" required>
               </div>
             </div>
 
@@ -156,7 +159,7 @@
               <label for="email" class="field-label">Email address <span class="required">*</span></label>
               <div class="input-wrapper">
                 <i class="fas fa-envelope input-icon"></i>
-                <input type="email" id="email" name="email" class="bn-text-input" placeholder="you@example.com" required>
+                <input type="email" th:field="*{email}" class="bn-text-input" placeholder="you@example.com" maxlength="120" th:attr="aria-invalid=${#fields.hasErrors('email')}" required>
               </div>
             </div>
 
@@ -164,7 +167,7 @@
               <label for="subject" class="field-label">Topic</label>
               <div class="input-wrapper">
                 <i class="fas fa-tag input-icon"></i>
-                <select id="subject" name="subject" class="bn-select-input">
+                <select th:field="*{subject}" class="bn-select-input" th:attr="aria-invalid=${#fields.hasErrors('subject')}">
                   <option value="Borrowing & renewals">Borrowing & renewals</option>
                   <option value="Membership & card activation">Membership & card activation</option>
                   <option value="Catalog searches & reservations">Catalog searches & reservations</option>
@@ -178,7 +181,7 @@
             <div class="form-group-field">
               <label for="message" class="field-label">Message <span class="required">*</span></label>
               <div class="input-wrapper textarea-wrapper">
-                <textarea id="message" name="message" class="bn-textarea-input" rows="5" placeholder="Tell us how we can help, which book you are looking for, or what you would like to ask..." required></textarea>
+                <textarea th:field="*{message}" class="bn-textarea-input" rows="5" maxlength="5000" th:attr="aria-invalid=${#fields.hasErrors('message')}" placeholder="Tell us how we can help, which book you are looking for, or what you would like to ask..." required></textarea>
               </div>
             </div>
 

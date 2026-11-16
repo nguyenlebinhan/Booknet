@@ -3,11 +3,9 @@ package grp3.java.booknet.security;
 import grp3.java.booknet.entity.user.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 
 @Getter
@@ -16,11 +14,13 @@ public class CustomOAuth2User implements OAuth2User {
     private final OAuth2User oAuth2User;
     private final User user;
     private final long authVersion;
+    private final Collection<? extends GrantedAuthority> authorities;
 
     public CustomOAuth2User(OAuth2User oAuth2User, User user) {
         this.oAuth2User = oAuth2User;
         this.user = user;
         this.authVersion = user.getAuthVersion();
+        this.authorities = user.getRole().authorities();
     }
 
     @Override
@@ -30,7 +30,7 @@ public class CustomOAuth2User implements OAuth2User {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()));
+        return authorities;
     }
 
     @Override

@@ -22,6 +22,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.rememberme.RememberMeAuthenticationFilter;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -57,6 +59,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        RequestMatcher apiRequest = request -> request.getRequestURI().equals(request.getContextPath() + "/api")
+                || request.getRequestURI().startsWith(request.getContextPath() + "/api/");
         http
             .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(auth -> auth
@@ -74,8 +78,19 @@ public class SecurityConfig {
                     "/favicon.ico",
                     "/oauth2/**"
                 ).permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/staff/**", "/api/staff/**").hasAnyRole("LIBRARIAN", "ADMIN")
+                .requestMatchers("/member/**", "/api/member/**").hasRole("MEMBER")
+                .requestMatchers("/account/**", "/api/account/**").hasAnyRole("MEMBER", "LIBRARIAN", "ADMIN")
                 .anyRequest().authenticated()
+            )
+            .exceptionHandling(errors -> errors
+                .defaultAuthenticationEntryPointFor((request, response, exception) -> {
+                    response.setStatus(401);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\":\"Authentication required\"}");
+                }, apiRequest)
+                .defaultAuthenticationEntryPointFor(new LoginUrlAuthenticationEntryPoint("/login"), request -> true)
             )
             .anonymous(anonymous -> anonymous.authorities(UserRole.ROLE_GUEST.name()))
             .formLogin(form -> form

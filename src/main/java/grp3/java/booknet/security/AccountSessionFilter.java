@@ -14,7 +14,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-/** Re-check account state and revoke existing local AND Google sessions after password changes. */
+/** Re-check account state, version and role for local, Google and remember-me sessions. */
 @RequiredArgsConstructor
 public class AccountSessionFilter extends OncePerRequestFilter {
     private final UserRepository users;
@@ -35,7 +35,9 @@ public class AccountSessionFilter extends OncePerRequestFilter {
         if (id != null) {
             long expectedVersion = version;
             boolean valid = users.findById(id).map(user -> user.isEnabled() && user.isEmailVerified()
-                    && user.getStatus() == UserStatus.ACTIVE && user.getAuthVersion() == expectedVersion).orElse(false);
+                    && user.getStatus() == UserStatus.ACTIVE && user.getAuthVersion() == expectedVersion
+                    && authentication.getAuthorities().stream().anyMatch(authority ->
+                        authority.getAuthority().equals(user.getRole().authorityName()))).orElse(false);
             if (!valid) {
                 SecurityContextHolder.clearContext();
                 if (request.getSession(false) != null) request.getSession(false).invalidate();
@@ -45,7 +47,14 @@ public class AccountSessionFilter extends OncePerRequestFilter {
                 cookie.setSecure(request.isSecure());
                 cookie.setMaxAge(0);
                 response.addCookie(cookie);
-                response.sendRedirect(request.getContextPath() + "/login?error=true");
+                if (request.getRequestURI().equals(request.getContextPath() + "/api")
+                        || request.getRequestURI().startsWith(request.getContextPath() + "/api/")) {
+                    response.setStatus(401);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\":\"Please sign in again\"}");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/login?error=true");
+                }
                 return;
             }
         }

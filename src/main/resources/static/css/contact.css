@@ -331,6 +331,23 @@ body.bn-page-body {
   margin: 0;
 }
 
+.bn-alert-error {
+  border: 1px solid var(--bn-danger);
+  color: var(--bn-danger);
+  border-radius: var(--bn-radius-sm);
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+.bn-alert-error p {
+  margin: 0;
+}
+
+.bn-contact-form [aria-invalid="true"] {
+  border-color: var(--bn-danger);
+}
+
 /* Alert Success */
 .bn-alert-success {
   background-color: #ecfdf5;

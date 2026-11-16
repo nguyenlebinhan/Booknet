@@ -19,6 +19,7 @@ Giữ tên tài liệu này để các liên kết hiện có tiếp tục hoạ
 | `GET/POST /account/profile` | Form `profileForm`: `fullName`, `phone`, `address`, `avatarUrl`; thành công redirect lại với flash message |
 | `GET/POST /account/change-password` | Form `passwordForm`: `currentPassword`, `newPassword`, `confirmPassword`; thành công đăng xuất và redirect Login với flash message |
 | `POST /account/link/google` | Bắt đầu liên kết Google qua form có CSRF |
+| `POST /account/set-password` | Người đang đăng nhập yêu cầu email tạo mật khẩu; lấy user từ principal, không nhận email/ID từ form |
 | `POST /logout` | Xóa phiên và redirect `/login?logout=true` |
 
 Email chỉ gửi link HTML `/verify-email` hoặc `/reset-password`. Không cần JavaScript fetch
@@ -41,7 +42,13 @@ reset, hồ sơ và đổi mật khẩu; lỗi custom validity được xóa khi
 - Forgot/resend trả kết quả chung cho tài khoản không tồn tại, không đủ điều kiện hoặc SMTP lỗi.
   SMTP lỗi làm token vừa tạo bị vô hiệu hóa; log không chứa token/email.
 - Đăng ký lỗi SMTP rollback cả user/token và render lại lỗi trên form; có thể đăng ký lại.
-- Reset chỉ dành cho LOCAL đang hoạt động, đã xác thực. Google-only không tạo mật khẩu qua reset/đổi mật khẩu.
+- Reset dành cho tài khoản đang hoạt động, đã xác thực, gồm cả GOOGLE chưa có mật khẩu.
+- Profile và Password settings hiển thị Set password khi `hasPassword = false`.
+  POST `/account/set-password` gửi link `/reset-password` đến email của tài khoản đang đăng nhập,
+  dùng chung token RESET_PASSWORD 15 phút, một lần và cooldown 60 giây với Forgot password.
+  SMTP lỗi rollback token và hiện lỗi; không báo đã gửi thành công. Tài khoản đã có mật khẩu bị từ chối tạo lại qua route này.
+- Khả năng đăng nhập bằng mật khẩu dựa trên `User.hasPassword()`, không dựa trên provider gốc.
+  Tạo mật khẩu không đổi provider hay identity Google; cùng user dùng được cả hai cách đăng nhập.
 - Đổi mật khẩu kiểm tra mật khẩu hiện tại và không cho dùng lại mật khẩu cũ.
   Đổi/reset tăng `users.auth_version`, hủy token reset, thu hồi phiên local/Google cũ ở request tiếp theo.
   Phiên thực hiện được xóa ngay, cookie `JSESSIONID`/`remember-me` bị xóa. Remember-me cũ hết hiệu lực theo hash mật khẩu.
@@ -72,8 +79,19 @@ reset, hồ sơ và đổi mật khẩu; lỗi custom validity được xóa khi
 
 ## Cấu hình và kiểm thử
 
+- Contact dùng `ContactController`, DTO record `ContactForm` và `ContactMailService`.
+  GET/POST `/contact` công khai nhưng POST bắt buộc CSRF; không bind Entity.
+  Validation server: tên 2–120, email tối đa 120, topic thuộc danh sách form, nội dung bắt buộc/tối đa 5000 ký tự.
+  Lỗi validation/SMTP render lại form cùng dữ liệu đã escape, không đặt flash thành công.
+  Gửi đồng bộ qua `JavaMailSender`, thành công redirect `/contact` với flash message.
+- `CONTACT_TO` là hộp thư thủ thư bắt buộc để gửi Contact; bỏ trống sẽ hiện lỗi gửi.
+  From lấy từ `MAIL_FROM`, Reply-To là email người liên hệ. Contact không gửi thư xác nhận cho người điền form và chưa lưu DB.
+  Thông báo thành công nghĩa là SMTP chấp nhận yêu cầu, không đảm bảo thư đã vào Inbox.
+
 - Ngày 10/11/2026: **47/47 test đạt**, không lỗi/skip; gồm 20 AccountFlow, 6 OAuthCallback,
   20 ThymeleafAccountFlow và 1 application context. Baseline trước chuyển đổi: 37/37 đạt.
+- Ngày 13/11/2026, workspace nhánh `feat/google-password-contact`: **55/55 test đạt**, không lỗi/skip;
+  gồm 23 AccountFlow, 6 OAuthCallback, 24 ThymeleafAccountFlow, 1 ContactMailService và 1 application context.
 - Dùng JDK 21 cho Maven. Chạy `mvn test` hoặc `./mvnw.cmd test`.
 - Test dùng profile `test`, H2 riêng với `create-drop`, mock SMTP/Google; không xóa dữ liệu DB thật.
 - Local dùng MySQL, mặc định `ddl-auto=update`. Môi trường `validate`/`none` cần migration

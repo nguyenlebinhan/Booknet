@@ -5,6 +5,24 @@
 > Đây là ảnh chụp trạng thái dự án, không xác nhận nhánh đã merge vào `main`.
 > Trước mỗi công việc, đọc lại source liên quan và Git diff vì dự án có thể đã thay đổi.
 
+## Cập nhật Contact và mật khẩu Google — 16/11/2026
+
+Phần này thay thế các mô tả cũ bên dưới về Contact chưa gửi mail và Google-only không tạo được mật khẩu.
+
+- Contact chuyển sang `ContactController`, DTO `ContactForm` và `ContactMailService`.
+  POST kiểm tra validation và CSRF, gửi SMTP đến `CONTACT_TO`, dùng `MAIL_FROM` và Reply-To của người điền form.
+  Chỉ redirect với thông báo thành công sau khi SMTP chấp nhận gửi; lỗi render lại form và giữ dữ liệu.
+  Chưa lưu feedback vào DB. Cần cấu hình SMTP thật và `CONTACT_TO`; không commit `.env`.
+- Google-only có nút Set password trên Profile/Password settings. `POST /account/set-password`
+  gửi link đến email lấy từ tài khoản đang đăng nhập; dùng chung token RESET_PASSWORD và trang `/reset-password`.
+  Token SHA-256, 15 phút, một lần, cooldown 60 giây. SMTP lỗi rollback token và hiện lỗi.
+- Tài khoản có password hash được đăng nhập bằng email/mật khẩu, không phụ thuộc provider gốc.
+  Forgot/reset hỗ trợ tài khoản Google đang hoạt động, đã xác thực. Google identity và user ID được giữ nguyên.
+  Đặt/đổi/reset mật khẩu tăng `auth_version` và thu hồi phiên cũ; không tự gộp tài khoản trùng email.
+- Bộ test hiện có 55 trường hợp: 23 AccountFlow, 24 ThymeleafAccountFlow, 6 OAuthCallback,
+  1 ContactMailService và 1 application context. Test dùng H2 và mock Google/SMTP;
+  kết quả đạt không chứng minh toàn bộ luồng Google/nhận thư thực tế. Chi tiết: [account-api.md](account-api.md).
+
 ## 1. Những điều cần nắm trước khi làm
 
 - Booknet là ứng dụng quản lý thư viện của Group 3, package gốc `grp3.java.booknet`.

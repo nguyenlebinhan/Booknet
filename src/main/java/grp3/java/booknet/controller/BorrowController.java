@@ -32,7 +32,7 @@ public class BorrowController {
     private final BorrowService borrowService;
 
     @GetMapping("/confirm")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'USER', 'ADMIN')")
     public String showConfirmLoanPage(
             Authentication authentication,
             @RequestParam(value = "bookId", required = false) List<Long> bookIds,
@@ -66,7 +66,7 @@ public class BorrowController {
     }
 
     @PostMapping("/confirm/remove")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'USER', 'ADMIN')")
     public String removeBookFromLoanRequest(
             @RequestParam(value = "bookIds", required = false) List<Long> bookIds,
             @RequestParam("removeBookId") Long removeBookId,
@@ -94,7 +94,7 @@ public class BorrowController {
     }
 
     @PostMapping("/confirm")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'USER', 'ADMIN')")
     public String processConfirmLoan(
             Authentication authentication,
             @Valid @ModelAttribute("borrowForm") BorrowRequestForm form,

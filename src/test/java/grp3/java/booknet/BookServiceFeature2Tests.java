@@ -4,7 +4,7 @@ import grp3.java.booknet.dto.book.request.BookCreateForm;
 import grp3.java.booknet.entity.book.*;
 import grp3.java.booknet.enums.book.PublicationStatus;
 import grp3.java.booknet.repository.book.*;
-import grp3.java.booknet.service.BookService;
+import grp3.java.booknet.service.book.BookService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

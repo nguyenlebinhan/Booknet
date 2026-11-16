@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin dashboard | booknet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Serif:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/dashboard.css}">
+</head>
+<body class="admin-page">
+<a class="admin-skip-link" href="#admin-main">Skip to dashboard</a>
+<div class="admin-shell">
+  <aside th:replace="~{admin/fragments/dashboard :: sidebar}"></aside>
+
+  <div class="admin-workspace">
+    <header class="admin-topbar">
+      <p>Administration <span aria-hidden="true">/</span> Dashboard</p>
+      <a class="admin-topbar-account" th:href="@{/account/profile}" th:text="${adminName}">Administrator</a>
+    </header>
+
+    <main class="admin-main" id="admin-main">
+      <p class="admin-breadcrumb">Administration <span aria-hidden="true">/</span> Dashboard</p>
+
+      <section class="admin-page-heading">
+        <div>
+          <p class="admin-kicker">BOOKNET ADMINISTRATION</p>
+          <h1>Admin dashboard</h1>
+          <p>A live overview of your library and its current priorities.</p>
+        </div>
+        <div class="admin-heading-actions">
+          <a class="admin-button secondary" th:href="@{/catalog}">View catalog</a>
+          <a class="admin-button primary" th:href="@{/admin/users}">Manage accounts</a>
+        </div>
+      </section>
+
+      <div class="admin-snapshot">
+        <span class="admin-snapshot-label">LIVE DATABASE</span>
+        <p>Current library records <span aria-hidden="true">·</span> <time th:text="${snapshotAt}">16 Nov 2026, 20:30</time></p>
+        <small>Figures update from the current database. Historical charts and audit events are not connected.</small>
+      </div>
+
+      <section class="admin-stat-grid" aria-label="Library overview">
+        <article class="admin-stat-card">
+          <p>Published titles</p>
+          <strong th:text="${dashboard.publishedTitles}">0</strong>
+          <small>Available in the public catalog</small>
+        </article>
+        <article class="admin-stat-card">
+          <p>Registered members</p>
+          <strong th:text="${dashboard.registeredMembers}">0</strong>
+          <small>Accounts with the member role</small>
+        </article>
+        <article class="admin-stat-card">
+          <p>Copies currently on loan</p>
+          <strong th:text="${dashboard.borrowedCopies}">0</strong>
+          <small>Copies marked as borrowed</small>
+        </article>
+        <article class="admin-stat-card">
+          <p>Overdue loans</p>
+          <strong class="admin-stat-danger" th:text="${dashboard.overdueLoans}">0</strong>
+          <small>Past-due active or overdue records</small>
+        </article>
+      </section>
+
+      <section class="admin-attention-section" aria-labelledby="attention-title">
+        <div class="admin-section-heading">
+          <h2 id="attention-title">Needs attention</h2>
+          <span>Current work queues</span>
+        </div>
+        <div class="admin-attention-grid">
+          <article class="admin-attention-card">
+            <p class="admin-attention-value" th:text="${dashboard.draftTitles}">0</p>
+            <h3>Unpublished titles</h3>
+            <p>Review draft records before making them available to readers.</p>
+            <a th:href="@{/catalog}">Review catalog <span aria-hidden="true">→</span></a>
+          </article>
+          <article class="admin-attention-card">
+            <p class="admin-attention-value" th:text="${dashboard.pendingReservations}">0</p>
+            <h3>Pending reservations</h3>
+            <p>Reservations are recorded, but staff review tools are not available yet.</p>
+            <span class="admin-notice">Review workflow not connected</span>
+          </article>
+          <article class="admin-attention-card inventory-card">
+            <h3>Copy availability</h3>
+            <p>Available copies compared with copies on loan.</p>
+            <div class="admin-inventory-bar" role="img"
+                 th:aria-label="${dashboard.availableCopies + ' available copies and ' + dashboard.borrowedCopies + ' borrowed copies'}">
+              <span class="available" th:style="|width: ${dashboard.availableCopyPercentage()}%|"></span>
+              <span class="borrowed" th:style="|width: ${100 - dashboard.availableCopyPercentage()}%|"></span>
+            </div>
+            <div class="admin-inventory-legend">
+              <span><i class="available"></i><b th:text="${dashboard.availableCopies}">0</b> available</span>
+              <span><i class="borrowed"></i><b th:text="${dashboard.borrowedCopies}">0</b> on loan</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="admin-bottom-grid">
+        <article class="admin-panel">
+          <div class="admin-panel-heading">
+            <div><p class="admin-kicker">QUICK ACCESS</p><h2>Library workspace</h2></div>
+          </div>
+          <div class="admin-quick-links">
+            <a th:href="@{/catalog}"><span><strong>Book catalog</strong><small>Browse published titles and staff-only drafts</small></span><b aria-hidden="true">↗</b></a>
+            <a th:href="@{/staff/members}"><span><strong>Member directory</strong><small>Search members and review account details</small></span><b aria-hidden="true">↗</b></a>
+            <a th:href="@{/admin/users}"><span><strong>User accounts</strong><small>Review registered accounts and access</small></span><b aria-hidden="true">↗</b></a>
+          </div>
+        </article>
+
+        <aside class="admin-activity-panel">
+          <p class="admin-kicker">ACTIVITY</p>
+          <h2>Recent administrative activity</h2>
+          <p>Audit history is not recorded by the current application, so no activity entries are shown here.</p>
+          <span class="admin-activity-status">Audit log not connected</span>
+        </aside>
+      </section>
+    </main>
+    <footer class="admin-footer"><span>booknet Library</span><a th:href="@{/contact}">Help &amp; contact</a></footer>
+  </div>
+</div>
+</body>
+</html>

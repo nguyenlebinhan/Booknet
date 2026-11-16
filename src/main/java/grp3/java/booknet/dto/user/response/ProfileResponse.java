@@ -6,10 +6,11 @@ import grp3.java.booknet.enums.user.UserRole;
 
 public record ProfileResponse(Long id, String email, String fullName, String username,
                               String phone, String address, String avatarUrl, String memberCode,
-                              UserRole role, AuthProvider provider, boolean emailVerified, boolean googleLinked) {
+                              UserRole role, AuthProvider provider, boolean emailVerified, boolean googleLinked,
+                              boolean hasPassword) {
     public static ProfileResponse from(User user, boolean googleLinked) {
         return new ProfileResponse(user.getId(), user.getEmail(), user.getFullName(), user.getUsername(),
                 user.getPhone(), user.getAddress(), user.getAvatarUrl(), user.getMemberCode(),
-                user.getRole(), user.getProvider(), user.isEmailVerified(), googleLinked);
+                user.getRole(), user.getProvider(), user.isEmailVerified(), googleLinked, user.hasPassword());
     }
 }

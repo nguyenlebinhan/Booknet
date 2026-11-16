@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<th:block th:fragment="navigation">
+  <th:block sec:authorize="hasAnyRole('ADMIN', 'LIBRARIAN')">
+    <aside th:replace="~{admin/fragments/dashboard :: sidebar}"></aside>
+  </th:block>
+  <th:block sec:authorize="!hasAnyRole('ADMIN', 'LIBRARIAN')">
+    <header th:replace="~{shared/navbar :: navbar}"></header>
+  </th:block>
+</th:block>
+
+<th:block th:fragment="staffStyles">
+  <link rel="stylesheet" th:href="@{/css/admin/dashboard.css}"
+        sec:authorize="hasAnyRole('ADMIN', 'LIBRARIAN')">
+</th:block>
+</body>
+</html>

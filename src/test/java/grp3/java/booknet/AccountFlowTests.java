@@ -1,18 +1,19 @@
 package grp3.java.booknet;
 
-import grp3.java.booknet.config.OAuthLinkSessionAttributes;
 import grp3.java.booknet.dto.user.request.ResetPasswordRequest;
+import grp3.java.booknet.config.security.OAuthLinkSessionAttributes;
 import grp3.java.booknet.entity.user.AccountToken;
 import grp3.java.booknet.entity.user.OAuthIdentity;
 import grp3.java.booknet.entity.user.User;
 import grp3.java.booknet.enums.user.*;
-import grp3.java.booknet.exception.AccountException;
+import grp3.java.booknet.exception.account.AccountException;
 import grp3.java.booknet.repository.user.*;
-import grp3.java.booknet.security.*;
 import grp3.java.booknet.security.dto.CustomUserDetails;
+import grp3.java.booknet.security.principal.CustomOAuth2User;
+import grp3.java.booknet.security.principal.CustomOidcUser;
 import grp3.java.booknet.security.service.CustomOidcUserService;
-import grp3.java.booknet.service.impl.AccountServiceImpl;
-import grp3.java.booknet.service.impl.OAuthAccountServiceImpl;
+import grp3.java.booknet.service.account.AccountService;
+import grp3.java.booknet.service.account.OAuthAccountService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -70,10 +71,8 @@ class AccountFlowTests {
     @Autowired AccountTokenRepository tokens;
     @Autowired OAuthIdentityRepository identities;
     @Autowired PasswordEncoder passwords;
-    @Autowired
-    AccountServiceImpl accounts;
-    @Autowired
-    OAuthAccountServiceImpl oauthAccounts;
+    @Autowired AccountService accounts;
+    @Autowired OAuthAccountService oauthAccounts;
     @Autowired ClientRegistrationRepository clients;
     @MockitoBean JavaMailSender sender;
     private MockHttpServletRequest oauthRequest;
@@ -117,19 +116,19 @@ class AccountFlowTests {
     @Test
     void registrationValidatesConfirmationTermsLengthAndDuplicateEmail() throws Exception {
         register("reader@example.com", OTHER_PASSWORD, true)
-                .andExpect(view().name("register")).andExpect(model().attributeHasFieldErrors("user", "confirmPassword"));
+                .andExpect(view().name("auth/register")).andExpect(model().attributeHasFieldErrors("user", "confirmPassword"));
         register("reader@example.com", INITIAL_PASSWORD, false)
-                .andExpect(view().name("register")).andExpect(model().attributeHasFieldErrors("user", "termsAccepted"));
+                .andExpect(view().name("auth/register")).andExpect(model().attributeHasFieldErrors("user", "termsAccepted"));
         localUser("reader@example.com", true);
         register("READER@example.com", INITIAL_PASSWORD, true)
-                .andExpect(view().name("register")).andExpect(model().attributeHasFieldErrors("user", "email"));
+                .andExpect(view().name("auth/register")).andExpect(model().attributeHasFieldErrors("user", "email"));
         verifyNoInteractions(sender);
     }
 
     @Test
     void failedRegistrationMailRollsBackUserAndToken() throws Exception {
         doThrow(new MailSendException("SMTP unavailable")).when(sender).send(any(SimpleMailMessage.class));
-        register("reader@example.com", INITIAL_PASSWORD, true).andExpect(view().name("register"))
+        register("reader@example.com", INITIAL_PASSWORD, true).andExpect(view().name("auth/register"))
                 .andExpect(model().attributeExists("globalError"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Unable to send the verification email")));
         assertThat(users.count()).isZero();
@@ -170,7 +169,7 @@ class AccountFlowTests {
         assertThat(requestEmail("/forgot-password", "google@example.com")).isEqualTo(known);
         assertThat(requestEmail("/forgot-password", "unverified@example.com")).isEqualTo(known);
         requestEmail("/forgot-password", "reader@example.com");
-        verify(sender, times(1)).send(any(SimpleMailMessage.class));
+        verify(sender, times(2)).send(any(SimpleMailMessage.class));
     }
 
     @Test
@@ -193,7 +192,7 @@ class AccountFlowTests {
         requestEmail("/forgot-password", user.getEmail());
         String token = deliveredToken();
         mvc.perform(get("/reset-password").param("token", token)).andExpect(model().attribute("tokenValid", true));
-        resetPassword(token, NEW_PASSWORD, OTHER_PASSWORD).andExpect(view().name("reset-password"))
+        resetPassword(token, NEW_PASSWORD, OTHER_PASSWORD).andExpect(view().name("auth/reset-password"))
                 .andExpect(model().attributeExists("confirmPasswordError"));
         resetPassword(token, NEW_PASSWORD, NEW_PASSWORD).andExpect(redirectedUrl("/login?reset=true"));
         resetPassword(token, OTHER_PASSWORD, OTHER_PASSWORD).andExpect(model().attribute("tokenValid", false));
@@ -253,7 +252,7 @@ class AccountFlowTests {
         User user = localUser("reader@example.com", true);
         mvc.perform(get("/account/profile")).andExpect(redirectedUrl("/login"));
         MockHttpSession session = login(user.getEmail(), INITIAL_PASSWORD);
-        mvc.perform(get("/account/profile").session(session)).andExpect(status().isOk()).andExpect(view().name("profile"))
+        mvc.perform(get("/account/profile").session(session)).andExpect(status().isOk()).andExpect(view().name("account/profile"))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML));
         mvc.perform(post("/account/profile").session(session).with(csrf())
                 .param("fullName", "  Updated Reader  ").param("phone", "+84 123456789").param("address", "HCM")
@@ -271,7 +270,7 @@ class AccountFlowTests {
         assertThat(updated.getPassword()).isEqualTo(user.getPassword());
         mvc.perform(post("/account/profile").session(session).with(csrf())
                 .param("fullName", "Updated Reader").param("avatarUrl", "javascript:alert(1)"))
-                .andExpect(view().name("profile")).andExpect(model().attributeHasFieldErrors("profileForm", "avatarUrl"));
+                .andExpect(view().name("account/profile")).andExpect(model().attributeHasFieldErrors("profileForm", "avatarUrl"));
     }
 
     @Test
@@ -279,9 +278,9 @@ class AccountFlowTests {
         User user = localUser("reader@example.com", true);
         MockHttpSession session = login(user.getEmail(), INITIAL_PASSWORD);
         MockHttpSession other = login(user.getEmail(), INITIAL_PASSWORD);
-        changePassword(session, "wrong", NEW_PASSWORD).andExpect(view().name("change-password"))
+        changePassword(session, "wrong", NEW_PASSWORD).andExpect(view().name("account/change-password"))
                 .andExpect(model().attributeHasErrors("passwordForm"));
-        changePassword(session, INITIAL_PASSWORD, INITIAL_PASSWORD).andExpect(view().name("change-password"))
+        changePassword(session, INITIAL_PASSWORD, INITIAL_PASSWORD).andExpect(view().name("account/change-password"))
                 .andExpect(model().attributeHasErrors("passwordForm"));
         changePassword(session, INITIAL_PASSWORD, NEW_PASSWORD).andExpect(redirectedUrl("/login"))
                 .andExpect(flash().attributeExists("successMessage"));
@@ -340,6 +339,46 @@ class AccountFlowTests {
     }
 
     @Test
+    void googleSignInStillUsesSameAccountAfterPasswordSetupAndReset() throws Exception {
+        User user = oauthAccounts.authenticate(google("dual-login", "google@example.com", true));
+        accounts.requestPasswordSetup(user.getId());
+        accounts.resetPassword(new ResetPasswordRequest(deliveredToken(), NEW_PASSWORD, NEW_PASSWORD));
+        User googleLogin = oauthAccounts.authenticate(google("dual-login", "google@example.com", true));
+        assertThat(googleLogin.getId()).isEqualTo(user.getId());
+        assertThat(googleLogin.getProvider()).isEqualTo(AuthProvider.GOOGLE);
+        assertThat(identities.count()).isEqualTo(1);
+        MockHttpSession session = login(user.getEmail(), NEW_PASSWORD);
+        mvc.perform(get("/account/profile").session(session)).andExpect(status().isOk());
+        // Forgot password remains available after setup, with the same cooldown and identity.
+        tokens.findAll().forEach(token -> {
+            token.setIssuedAt(Instant.now().minusSeconds(120));
+            tokens.saveAndFlush(token);
+        });
+        requestEmail("/forgot-password", user.getEmail());
+        accounts.resetPassword(new ResetPasswordRequest(deliveredToken(), OTHER_PASSWORD, OTHER_PASSWORD));
+        assertThat(oauthAccounts.authenticate(google("dual-login", "google@example.com", true)).getId()).isEqualTo(user.getId());
+        login(user.getEmail(), OTHER_PASSWORD);
+        assertThat(users.count()).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = UserStatus.class, names = {"SUSPENDED", "EXPIRED"})
+    void googlePasswordSetupAndPreviouslyIssuedTokensRejectInactiveAccounts(UserStatus status) throws Exception {
+        User user = oauthAccounts.authenticate(google("blocked-setup", "google@example.com", true));
+        accounts.requestPasswordSetup(user.getId());
+        String token = deliveredToken();
+        user = users.findById(user.getId()).orElseThrow();
+        user.setStatus(status);
+        users.saveAndFlush(user);
+        Long userId = user.getId();
+        assertThatThrownBy(() -> accounts.requestPasswordSetup(userId)).isInstanceOf(AccountException.class);
+        mvc.perform(get("/reset-password").param("token", token)).andExpect(model().attribute("tokenValid", false));
+        resetPassword(token, NEW_PASSWORD, NEW_PASSWORD).andExpect(model().attribute("tokenValid", false));
+        assertThat(users.findById(userId).orElseThrow().getPassword()).isNull();
+        verify(sender, times(1)).send(any(SimpleMailMessage.class));
+    }
+
+    @Test
     void explicitLinkKeepsLocalCredentialsAndGoogleLogsIntoSameAccount() {
         User user = localUser("local@example.com", true);
         beginLink(user);
@@ -387,7 +426,7 @@ class AccountFlowTests {
     void linkRequiresPasswordLoginRatherThanRememberMe() throws Exception {
         User user = localUser("reader@example.com", true);
         var remembered = new RememberMeAuthenticationToken("test-key", new CustomUserDetails(user),
-                List.of(new SimpleGrantedAuthority("ROLE_USER")));
+                List.of(new SimpleGrantedAuthority("ROLE_MEMBER")));
         mvc.perform(post("/account/link/google").with(authentication(remembered)).with(csrf()))
                 .andExpect(redirectedUrl("/")).andExpect(flash().attributeExists("googleLinkError"));
         beginLink(user);
@@ -408,7 +447,7 @@ class AccountFlowTests {
         var principal = service.loadUser(new OidcUserRequest(clients.findByRegistrationId("google"), accessToken, idToken));
         assertThat(principal).isInstanceOf(CustomOidcUser.class);
         assertThat(principal.getIdToken()).isSameAs(idToken);
-        assertThat(principal.getAuthorities()).extracting("authority").containsExactly("ROLE_USER");
+        assertThat(principal.getAuthorities()).extracting("authority").containsExactly("ROLE_MEMBER");
         assertThat(users.findByEmail("oidc@example.com")).isPresent();
         localUser("local@example.com", true);
         var localToken = new OidcIdToken("local-id-token", now, now.plusSeconds(300),

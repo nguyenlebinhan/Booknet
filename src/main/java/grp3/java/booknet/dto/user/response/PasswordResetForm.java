@@ -1,6 +1,6 @@
 package grp3.java.booknet.dto.user.response;
 
-import grp3.java.booknet.config.AccountPolicy;
+import grp3.java.booknet.config.account.AccountPolicy;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;

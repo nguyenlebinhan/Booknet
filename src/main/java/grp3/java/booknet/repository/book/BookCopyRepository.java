@@ -26,11 +26,14 @@ public interface BookCopyRepository extends JpaRepository<BookCopy, Long> {
 
     @EntityGraph(attributePaths = "book")
     List<BookCopy> findByBook_Id(Long bookId);
+    Optional<BookCopy> findFirstByBook_IdAndStatus(Long bookId, CopyStatus status);
 
     @EntityGraph(attributePaths = "book")
     Page<BookCopy> findByBook_Id(Long bookId, Pageable pageable);
     List<BookCopy> findByBook_IdAndStatus(Long bookId, CopyStatus status);
     List<BookCopy> findByStatus(CopyStatus status);
+
+    long countByStatus(CopyStatus status);
 
     long countByBook_Id(Long bookId);
     long countByBook_IdAndStatus(Long bookId, CopyStatus status);
@@ -49,6 +52,9 @@ public interface BookCopyRepository extends JpaRepository<BookCopy, Long> {
 
     @Query("SELECT bc.book.id, COUNT(bc) FROM BookCopy bc WHERE bc.book.id IN :bookIds AND bc.status = :status GROUP BY bc.book.id")
     List<Object[]> countCopiesByBookIdsAndStatus(@Param("bookIds") Collection<Long> bookIds, @Param("status") CopyStatus status);
+
+    @Query("SELECT bc.book.id, COUNT(bc) FROM BookCopy bc WHERE bc.book.id IN :bookIds AND bc.status IN :statuses GROUP BY bc.book.id")
+    List<Object[]> countCopiesByBookIdsAndStatuses(@Param("bookIds") Collection<Long> bookIds, @Param("statuses") Collection<CopyStatus> statuses);
 
     @Query("select count(bc) from BookCopy bc where bc.book.id = :bookId and bc.status = :status")
     long countCopies(@Param("bookId") Long bookId, @Param("status") CopyStatus status);

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add a book | booknet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/book-management.css}">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+</head>
+<body>
+  <th:block th:replace="~{shared/navigation :: navigation}"></th:block>
+  <main class="book-management-page create-page">
+    <nav class="book-breadcrumb" aria-label="Breadcrumb">
+      <a th:href="@{/catalog}">Explore books</a><span aria-hidden="true">/</span><span aria-current="page">Add book</span>
+    </nav>
+    <div class="page-heading">
+      <div><h1>Add a book</h1><p>Create a new catalog record. New books start as drafts.</p></div>
+      <a class="button button-secondary" th:href="@{/catalog}">Back to catalog</a>
+    </div>
+    <div class="notice notice-error" role="alert" th:if="${globalError}" th:text="${globalError}"></div>
+
+    <form class="book-edit-grid create-form" th:action="@{/admin/books/create}" th:object="${bookForm}" method="post">
+      <div class="book-edit-main">
+      <section class="form-card">
+        <div class="card-heading"><h2>Basic information</h2><p>Fields marked * are required.</p></div>
+        <div class="form-field">
+          <label for="title">Book title *</label>
+          <input id="title" type="text" th:field="*{title}" maxlength="255" required>
+          <small class="field-error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></small>
+        </div>
+        <div class="form-row">
+          <div class="form-field"><label for="bookCode">Book code *</label><input id="bookCode" type="text" th:field="*{bookCode}" maxlength="50" required><small>A unique catalog code; the book ID is generated automatically.</small><small class="field-error" th:if="${#fields.hasErrors('bookCode')}" th:errors="*{bookCode}"></small></div>
+          <div class="form-field"><label for="isbn">ISBN *</label><input id="isbn" type="text" th:field="*{isbn}" maxlength="17" required><small class="field-error" th:if="${#fields.hasErrors('isbn')}" th:errors="*{isbn}"></small></div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="authorIds">Author *</label>
+            <select id="authorIds" th:field="*{authorIds}" multiple required><option th:each="author : ${authors}" th:value="${author.id}" th:text="${author.name}">Author</option></select>
+            <small class="field-error" th:if="${#fields.hasErrors('authorIds')}" th:errors="*{authorIds}"></small>
+          </div>
+          <div class="form-field"><label for="translator">Translator</label><input id="translator" type="text" th:field="*{translator}" maxlength="150"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="categoryIds">Genre *</label>
+            <select id="categoryIds" th:field="*{categoryIds}" multiple required><option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}">Genre</option></select>
+            <small class="field-error" th:if="${#fields.hasErrors('categoryIds')}" th:errors="*{categoryIds}"></small>
+          </div>
+          <div class="form-field"><label for="language">Language *</label><select id="language" th:field="*{language}" required><option value="vi">Vietnamese</option><option value="en">English</option><option value="other">Other</option></select></div>
+        </div>
+        <div class="form-row form-row-three">
+          <div class="form-field"><label for="publisherId">Publisher</label><select id="publisherId" th:field="*{publisherId}"><option value="">Select publisher</option><option th:each="publisher : ${publishers}" th:value="${publisher.id}" th:text="${publisher.name}">Publisher</option></select></div>
+          <div class="form-field"><label for="publishYear">Publication year *</label><input id="publishYear" type="number" th:field="*{publishYear}" min="1000" max="2100" required><small class="field-error" th:if="${#fields.hasErrors('publishYear')}" th:errors="*{publishYear}"></small></div>
+          <div class="form-field"><label for="pageCount">Page count</label><input id="pageCount" type="number" th:field="*{pageCount}" min="1" max="20000"><small class="field-error" th:if="${#fields.hasErrors('pageCount')}" th:errors="*{pageCount}"></small></div>
+        </div>
+        <div class="form-field"><label for="edition">Edition</label><input id="edition" type="text" th:field="*{edition}" maxlength="50"></div>
+      </section>
+
+      <section class="form-card">
+        <div class="card-heading"><h2>Description &amp; keywords</h2></div>
+        <div class="form-field"><label for="description">Synopsis</label><textarea id="description" th:field="*{description}" maxlength="5000" rows="5"></textarea><small class="field-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></small></div>
+        <div class="form-field"><label for="keywords">Search keywords</label><input id="keywords" type="text" th:field="*{keywords}" maxlength="255"><small>Separate keywords with commas.</small></div>
+      </section>
+      </div>
+
+      <aside class="book-edit-sidebar">
+        <section class="form-card cover-card">
+          <div class="card-heading"><h2>Cover image</h2></div>
+          <div class="cover-preview">
+            <img id="cover-preview-image" alt="Cover preview" hidden>
+            <span id="cover-placeholder">Cover preview</span>
+          </div>
+          <div class="form-field">
+            <label class="button button-secondary cover-change-button" for="coverUrl">Change cover</label>
+            <label class="cover-url-label" for="coverUrl">Cover image URL</label>
+            <input id="coverUrl" type="url" th:field="*{coverUrl}" maxlength="500" placeholder="https://...">
+            <small>Use a publicly accessible image URL.</small>
+            <small class="field-error" th:if="${#fields.hasErrors('coverUrl')}" th:errors="*{coverUrl}"></small>
+          </div>
+        </section>
+        <section class="form-card publish-card">
+          <div class="card-heading"><h2>Publish</h2></div>
+          <div class="status-panel">
+            <span>Status</span>
+            <strong>Draft</strong>
+          </div>
+          <p class="help-copy">New books are saved as drafts. Publish them after adding the catalog record.</p>
+        </section>
+      </aside>
+
+      <div class="form-actions">
+        <button class="button button-primary" type="submit">Save as draft</button>
+        <a class="button button-secondary" th:href="@{/catalog}">Cancel</a>
+      </div>
+    </form>
+  </main>
+  <script>
+    (() => {
+      const coverUrl = document.getElementById('coverUrl');
+      const coverImage = document.getElementById('cover-preview-image');
+      const placeholder = document.getElementById('cover-placeholder');
+      if (!coverUrl || !coverImage || !placeholder) return;
+
+      coverUrl.addEventListener('input', () => {
+        const value = coverUrl.value.trim();
+        if (value) {
+          coverImage.src = value;
+          coverImage.hidden = false;
+          placeholder.hidden = true;
+        } else {
+          coverImage.hidden = true;
+          placeholder.hidden = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

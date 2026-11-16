@@ -4,9 +4,9 @@ import grp3.java.booknet.dto.user.response.ProfileResponse;
 import grp3.java.booknet.entity.user.User;
 import grp3.java.booknet.enums.user.*;
 import grp3.java.booknet.repository.user.*;
-import grp3.java.booknet.security.CustomOidcUser;
+import grp3.java.booknet.security.principal.CustomOidcUser;
 import grp3.java.booknet.security.service.CustomOidcUserService;
-import grp3.java.booknet.config.OAuthLinkSessionAttributes;
+import grp3.java.booknet.config.security.OAuthLinkSessionAttributes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,7 +81,7 @@ class OAuthCallbackTests {
         MvcResult result = callback(start).andExpect(redirectedUrl("/")).andReturn();
         MockHttpSession session = (MockHttpSession) result.getRequest().getSession(false);
         var profile = mvc.perform(get("/account/profile").session(session)).andExpect(status().isOk())
-                .andExpect(view().name("profile")).andReturn();
+                .andExpect(view().name("account/profile")).andReturn();
         var account = (ProfileResponse) profile.getModelAndView().getModel().get("profile");
         assertThat(account.email()).isEqualTo("google@example.com");
         assertThat(account.provider()).isEqualTo(AuthProvider.GOOGLE);

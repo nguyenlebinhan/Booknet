@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Delete book - Booknet</title>
+    <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+    <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
 </head>
 <body>
+<th:block th:replace="~{shared/navigation :: navigation}"></th:block>
 <main>
     <h1>Delete book</h1>
 
@@ -41,7 +44,7 @@
         </form>
     </section>
 
-    <a th:href="@{/admin/books}">Back to book management</a>
+    <a th:href="@{/catalog}">Back to catalog</a>
 </main>
 </body>
 </html>

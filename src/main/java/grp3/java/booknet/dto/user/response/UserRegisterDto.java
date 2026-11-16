@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Pattern;
-import grp3.java.booknet.config.AccountPolicy;
+import grp3.java.booknet.config.account.AccountPolicy;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

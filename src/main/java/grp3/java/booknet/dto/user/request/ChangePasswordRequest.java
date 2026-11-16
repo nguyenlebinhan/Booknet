@@ -1,6 +1,6 @@
 package grp3.java.booknet.dto.user.request;
 
-import grp3.java.booknet.config.AccountPolicy;
+import grp3.java.booknet.config.account.AccountPolicy;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

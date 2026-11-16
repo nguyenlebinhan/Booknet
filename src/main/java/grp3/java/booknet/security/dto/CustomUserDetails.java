@@ -5,11 +5,9 @@ import grp3.java.booknet.enums.user.AuthProvider;
 import grp3.java.booknet.enums.user.UserStatus;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Collections;
 
 @Getter
 public class CustomUserDetails implements UserDetails {
@@ -37,7 +35,7 @@ public class CustomUserDetails implements UserDetails {
         this.emailVerified = user.isEmailVerified();
         this.status = user.getStatus();
         this.authVersion = user.getAuthVersion();
-        this.authorities = Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()));
+        this.authorities = user.getRole().authorities();
     }
 
     @Override
@@ -75,4 +73,3 @@ public class CustomUserDetails implements UserDetails {
         return enabled && emailVerified && status == UserStatus.ACTIVE;
     }
 }
-

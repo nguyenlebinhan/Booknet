@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explore books | booknet</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}" href="/css/base/tokens.css">
+  <link rel="stylesheet" th:href="@{/css/layout/navbar.css}" href="/css/layout/navbar.css">
+  <link rel="stylesheet" th:href="@{/css/pages/catalog.css}" href="/css/pages/catalog.css">
+  <link rel="stylesheet" th:href="@{/css/layout/footer.css}" href="/css/layout/footer.css">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+</head>
+<body>
+  <th:block th:replace="~{shared/navigation :: navigation}"></th:block>
+
+  <main class="catalog-page">
+    <nav class="catalog-breadcrumb" aria-label="Breadcrumb">
+      <a th:href="@{/}">Home</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">Book catalog &amp; search</span>
+    </nav>
+
+    <header class="catalog-heading">
+      <div class="catalog-heading-copy">
+        <p class="catalog-kicker">THE BOOKNET COLLECTION</p>
+        <h1>Find a book. Open a world.</h1>
+        <p class="catalog-intro">Explore <strong th:text="${booksPage.totalElements}">0</strong> titles at booknet. Your next read is here.</p>
+        <div class="catalog-staff-note" th:if="${staffCatalog}">
+          <span class="catalog-staff-label">Staff catalog</span>
+          <span>Includes drafts and discontinued books</span>
+        </div>
+      </div>
+      <a class="catalog-staff-link" sec:authorize="hasAnyRole('LIBRARIAN', 'ADMIN')" th:href="@{/admin/books/create}">
+        <span class="catalog-staff-icon" aria-hidden="true">+</span>
+        <span class="catalog-staff-action">
+          <strong>Add a book</strong>
+          <small>Create a catalog record</small>
+        </span>
+        <span class="catalog-staff-arrow" aria-hidden="true">↗</span>
+      </a>
+    </header>
+
+    <form class="catalog-form" th:object="${filter}" th:action="@{/catalog}" method="get">
+      <div class="catalog-search">
+        <img th:src="@{/images/home/search.svg}" width="19" height="19" alt="">
+        <input type="search" th:field="*{keyword}" aria-label="Search books"
+               placeholder="Search by title, author or ISBN...">
+        <button type="submit">
+          <img th:src="@{/images/home/search.svg}" width="15" height="15" alt="">
+          <span>Search</span>
+        </button>
+      </div>
+
+      <div class="catalog-layout">
+        <aside class="catalog-sidebar" aria-label="Book filters">
+          <div class="filter-heading">
+            <h2>Filter books</h2>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7h9m4 0h3M4 17h3m4 0h9M13 4v6M7 14v6" />
+            </svg>
+          </div>
+
+          <fieldset class="filter-group" th:if="${!categories.isEmpty()}">
+            <legend>Genre</legend>
+            <label class="filter-option" th:each="category : ${categories}">
+              <input type="checkbox" th:field="*{categoryIds}" th:value="${category.id}">
+              <span th:text="${category.name}">Literature</span>
+            </label>
+          </fieldset>
+
+          <fieldset class="filter-group">
+            <legend>Status</legend>
+            <label class="filter-option">
+              <input type="checkbox" th:field="*{availability}" value="borrow">
+              <span>Available to borrow</span>
+            </label>
+            <label class="filter-option">
+              <input type="checkbox" th:field="*{availability}" value="reserve">
+              <span>Available to reserve</span>
+            </label>
+          </fieldset>
+
+          <fieldset class="filter-group">
+            <legend>Language</legend>
+            <label class="filter-option">
+              <input type="checkbox" th:field="*{languages}" value="vi">
+              <span>Vietnamese</span>
+            </label>
+            <label class="filter-option">
+              <input type="checkbox" th:field="*{languages}" value="en">
+              <span>English</span>
+            </label>
+          </fieldset>
+
+          <div class="filter-group filter-year">
+            <label for="publishYear">Publication year</label>
+            <select id="publishYear" th:field="*{publishYear}">
+              <option value="">All years</option>
+              <option th:each="year : ${publishYears}" th:value="${year}" th:text="${year}">2024</option>
+            </select>
+          </div>
+
+          <div class="filter-actions">
+            <button type="submit" class="apply-filters">Apply filters</button>
+            <a th:href="@{/catalog}">Clear all filters</a>
+          </div>
+        </aside>
+
+        <section class="catalog-results" aria-label="Book search results">
+          <div class="results-toolbar">
+            <p th:if="${booksPage.totalElements > 0}">
+              Showing <span th:text="${booksPage.number * booksPage.size + 1}">1</span>–<span
+                th:text="${booksPage.number * booksPage.size + booksPage.numberOfElements}">6</span>
+              of <span th:text="${booksPage.totalElements}">0</span> results
+            </p>
+            <p th:unless="${booksPage.totalElements > 0}">No books found</p>
+            <label class="sort-control" for="catalogSort">
+              <span>Sort by:</span>
+              <select id="catalogSort" th:field="*{sort}">
+                <option value="recent">Recently added</option>
+                <option value="title-asc">Title A–Z</option>
+                <option value="title-desc">Title Z–A</option>
+                <option value="year-desc">Newest publication</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="catalog-book-grid" th:if="${!booksPage.isEmpty()}">
+            <article class="catalog-book" th:each="book : ${booksPage.content}">
+              <div class="book-cover-stage">
+                <img class="book-cover" th:if="${book.coverUrl != null and !#strings.isEmpty(book.coverUrl)}"
+                     th:src="${book.coverUrl}" th:alt="${'Cover of ' + book.title}">
+                <div class="book-cover-placeholder"
+                     th:unless="${book.coverUrl != null and !#strings.isEmpty(book.coverUrl)}">
+                  <span class="placeholder-author" th:text="${#strings.listJoin(book.authors, ', ')}">booknet collection</span>
+                  <span class="placeholder-title" th:text="${book.title}">Book title</span>
+                  <span class="placeholder-mark">booknet</span>
+                </div>
+              </div>
+              <div class="book-information">
+                <p class="book-category" th:text="${book.categories.isEmpty() ? 'BOOKNET COLLECTION' : book.categories.get(0)}">LITERATURE</p>
+                <h2 th:text="${book.title}">Book title</h2>
+                <p class="book-author" th:text="${#strings.listJoin(book.authors, ', ')}">Author</p>
+                <span class="book-status publication-draft" th:if="${staffCatalog and book.publicationStatus.name() == 'DRAFT'}">Draft</span>
+                <span class="book-status publication-discontinued" th:if="${staffCatalog and book.publicationStatus.name() == 'DISCONTINUED'}">Discontinued</span>
+                <span class="book-status" th:if="${book.publicationStatus.name() == 'PUBLISHED' and book.availableCopies > 0}"
+                      th:text="${'Available · ' + book.availableCopies + '/' + book.totalCopies + ' copies'}">Available</span>
+                <span class="book-status on-loan" th:if="${book.publicationStatus.name() == 'PUBLISHED' and book.availableCopies == 0 and book.canReserve}">On loan · Reserve</span>
+                <span class="book-status unavailable" th:if="${book.publicationStatus.name() == 'PUBLISHED' and book.availableCopies == 0 and !book.canReserve}">Not in circulation</span>
+                <a class="book-manage-link" sec:authorize="hasAnyRole('LIBRARIAN', 'ADMIN')"
+                   th:href="@{/admin/books/{id}/edit(id=${book.id})}">Edit book</a>
+              </div>
+            </article>
+          </div>
+
+          <div class="catalog-empty" th:if="${booksPage.isEmpty()}">
+            <h2>No books match these filters</h2>
+            <p>Try another title or clear some filters to explore the collection.</p>
+            <a th:href="@{/catalog}">Clear all filters</a>
+          </div>
+
+          <nav class="catalog-pagination" th:if="${booksPage.totalPages > 1}" aria-label="Catalog pages">
+            <a class="page-arrow" th:if="${booksPage.hasPrevious()}"
+               th:href="@{/catalog(page=${booksPage.number - 1},keyword=${filter.keyword},categoryIds=${filter.categoryIds},availability=${filter.availability},languages=${filter.languages},publishYear=${filter.publishYear},sort=${filter.sort})}"
+               aria-label="Previous page">‹</a>
+            <span class="page-arrow disabled" th:unless="${booksPage.hasPrevious()}" aria-hidden="true">‹</span>
+
+            <a class="page-number" th:if="${!visiblePages.isEmpty() and visiblePages.get(0) > 0}"
+               th:href="@{/catalog(page=0,keyword=${filter.keyword},categoryIds=${filter.categoryIds},availability=${filter.availability},languages=${filter.languages},publishYear=${filter.publishYear},sort=${filter.sort})}">1</a>
+            <span class="page-ellipsis" th:if="${!visiblePages.isEmpty() and visiblePages.get(0) > 1}">…</span>
+
+            <a class="page-number" th:each="pageNumber : ${visiblePages}"
+               th:classappend="${pageNumber == booksPage.number} ? ' is-current' : ''"
+               th:attr="aria-current=${pageNumber == booksPage.number ? 'page' : null}"
+               th:href="@{/catalog(page=${pageNumber},keyword=${filter.keyword},categoryIds=${filter.categoryIds},availability=${filter.availability},languages=${filter.languages},publishYear=${filter.publishYear},sort=${filter.sort})}"
+               th:text="${pageNumber + 1}">1</a>
+
+            <span class="page-ellipsis" th:if="${!visiblePages.isEmpty() and visiblePages.get(visiblePages.size() - 1) < booksPage.totalPages - 2}">…</span>
+            <a class="page-number" th:if="${!visiblePages.isEmpty() and visiblePages.get(visiblePages.size() - 1) < booksPage.totalPages - 1}"
+               th:href="@{/catalog(page=${booksPage.totalPages - 1},keyword=${filter.keyword},categoryIds=${filter.categoryIds},availability=${filter.availability},languages=${filter.languages},publishYear=${filter.publishYear},sort=${filter.sort})}"
+               th:text="${booksPage.totalPages}">22</a>
+
+            <a class="page-arrow" th:if="${booksPage.hasNext()}"
+               th:href="@{/catalog(page=${booksPage.number + 1},keyword=${filter.keyword},categoryIds=${filter.categoryIds},availability=${filter.availability},languages=${filter.languages},publishYear=${filter.publishYear},sort=${filter.sort})}"
+               aria-label="Next page">›</a>
+            <span class="page-arrow disabled" th:unless="${booksPage.hasNext()}" aria-hidden="true">›</span>
+          </nav>
+
+          <p class="page-size-note" th:if="${booksPage.totalElements > 0}">6 books per page</p>
+
+          <div class="catalog-suggestion">
+            <span class="suggestion-icon" aria-hidden="true">?</span>
+            <p>Can't find your book? Try the author's name or suggest a title to a librarian.</p>
+            <a th:href="@{/contact}">Suggest a book <span aria-hidden="true">↗</span></a>
+          </div>
+        </section>
+      </div>
+    </form>
+  </main>
+
+  <footer th:replace="~{shared/footer :: footer-section}"></footer>
+</body>
+</html>

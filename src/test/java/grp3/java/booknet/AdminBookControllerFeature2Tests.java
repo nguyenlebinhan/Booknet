@@ -4,7 +4,7 @@ import grp3.java.booknet.dto.book.request.BookCreateForm;
 import grp3.java.booknet.repository.book.AuthorRepository;
 import grp3.java.booknet.repository.book.CategoryRepository;
 import grp3.java.booknet.repository.book.PublisherRepository;
-import grp3.java.booknet.service.BookService;
+import grp3.java.booknet.service.book.BookService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -25,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@TestPropertySource(properties = "spring.thymeleaf.prefix=file:src/main/resources/templates/")
 class AdminBookControllerFeature2Tests {
 
     @Autowired
@@ -43,7 +45,28 @@ class AdminBookControllerFeature2Tests {
                 .andExpect(model().attributeExists("bookForm"))
                 .andExpect(model().attributeExists("categories"))
                 .andExpect(model().attributeExists("authors"))
-                .andExpect(model().attributeExists("publishers"));
+                .andExpect(model().attributeExists("publishers"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("class=\"admin-sidebar\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("ADMIN SPACE")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("id=\"booknet-navbar\""))))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Book code *")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("name=\"id\""))));
+    }
+
+    @Test
+    @DisplayName("Librarian can display the add book form")
+    @WithMockUser(username = "librarian@booknet.vn", roles = {"LIBRARIAN"})
+    void librarianCanDisplayAddBookForm() throws Exception {
+        mockMvc.perform(get("/admin/books/create"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin/books/create"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("class=\"admin-sidebar\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("STAFF SPACE")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("id=\"booknet-navbar\""))))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Add a book")));
     }
 
     @Test
@@ -63,7 +86,7 @@ class AdminBookControllerFeature2Tests {
                         .param("publishYear", "2017")
                         .param("pageCount", "432"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin/books"))
+                .andExpect(redirectedUrl("/admin/books/100/edit"))
                 .andExpect(flash().attributeExists("successMessage"));
     }
 

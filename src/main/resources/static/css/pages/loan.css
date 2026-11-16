@@ -1,0 +1,472 @@
+/* ==========================================================================
+   Loan Confirmation Screen (Matching Figma Design System)
+   ========================================================================== */
+
+.loan-main {
+  padding: 40px 24px 80px;
+  background-color: var(--bn-paper);
+  min-height: calc(100vh - 80px);
+}
+
+.loan-container {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+/* Breadcrumb */
+.loan-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--bn-muted);
+  margin-bottom: 24px;
+}
+
+.loan-breadcrumb a {
+  color: var(--bn-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.loan-breadcrumb a:hover {
+  color: var(--bn-forest);
+}
+
+.loan-breadcrumb .sep {
+  opacity: 0.6;
+}
+
+.loan-breadcrumb .current {
+  color: var(--bn-ink);
+  font-weight: 500;
+}
+
+/* Header */
+.loan-header {
+  margin-bottom: 32px;
+}
+
+.loan-kicker {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bn-ochre);
+  margin-bottom: 8px;
+}
+
+.loan-title {
+  font-family: var(--bn-font-serif);
+  font-size: 38px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--bn-ink);
+  margin-bottom: 10px;
+}
+
+.loan-subtitle {
+  font-size: 15px;
+  color: var(--bn-muted);
+}
+
+/* Progress Stepper */
+.loan-stepper {
+  display: flex;
+  align-items: center;
+  background: var(--bn-surface);
+  border: 1px solid var(--bn-line);
+  border-radius: 12px;
+  padding: 16px 28px;
+  margin-bottom: 36px;
+  gap: 48px;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--bn-muted);
+}
+
+.step-item.is-completed {
+  color: var(--bn-ink);
+}
+
+.step-item.is-active {
+  color: var(--bn-ink);
+  font-weight: 600;
+}
+
+.step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 13px;
+  background: var(--bn-shelf);
+  color: var(--bn-muted);
+}
+
+.step-item.is-completed .step-badge {
+  background: var(--bn-forest);
+  color: #fff;
+}
+
+.step-item.is-active .step-badge {
+  background: var(--bn-forest);
+  color: #fff;
+}
+
+/* Grid Layout */
+.loan-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 28px;
+  align-items: start;
+}
+
+/* Left Cards */
+.loan-left {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.loan-card {
+  background: var(--bn-surface);
+  border: 1px solid var(--bn-line);
+  border-radius: 16px;
+  padding: 28px;
+}
+
+.loan-card-title {
+  font-family: var(--bn-font-serif);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--bn-ink);
+  margin-bottom: 20px;
+}
+
+/* Book item */
+.book-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.selected-book-card {
+  position: relative;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--bn-shelf);
+}
+
+.selected-book-card:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.selected-book-card-main {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.btn-remove-book {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--bn-muted);
+  border: 1px solid var(--bn-line);
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+.btn-remove-book:hover {
+  background: #fde8e7;
+  color: var(--bn-danger);
+  border-color: #f7c5c0;
+}
+
+.selected-book-cover {
+  width: 90px;
+  height: 125px;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  background: var(--bn-shelf);
+  flex-shrink: 0;
+}
+
+.selected-book-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.selected-book-title {
+  font-family: var(--bn-font-serif);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--bn-ink);
+  line-height: 1.3;
+}
+
+.selected-book-meta {
+  font-size: 14px;
+  color: var(--bn-muted);
+}
+
+.selected-book-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bn-sage);
+  color: var(--bn-forest);
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin: 6px 0;
+}
+
+.selected-book-location {
+  font-size: 13px;
+  color: var(--bn-muted);
+  line-height: 1.4;
+}
+
+/* Borrowing terms */
+.terms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.term-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.term-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  color: var(--bn-forest);
+  margin-top: 2px;
+}
+
+.term-heading {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--bn-ink);
+  margin-bottom: 4px;
+}
+
+.term-desc {
+  font-size: 13px;
+  color: var(--bn-muted);
+  line-height: 1.4;
+}
+
+/* Right Column (Loan details summary) */
+.loan-right {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.details-card {
+  background: var(--bn-surface);
+  border: 1px solid var(--bn-line);
+  border-radius: 16px;
+  padding: 28px;
+}
+
+.details-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  font-size: 14px;
+}
+
+.details-label {
+  color: var(--bn-muted);
+}
+
+.details-val {
+  font-weight: 500;
+  color: var(--bn-ink);
+}
+
+/* Return date banner */
+.return-banner {
+  background: var(--bn-sage);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 18px 0;
+  text-align: left;
+}
+
+.return-banner-kicker {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bn-forest);
+  opacity: 0.8;
+  margin-bottom: 6px;
+}
+
+.return-banner-date {
+  font-family: var(--bn-font-serif);
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--bn-forest);
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.return-banner-sub {
+  font-size: 13px;
+  color: var(--bn-forest);
+  opacity: 0.9;
+}
+
+/* Checkbox agreement */
+.loan-agreement {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 18px 0 24px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.loan-agreement input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--bn-forest);
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+.loan-agreement-text {
+  font-size: 13px;
+  color: var(--bn-ink);
+  line-height: 1.4;
+}
+
+/* Submit button */
+.btn-confirm-loan {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 20px;
+  background: var(--bn-forest);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-confirm-loan:hover:not(:disabled) {
+  background: var(--bn-forest-hover);
+}
+
+.btn-confirm-loan:disabled {
+  background: var(--bn-line);
+  color: var(--bn-muted);
+  cursor: not-allowed;
+}
+
+/* Back link */
+.btn-back-details {
+  display: block;
+  text-align: center;
+  font-size: 13px;
+  color: var(--bn-muted);
+  text-decoration: none;
+  margin-top: 14px;
+  transition: color 0.15s ease;
+}
+
+.btn-back-details:hover {
+  color: var(--bn-forest);
+}
+
+/* Notice Card */
+.notice-card {
+  display: flex;
+  gap: 14px;
+  background: var(--bn-sage);
+  border-radius: 12px;
+  padding: 16px 20px;
+  align-items: flex-start;
+}
+
+.notice-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: var(--bn-forest);
+  margin-top: 2px;
+}
+
+.notice-content h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bn-forest);
+  margin-bottom: 4px;
+}
+
+.notice-content p {
+  font-size: 13px;
+  color: var(--bn-forest);
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+.error-alert-box {
+  background: #fde8e7;
+  border: 1px solid var(--bn-danger);
+  color: var(--bn-danger);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 14px;
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+  .loan-grid {
+    grid-template-columns: 1fr;
+  }
+  .loan-stepper {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}

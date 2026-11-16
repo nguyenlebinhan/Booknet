@@ -421,7 +421,7 @@ class AccountFlowTests {
     void linkRequiresPasswordLoginRatherThanRememberMe() throws Exception {
         User user = localUser("reader@example.com", true);
         var remembered = new RememberMeAuthenticationToken("test-key", new CustomUserDetails(user),
-                List.of(new SimpleGrantedAuthority("ROLE_USER")));
+                List.of(new SimpleGrantedAuthority("ROLE_MEMBER")));
         mvc.perform(post("/account/link/google").with(authentication(remembered)).with(csrf()))
                 .andExpect(redirectedUrl("/")).andExpect(flash().attributeExists("googleLinkError"));
         beginLink(user);
@@ -442,7 +442,7 @@ class AccountFlowTests {
         var principal = service.loadUser(new OidcUserRequest(clients.findByRegistrationId("google"), accessToken, idToken));
         assertThat(principal).isInstanceOf(CustomOidcUser.class);
         assertThat(principal.getIdToken()).isSameAs(idToken);
-        assertThat(principal.getAuthorities()).extracting("authority").containsExactly("ROLE_USER");
+        assertThat(principal.getAuthorities()).extracting("authority").containsExactly("ROLE_MEMBER");
         assertThat(users.findByEmail("oidc@example.com")).isPresent();
         localUser("local@example.com", true);
         var localToken = new OidcIdToken("local-id-token", now, now.plusSeconds(300),

@@ -24,7 +24,6 @@ import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.hamcrest.Matchers.containsString;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -253,7 +252,7 @@ class ThymeleafAccountFlowTests {
                 .providerSubject("google-only").email(user.getEmail()).build());
         var google = new grp3.java.booknet.security.CustomOAuth2User(
                 new org.springframework.security.oauth2.core.user.DefaultOAuth2User(
-                        java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER")),
+                        java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_MEMBER")),
                         java.util.Map.of("sub", "google-only", "email", user.getEmail()), "sub"), user);
         var authentication = org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login().oauth2User(google);
         MvcResult profile = mvc.perform(get("/account/profile").with(authentication)).andExpect(view().name("profile"))

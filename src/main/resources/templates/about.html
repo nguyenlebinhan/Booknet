@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About booknet • booknet Library</title>
+
+  <!-- Google Fonts: Noto Serif & Inter & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Core & Component Stylesheets -->
+  <link rel="stylesheet" th:href="@{/css/tokens.css}" href="/css/tokens.css">
+  <link rel="stylesheet" th:href="@{/css/navbar.css}" href="/css/navbar.css">
+  <link rel="stylesheet" th:href="@{/css/footer.css}" href="/css/footer.css">
+  <link rel="stylesheet" th:href="@{/css/about.css}" href="/css/about.css">
+</head>
+
+<body class="bn-page-body">
+
+  <!-- Navbar Fragment -->
+  <header th:replace="~{Navbar :: navbar}"></header>
+
+  <main class="about-main-container">
+    
+    <!-- 1. HERO SECTION -->
+    <section class="about-hero-section">
+      <div class="about-hero-content">
+        <div class="bn-pill-badge">
+          <span class="badge-dot"></span>
+          <span>READ. CONNECT. GROW.</span>
+        </div>
+        
+        <h1 class="about-hero-title">
+          A book opens.<br>
+          <em>A world stays with you.</em>
+        </h1>
+        
+        <p class="about-hero-lead">
+          <strong>booknet</strong> is an open community library in the heart of the city — a familiar reading corner, an inspiring space for discovery, and a collection of carefully selected books, from timeless classics to new ideas.
+        </p>
+
+        <div class="about-hero-actions">
+          <a th:href="@{/catalog}" href="/catalog" class="bn-btn bn-btn-primary">
+            <span>Explore the catalog</span>
+            <i class="fas fa-arrow-right"></i>
+          </a>
+          <a th:href="@{/register}" href="/register" class="bn-btn bn-btn-outline">
+            <span>Get a member card</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Hero Visual Card with Figma Image -->
+      <div class="about-hero-visual">
+        <div class="visual-card-frame">
+          <img th:src="@{/images/library-space.jpg}" src="/images/library-space.jpg" alt="The booknet library space" class="visual-img">
+          
+          <div class="visual-floating-badge">
+            <div class="badge-icon-box">
+              <i class="fas fa-sun"></i>
+            </div>
+            <div class="badge-info-text">
+              <span class="status-live">Open today until 20:00</span>
+              <span class="location-label">28 Nguyễn Du, Hà Nội · A quiet corner in the city</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. STATS SECTION (booknet in numbers) -->
+    <section class="about-stats-strip">
+      <div class="stats-header-bar">
+        <span class="strip-label">BOOKNET IN NUMBERS</span>
+        <div class="strip-divider-line"></div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-number">12,000+</span>
+          <span class="stat-caption">Carefully selected titles</span>
+          <p class="stat-sub">Literature, philosophy, science and art</p>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-number">3,200+</span>
+          <span class="stat-caption">Fellow readers</span>
+          <p class="stat-sub">Members who read, connect and share ideas</p>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-number">14 days</span>
+          <span class="stat-caption">Per standard loan</span>
+          <p class="stat-sub">Flexible online renewals for another 7–14 days</p>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-number">01</span>
+          <span class="stat-caption">One community of book lovers</span>
+          <p class="stat-sub">Building a lasting reading habit together</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. OUR STORY & VALUES -->
+    <section class="about-story-section">
+      <div class="story-container">
+        
+        <div class="story-left-col">
+          <div class="section-tag-box">OUR STORY & MISSION</div>
+          <h2 class="section-title-serif">Where books bring like-minded readers together</h2>
+          <p class="story-p">
+            At <strong>booknet</strong>, we believe that turning a page is more than taking in information. It is the start of a conversation with yourself and a journey towards new perspectives.
+          </p>
+          <p class="story-p">
+            Our mission is to make reading a welcoming part of modern city life. booknet brings together the calm of a traditional library and the convenience of digital library services. Whether you are researching, looking for a weekend novel or joining a book discussion, there is a corner here for you.
+          </p>
+
+          <div class="quote-card-quote">
+            <i class="fas fa-quote-left quote-icon"></i>
+            <p class="quote-text">
+              "A book opens. A world stays with you. A reading space for everyone."
+            </p>
+            <span class="quote-author">— The booknet library promise</span>
+          </div>
+        </div>
+
+        <div class="story-right-col">
+          <div class="values-stack">
+            
+            <div class="value-item-card">
+              <div class="value-icon-circle">
+                <i class="fas fa-feather-pointed"></i>
+              </div>
+              <div class="value-content">
+                <h3 class="value-heading">Selected with care</h3>
+                <p class="value-desc">
+                  Our librarians carefully review every book on the shelf, choosing thoughtful writing and ideas that stay with readers.
+                </p>
+              </div>
+            </div>
+
+            <div class="value-item-card">
+              <div class="value-icon-circle">
+                <i class="fas fa-compass"></i>
+              </div>
+              <div class="value-content">
+                <h3 class="value-heading">An open and inclusive space</h3>
+                <p class="value-desc">
+                  We welcome readers of every age, from students and working adults to older readers, in a friendly and inclusive space.
+                </p>
+              </div>
+            </div>
+
+            <div class="value-item-card">
+              <div class="value-icon-circle">
+                <i class="fas fa-microchip"></i>
+              </div>
+              <div class="value-content">
+                <h3 class="value-heading">A connected reading experience</h3>
+                <p class="value-desc">
+                  An online catalog, barcode borrowing and returns, QR fine payments and AI-assisted recommendations help readers find their next book.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 4. SIMPLE JOURNEY: A guide to borrowing -->
+    <section class="about-journey-section">
+      <div class="journey-header">
+        <span class="section-tag-box">A SIMPLE JOURNEY</span>
+        <h2 class="journey-title-serif">Bring books home, carry ideas further.</h2>
+        <p class="journey-subtitle">Three simple steps to start your reading journey with booknet</p>
+      </div>
+
+      <div class="journey-steps-grid">
+        <div class="step-card">
+          <div class="step-badge-number">01</div>
+          <h3 class="step-title">Become a reader</h3>
+          <p class="step-desc">
+            Create a free account, activate your digital member card and start a list of books you would like to read.
+          </p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-badge-number">02</div>
+          <h3 class="step-title">Choose a book</h3>
+          <p class="step-desc">
+            Search by title, author or topic, check availability and request a loan or reservation.
+          </p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-badge-number">03</div>
+          <h3 class="step-title">Read your way</h3>
+          <p class="step-desc">
+            Collect your books at 28 Nguyễn Du, enjoy reading at your own pace and renew online.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. EVENTS AT BOOKNET (See you at the library) -->
+    <section class="about-events-section">
+      <div class="events-top-row">
+        <div>
+          <span class="section-tag-box">COMMUNITY & EVENTS</span>
+          <h2 class="section-title-serif">What's on at booknet</h2>
+        </div>
+        <a th:href="@{/services}" href="/services" class="all-events-link">
+          <span>View all events</span>
+          <i class="fas fa-arrow-up-right-from-square"></i>
+        </a>
+      </div>
+
+      <div class="events-cards-grid">
+        <div class="event-card-item">
+          <div class="event-date-box">
+            <span class="date-num">07</span>
+            <span class="date-month">NOVEMBER</span>
+          </div>
+          <div class="event-details-box">
+            <h3 class="event-title">Slow reading together</h3>
+            <p class="event-meta">
+              <i class="far fa-clock"></i> 09:00 – 11:00 &nbsp;·&nbsp; 
+              <i class="fas fa-location-dot"></i> Shared reading room (Level 1)
+            </p>
+            <p class="event-desc">
+              Put your phone aside and join fellow readers for two uninterrupted hours of quiet reading.
+            </p>
+          </div>
+          <div class="event-arrow-box">
+            <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+
+        <div class="event-card-item">
+          <div class="event-date-box">
+            <span class="date-num">14</span>
+            <span class="date-month">NOVEMBER</span>
+          </div>
+          <div class="event-details-box">
+            <h3 class="event-title">Stories from the pages</h3>
+            <p class="event-meta">
+              <i class="far fa-clock"></i> 15:00 – 16:30 &nbsp;·&nbsp; 
+              <i class="fas fa-location-dot"></i> Children and family corner
+            </p>
+            <p class="event-desc">
+              Stories and interactive quizzes for young readers, encouraging a love of books from an early age.
+            </p>
+          </div>
+          <div class="event-arrow-box">
+            <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. FINAL INVITATION CTA (Figma Component 2:47066) -->
+    <section class="about-invitation-cta">
+      <div class="invitation-inner-card">
+        <div class="invitation-text-col">
+          <span class="invitation-tag">JOIN BOOKNET</span>
+          <h2 class="invitation-heading">
+            There's always<br>
+            <em>a place for you.</em>
+          </h2>
+          <p class="invitation-desc">
+            Join the booknet reading community to discover new ideas, save your favorite books and keep up with our cultural events.
+          </p>
+          <div class="invitation-actions">
+            <a th:href="@{/register}" href="/register" class="bn-btn bn-btn-light">
+              <span>Become a member for free</span>
+              <i class="fas fa-arrow-right"></i>
+            </a>
+            <a th:href="@{/contact}" href="/contact" class="bn-btn bn-btn-link-white">
+              <span>Contact a librarian</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="invitation-image-col">
+          <img th:src="@{/images/reading-room.jpg}" src="/images/reading-room.jpg" alt="The booknet reading room" class="invitation-space-img">
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer Fragment -->
+  <footer th:replace="~{footer :: footer-section}"></footer>
+
+</body>
+</html>
+

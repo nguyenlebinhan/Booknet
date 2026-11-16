@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Delete book - Booknet</title>
+</head>
+<body>
+<main>
+    <h1>Delete book</h1>
+
+    <p th:if="${globalError}" th:text="${globalError}" role="alert"></p>
+
+    <section th:if="${deletionCheck}">
+        <h2 th:text="${deletionCheck.title}">Book title</h2>
+        <dl>
+            <dt>Book code</dt>
+            <dd th:text="${deletionCheck.bookCode}">BOOK-CODE</dd>
+            <dt>Hard deletion</dt>
+            <dd th:if="${deletionCheck.hardDeleteAllowed}">Allowed after confirmation</dd>
+            <dd th:unless="${deletionCheck.hardDeleteAllowed}">Blocked by existing references</dd>
+        </dl>
+
+        <div th:unless="${deletionCheck.hardDeleteAllowed}">
+            <p>This book has references that must be retained. Hard deletion is unavailable.</p>
+            <ul>
+                <li th:each="reference : ${deletionCheck.blockingReferences}" th:text="${reference}">historical reference</li>
+            </ul>
+            <form th:action="@{/admin/books/{id}/discontinue(id=${deletionCheck.bookId})}" method="post">
+                <button type="submit">Discontinue book instead</button>
+            </form>
+        </div>
+
+        <form th:if="${deletionCheck.hardDeleteAllowed}"
+              th:action="@{/admin/books/{id}/delete(id=${deletionCheck.bookId})}"
+              th:object="${deleteForm}" method="post">
+            <label for="confirmationCode">Enter the exact book code to confirm permanent deletion</label>
+            <input id="confirmationCode" type="text" th:field="*{confirmationCode}" autocomplete="off" required>
+            <p th:if="${#fields.hasErrors('confirmationCode')}" th:errors="*{confirmationCode}" role="alert"></p>
+            <button type="submit">Permanently delete</button>
+        </form>
+    </section>
+
+    <a th:href="@{/admin/books}">Back to book management</a>
+</main>
+</body>
+</html>

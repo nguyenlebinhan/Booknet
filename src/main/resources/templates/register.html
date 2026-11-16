@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Become a member | booknet Library</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" th:href="@{/css/auth.css}" href="/css/auth.css">
+</head>
+<body class="auth-page">
+
+  <div class="auth-layout">
+
+    <aside th:replace="~{authFragments :: aside('register-library.jpg', 'Every reader,', 'a story of their own.')}"></aside>
+
+    <main class="auth-main">
+      <div class="auth-content">
+
+        <header class="auth-header">
+          <p class="auth-eyebrow">GET STARTED WITH booknet</p>
+          <h1 class="auth-title auth-title-small">Become a reader.</h1>
+          <p class="auth-subtitle">Create a free account. A whole library awaits.</p>
+        </header>
+
+        <div th:if="${globalError != null}" class="auth-notice auth-notice-error" role="alert" th:text="${globalError}">Something went wrong during registration.</div>
+
+        <form class="auth-form" th:action="@{/register}" th:object="${user}" method="post">
+
+          <div class="auth-fields">
+            <div class="auth-field">
+              <label for="fullName" class="auth-label">Full name *</label>
+              <div class="auth-input-box" th:classappend="${#fields.hasErrors('fullName')} ? 'has-error'">
+                <input type="text" id="fullName" th:field="*{fullName}" class="auth-input" placeholder="Your full name" autocomplete="name" required>
+              </div>
+              <p class="auth-field-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}">Full name is invalid.</p>
+            </div>
+
+            <div class="auth-field-row">
+              <div class="auth-field">
+                <label for="email" class="auth-label">Email *</label>
+                <div class="auth-input-box" th:classappend="${#fields.hasErrors('email')} ? 'has-error'">
+                  <input type="email" id="email" th:field="*{email}" class="auth-input" placeholder="name@example.com" autocomplete="email" required>
+                </div>
+                <p class="auth-field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Email is invalid.</p>
+              </div>
+
+              <div class="auth-field">
+                <label for="phone" class="auth-label">Phone number *</label>
+                <div class="auth-input-box" th:classappend="${#fields.hasErrors('phone')} ? 'has-error'">
+                  <input type="tel" id="phone" th:field="*{phone}" class="auth-input" placeholder="0912 345 678" autocomplete="tel" pattern="[+]?[0-9 \(\)\-]{8,19}" title="Enter a valid phone number" required>
+                </div>
+                <p class="auth-field-error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}">Phone number is invalid.</p>
+              </div>
+            </div>
+
+            <div class="auth-field">
+              <label for="password" class="auth-label">Password *</label>
+              <div class="auth-input-box" th:classappend="${#fields.hasErrors('password')} ? 'has-error'">
+                <input type="password" id="password" th:field="*{password}" class="auth-input" autocomplete="new-password" minlength="8" maxlength="32" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*" title="At least 8 characters, including uppercase, lowercase and numbers" required>
+                <button th:replace="~{authFragments :: passwordToggle}"></button>
+              </div>
+              <p class="auth-field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Password is invalid.</p>
+              <p class="auth-field-hint" th:unless="${#fields.hasErrors('password')}">At least 8 characters, including uppercase, lowercase and numbers.</p>
+            </div>
+
+            <div class="auth-strength" id="password-strength" aria-hidden="true">
+              <span></span><span></span><span></span><span></span>
+            </div>
+
+            <div class="auth-field">
+              <label for="confirmPassword" class="auth-label">Confirm password *</label>
+              <div class="auth-input-box" th:classappend="${#fields.hasErrors('confirmPassword')} ? 'has-error'">
+                <input type="password" id="confirmPassword" th:field="*{confirmPassword}" class="auth-input" autocomplete="new-password" required>
+                <button th:replace="~{authFragments :: passwordToggle}"></button>
+              </div>
+              <p class="auth-field-error" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}">Passwords do not match.</p>
+            </div>
+          </div>
+
+          <div class="auth-field">
+            <label class="auth-check">
+              <input type="checkbox" th:field="*{termsAccepted}" class="auth-checkbox" required>
+              <span>I agree to booknet Library's Terms of use, Privacy policy and Borrowing policy.</span>
+            </label>
+            <p class="auth-field-error" th:if="${#fields.hasErrors('termsAccepted')}" th:errors="*{termsAccepted}">You must accept the terms.</p>
+          </div>
+
+          <div class="auth-actions">
+            <button type="submit" class="auth-btn auth-btn-primary">
+              <img th:src="@{/images/auth/arrow-right.svg}" width="17" height="17" alt="">
+              <span>Create member account</span>
+            </button>
+            <a th:replace="~{authFragments :: googleButton}"></a>
+          </div>
+
+        </form>
+
+        <div class="auth-message">
+          <img th:src="@{/images/auth/info.svg}" width="21" height="21" alt="">
+          <div class="auth-message-body">
+            <p class="auth-message-title">One small step before borrowing</p>
+            <p class="auth-message-text">Verify your email, then bring your ID to the desk to activate your card. Each member may borrow up to 5 books.</p>
+          </div>
+        </div>
+
+        <p class="auth-switch auth-switch-small">
+          <span>Already have an account?</span>
+          <a th:href="@{/login}" class="auth-link">Sign in now →</a>
+        </p>
+
+      </div>
+    </main>
+  </div>
+
+  <script th:src="@{/js/auth.js}" src="/js/auth.js"></script>
+</body>
+</html>

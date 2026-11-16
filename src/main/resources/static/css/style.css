@@ -1,0 +1,294 @@
+:root {
+  --bn-bg-dark: #0a0e1a;
+  --bn-card-bg: rgba(15, 30, 54, 0.85);
+  --bn-border-color: rgba(99, 102, 241, 0.25);
+  --bn-primary: #4f46e5;
+  --bn-primary-hover: #4338ca;
+  --bn-accent: #6366f1;
+  --bn-text-main: #f8fafc;
+  --bn-text-muted: #94a3b8;
+  --bn-input-bg: rgba(15, 23, 42, 0.7);
+  --bn-input-border: #1e293b;
+}
+
+body.auth-page {
+  background: radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.18) 0%, transparent 40%),
+              radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.14) 0%, transparent 45%),
+              var(--bn-bg-dark);
+  min-height: 100vh;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  color: var(--bn-text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 15px;
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 480px;
+}
+
+.auth-card {
+  background: var(--bn-card-bg);
+  border: 1px solid var(--bn-border-color);
+  border-radius: 20px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 30px rgba(79, 70, 229, 0.15);
+  padding: 40px 36px;
+}
+
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  margin-bottom: 24px;
+}
+
+.brand-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #4f46e5, #818cf8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 22px;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+}
+
+.brand-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #ffffff 40%, #a5b4fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+}
+
+.auth-header h1 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.auth-header p {
+  font-size: 0.92rem;
+  color: var(--bn-text-muted);
+  margin-bottom: 24px;
+}
+
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background-color: #ffffff;
+  color: #1e293b;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: all 0.25s ease;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-google:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: rgba(148, 163, 184, 0.2);
+}
+
+.auth-divider span {
+  padding: 0 14px;
+}
+
+.form-label {
+  color: #cbd5e1;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.input-group-custom {
+  position: relative;
+}
+
+.input-group-custom .input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 1.1rem;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.form-control-custom {
+  background-color: var(--bn-input-bg);
+  border: 1px solid var(--bn-input-border);
+  border-radius: 12px;
+  color: #f8fafc;
+  padding: 12px 14px 12px 44px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.form-control-custom:focus {
+  background-color: rgba(15, 23, 42, 0.9);
+  border-color: var(--bn-accent);
+  color: #fff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+
+.form-control-custom.is-invalid {
+  border-color: #ef4444;
+  background-image: none;
+}
+
+.form-control-custom::placeholder {
+  color: #475569;
+}
+
+.field-error {
+  color: #f87171;
+  font-size: 0.82rem;
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.form-check-input {
+  background-color: var(--bn-input-bg);
+  border-color: #334155;
+}
+
+.form-check-input:checked {
+  background-color: var(--bn-primary);
+  border-color: var(--bn-primary);
+}
+
+.form-check-label {
+  color: var(--bn-text-muted);
+  font-size: 0.88rem;
+}
+
+.form-check-label a {
+  color: #818cf8;
+  text-decoration: none;
+}
+
+.form-check-label a:hover {
+  text-decoration: underline;
+}
+
+.btn-submit {
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  border: none;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 13px 20px;
+  border-radius: 12px;
+  width: 100%;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4);
+}
+
+.btn-submit:hover {
+  background: linear-gradient(135deg, #4338ca, #4f46e5);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.5);
+  color: #fff;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 24px;
+  color: var(--bn-text-muted);
+  font-size: 0.9rem;
+}
+
+.auth-footer a {
+  color: #818cf8;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.auth-footer a:hover {
+  color: #c7d2fe;
+  text-decoration: underline;
+}
+
+.alert-custom-error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.88rem;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.alert-custom-success {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #86efac;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.88rem;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.alert-custom-info {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #93c5fd;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.88rem;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+

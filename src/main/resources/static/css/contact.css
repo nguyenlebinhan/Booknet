@@ -1,0 +1,677 @@
+/* ===================================================================
+   BookNet - Contact Page Stylesheet (Figma Design Token Implementation)
+   Canvas: #f8f6f0 | Forest Accent: #173f35 | Slate: #202e28
+   Typography: Noto Serif + Inter
+   =================================================================== */
+
+:root {
+  --bn-f-bg: #f8f6f0;
+  --bn-f-card: #fffefa;
+  --bn-f-soft: #efeadf;
+  --bn-f-border: #dfe2d7;
+  --bn-f-border-hover: #c4c9bb;
+  
+  --bn-f-primary: #173f35;
+  --bn-f-primary-hover: #0f2c25;
+  --bn-f-primary-light: #25584b;
+
+  --bn-f-text-dark: #202e28;
+  --bn-f-text-muted: #5e6d64;
+  --bn-f-text-subtle: #73786e;
+
+  --bn-f-accent-amber: #e37a4b;
+  --bn-f-accent-tag: #e8ede3;
+
+  --bn-font-serif: 'Noto Serif', Georgia, 'Times New Roman', serif;
+  --bn-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --bn-radius-sm: 8px;
+  --bn-radius-md: 14px;
+  --bn-radius-lg: 20px;
+  --bn-radius-xl: 28px;
+  --bn-radius-full: 9999px;
+
+  --bn-f-shadow-sm: 0 2px 8px rgba(32, 46, 40, 0.04);
+  --bn-f-shadow-md: 0 10px 30px rgba(32, 46, 40, 0.06);
+  --bn-f-shadow-lg: 0 20px 45px rgba(32, 46, 40, 0.09);
+}
+
+/* Page Body Base */
+body.bn-page-body {
+  background-color: var(--bn-f-bg);
+  color: var(--bn-f-text-dark);
+  font-family: var(--bn-font-sans);
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+.contact-main-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 40px 24px 80px 24px;
+}
+
+/* Common Pill Badge */
+.bn-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--bn-f-accent-tag);
+  color: var(--bn-f-primary);
+  padding: 6px 14px;
+  border-radius: var(--bn-radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--bn-f-primary);
+}
+
+.section-tag-box {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--bn-f-primary);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* Typography Helpers */
+.section-title-serif {
+  font-family: var(--bn-font-serif);
+  font-size: 34px;
+  font-weight: 500;
+  color: var(--bn-f-text-dark);
+  line-height: 1.25;
+  margin-bottom: 12px;
+}
+
+/* ===================================================================
+   1. HERO HEADER
+   =================================================================== */
+.contact-hero-section {
+  text-align: center;
+  max-width: 720px;
+  margin: 20px auto 50px auto;
+}
+
+.contact-hero-title {
+  font-family: var(--bn-font-serif);
+  font-size: 48px;
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--bn-f-text-dark);
+  margin-bottom: 18px;
+}
+
+.contact-hero-title em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--bn-f-primary);
+}
+
+.contact-hero-lead {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--bn-f-text-muted);
+  margin: 0;
+}
+
+/* ===================================================================
+   2. CONTACT GRID SECTION
+   =================================================================== */
+.contact-grid-section {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 40px;
+  align-items: start;
+  margin-bottom: 70px;
+}
+
+/* Left Column: Direct Info Cards */
+.contact-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.contact-card-box {
+  background-color: var(--bn-f-card);
+  border: 1px solid var(--bn-f-border);
+  border-radius: var(--bn-radius-lg);
+  padding: 28px;
+  display: flex;
+  gap: 20px;
+  box-shadow: var(--bn-f-shadow-sm);
+  transition: all 0.25s ease;
+}
+
+.contact-card-box:hover {
+  border-color: var(--bn-f-border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--bn-f-shadow-md);
+}
+
+.card-icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--bn-radius-md);
+  background-color: var(--bn-f-soft);
+  color: var(--bn-f-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.card-content-area {
+  flex-grow: 1;
+}
+
+.card-sub-tag {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--bn-f-text-subtle);
+  margin-bottom: 4px;
+}
+
+.card-headline {
+  font-family: var(--bn-font-serif);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--bn-f-text-dark);
+  margin: 0 0 8px 0;
+}
+
+.card-main-text {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--bn-f-text-dark);
+  line-height: 1.5;
+  margin: 0 0 6px 0;
+}
+
+.card-hint-text {
+  font-size: 12.5px;
+  color: var(--bn-f-text-muted);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Schedule List */
+.hours-schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.hours-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13.5px;
+}
+
+.hours-row .day-label {
+  color: var(--bn-f-text-muted);
+}
+
+.hours-row .time-label {
+  font-weight: 600;
+  color: var(--bn-f-text-dark);
+}
+
+.hours-row.muted {
+  font-size: 12px;
+  color: var(--bn-f-text-subtle);
+}
+
+/* Channels List */
+.contact-channels-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.channel-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.channel-title {
+  font-size: 12px;
+  color: var(--bn-f-text-muted);
+}
+
+.channel-link {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--bn-f-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.channel-link:hover {
+  text-decoration: underline;
+  color: var(--bn-f-primary-hover);
+}
+
+/* Library Notice Banner */
+.library-notice-banner {
+  background-color: var(--bn-f-soft);
+  border: 1px solid var(--bn-f-border);
+  border-radius: var(--bn-radius-md);
+  padding: 18px 20px;
+  display: flex;
+  gap: 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--bn-f-text-dark);
+}
+
+.library-notice-banner i {
+  color: var(--bn-f-primary);
+  font-size: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.library-notice-banner p {
+  margin: 4px 0 0 0;
+  color: var(--bn-f-text-muted);
+}
+
+.library-notice-banner a {
+  color: var(--bn-f-primary);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* Right Column: Form Card */
+.form-card-container {
+  background-color: var(--bn-f-card);
+  border: 1px solid var(--bn-f-border);
+  border-radius: var(--bn-radius-xl);
+  padding: 40px;
+  box-shadow: var(--bn-f-shadow-md);
+}
+
+.form-header-area {
+  margin-bottom: 28px;
+}
+
+.form-title-serif {
+  font-family: var(--bn-font-serif);
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--bn-f-text-dark);
+  margin: 0 0 6px 0;
+}
+
+.form-desc {
+  font-size: 14px;
+  color: var(--bn-f-text-muted);
+  margin: 0;
+}
+
+/* Alert Success */
+.bn-alert-success {
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  border-radius: var(--bn-radius-sm);
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Form Controls (Matching Figma Inputs) */
+.bn-contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bn-f-text-dark);
+}
+
+.field-label .required {
+  color: #dc2626;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--bn-f-text-subtle);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.bn-text-input,
+.bn-select-input,
+.bn-textarea-input {
+  width: 100%;
+  background-color: var(--bn-f-card);
+  border: 1px solid var(--bn-f-border);
+  border-radius: var(--bn-radius-sm);
+  padding: 12px 14px 12px 40px;
+  font-family: var(--bn-font-sans);
+  font-size: 14px;
+  color: var(--bn-f-text-dark);
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.bn-select-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%235e6d64%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.textarea-wrapper {
+  align-items: flex-start;
+}
+
+.textarea-wrapper .input-icon {
+  top: 14px;
+}
+
+.bn-textarea-input {
+  padding-left: 40px;
+  resize: vertical;
+  min-height: 120px;
+}
+
+.bn-text-input:focus,
+.bn-select-input:focus,
+.bn-textarea-input:focus {
+  border-color: var(--bn-f-primary);
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(23, 63, 53, 0.12);
+}
+
+.bn-submit-btn {
+  background-color: var(--bn-f-primary);
+  color: #fffefa;
+  border: none;
+  border-radius: var(--bn-radius-sm);
+  padding: 14px 28px;
+  font-family: var(--bn-font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  margin-top: 6px;
+}
+
+.bn-submit-btn:hover {
+  background-color: var(--bn-f-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(23, 63, 53, 0.25);
+}
+
+.form-privacy-note {
+  font-size: 12px;
+  color: var(--bn-f-text-subtle);
+  margin: 6px 0 0 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===================================================================
+   3. FAQ SECTION
+   =================================================================== */
+.contact-faq-section {
+  padding: 30px 0 70px 0;
+}
+
+.faq-header-center {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto 40px auto;
+}
+
+.faq-lead-sub {
+  font-size: 14.5px;
+  color: var(--bn-f-text-muted);
+  margin: 0;
+}
+
+.faq-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.faq-item-card {
+  background-color: var(--bn-f-card);
+  border: 1px solid var(--bn-f-border);
+  border-radius: var(--bn-radius-md);
+  padding: 26px;
+  transition: all 0.25s ease;
+}
+
+.faq-item-card:hover {
+  border-color: var(--bn-f-border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--bn-f-shadow-sm);
+}
+
+.faq-question {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.faq-question i {
+  color: var(--bn-f-primary);
+  font-size: 18px;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.faq-question h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--bn-f-text-dark);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.faq-answer {
+  font-size: 14px;
+  color: var(--bn-f-text-muted);
+  line-height: 1.65;
+  margin: 0;
+  padding-left: 30px;
+}
+
+.faq-answer a {
+  color: var(--bn-f-primary);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* ===================================================================
+   4. MAP SECTION
+   =================================================================== */
+.contact-map-section {
+  margin: 20px 0;
+}
+
+.map-container-card {
+  background-color: var(--bn-f-card);
+  border: 1px solid var(--bn-f-border);
+  border-radius: var(--bn-radius-xl);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  box-shadow: var(--bn-f-shadow-md);
+}
+
+.map-details-side {
+  padding: 45px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.map-title-serif {
+  font-family: var(--bn-font-serif);
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--bn-f-text-dark);
+  margin: 0 0 12px 0;
+}
+
+.map-desc {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--bn-f-text-muted);
+  margin-bottom: 24px;
+}
+
+.transit-tips-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 28px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.transit-tips-list li {
+  display: flex;
+  gap: 12px;
+  font-size: 13.5px;
+  color: var(--bn-f-text-muted);
+  align-items: flex-start;
+}
+
+.transit-tips-list li i {
+  color: var(--bn-f-primary);
+  font-size: 15px;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.map-frame-side {
+  background-color: var(--bn-f-soft);
+  min-height: 380px;
+}
+
+.map-frame-side iframe {
+  display: block;
+}
+
+/* Buttons */
+.bn-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 26px;
+  border-radius: var(--bn-radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.bn-btn-primary {
+  background-color: var(--bn-f-primary);
+  color: #fffefa;
+  border: 1px solid var(--bn-f-primary);
+}
+
+.bn-btn-primary:hover {
+  background-color: var(--bn-f-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(23, 63, 53, 0.25);
+  color: #fff;
+}
+
+/* ===================================================================
+   RESPONSIVE DESIGN
+   =================================================================== */
+@media (max-width: 992px) {
+  .contact-grid-section {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .map-container-card {
+    grid-template-columns: 1fr;
+  }
+
+  .map-details-side {
+    padding: 36px 30px;
+  }
+
+  .faq-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .contact-hero-title {
+    font-size: 34px;
+  }
+
+  .form-card-container {
+    padding: 26px 20px;
+  }
+
+  .contact-card-box {
+    padding: 20px;
+  }
+}
+

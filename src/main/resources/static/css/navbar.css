@@ -1,0 +1,246 @@
+.bn-navbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 88px;
+  padding: 0 80px;
+  background: var(--bn-surface);
+  border-bottom: 1px solid var(--bn-line);
+}
+
+.bn-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.bn-brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 44px;
+  background: var(--bn-forest);
+  border-radius: 20px 20px 4px 4px;
+}
+
+.bn-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bn-brand-name {
+  color: var(--bn-forest);
+  font-family: var(--bn-font-serif);
+  font-size: 25px;
+  font-weight: 600;
+}
+
+.bn-brand-tagline {
+  color: var(--bn-muted);
+  font-size: 9px;
+  letter-spacing: 1.7px;
+}
+
+.bn-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  padding: 0;
+  list-style: none;
+}
+
+.bn-nav-link {
+  color: var(--bn-muted);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.bn-nav-link:hover {
+  color: var(--bn-forest);
+}
+
+.bn-account {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.bn-signin {
+  color: var(--bn-forest);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.bn-signin:hover {
+  text-decoration: underline;
+}
+
+.bn-register {
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 16px;
+  background: var(--bn-forest);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.bn-register:hover {
+  background: var(--bn-forest-hover);
+}
+
+.bn-bell {
+  display: flex;
+}
+
+.bn-account-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--bn-line);
+}
+
+.bn-user {
+  position: relative;
+}
+
+.bn-user-button {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--bn-ink);
+  cursor: pointer;
+  font: 400 13px var(--bn-font-sans);
+}
+
+.bn-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--bn-sage);
+  border-radius: 100px;
+  color: var(--bn-forest);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bn-user-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 20;
+  min-width: 140px;
+  padding: 6px;
+  background: var(--bn-surface);
+  border: 1px solid var(--bn-line);
+  border-radius: 6px;
+  box-shadow: 0 6px 16px rgba(41, 52, 41, 0.13);
+}
+
+.bn-user-menu button,
+.bn-user-menu a {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  color: var(--bn-ink);
+  cursor: pointer;
+  font: 400 13px var(--bn-font-sans);
+  text-align: left;
+  text-decoration: none;
+}
+
+.bn-user-menu button:hover,
+.bn-user-menu a:hover {
+  background: var(--bn-sage);
+}
+
+.bn-menu-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.bn-menu-toggle span {
+  width: 20px;
+  height: 2px;
+  background: var(--bn-forest);
+}
+
+@media (max-width: 1280px) {
+  .bn-navbar {
+    padding: 0 40px;
+  }
+}
+
+@media (max-width: 900px) {
+  .bn-navbar {
+    padding: 0 24px;
+  }
+
+  .bn-menu-toggle {
+    display: flex;
+    order: 3;
+  }
+
+  .bn-nav-links {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    z-index: 20;
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 24px;
+    background: var(--bn-surface);
+    border-bottom: 1px solid var(--bn-line);
+  }
+
+  .bn-nav-links.open {
+    display: flex;
+  }
+
+  .bn-account {
+    gap: 12px;
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .bn-brand-text,
+  .bn-user-name,
+  .bn-account-divider {
+    display: none;
+  }
+
+  .bn-user-button {
+    gap: 6px;
+  }
+
+  .bn-register {
+    padding: 0 10px;
+    font-size: 12px;
+  }
+}

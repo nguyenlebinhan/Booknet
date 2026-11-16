@@ -71,6 +71,8 @@
     </section>
 
     <section class="home-account" aria-label="Account messages">
+      <div class="home-notice" role="alert" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+      <div class="home-notice success" role="status" th:if="${successMessage}" th:text="${successMessage}"></div>
       <div class="home-notice success" role="status" th:if="${googleLinkedMessage}">
         Google has been linked to this BookNet account.
       </div>

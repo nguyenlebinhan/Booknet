@@ -70,7 +70,7 @@ class AdminBookControllerFeature3Tests {
 
     @Test
     @DisplayName("Admin can display edit form for existing book")
-    @WithMockUser(username = "admin@booknet.vn", roles = {"ADMIN"})
+    @WithMockUser(username = "admin@booknet.vn", authorities = {"ROLE_ADMIN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void adminCanDisplayEditBookForm() throws Exception {
         BookEditForm dummyForm = BookEditForm.builder()
                 .title("Spring in Action")
@@ -98,7 +98,7 @@ class AdminBookControllerFeature3Tests {
 
     @Test
     @DisplayName("Librarian can view the book edit page")
-    @WithMockUser(username = "librarian@booknet.vn", roles = {"LIBRARIAN"})
+    @WithMockUser(username = "librarian@booknet.vn", authorities = {"ROLE_LIBRARIAN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void librarianCanDisplayEditBookForm() throws Exception {
         when(bookService.getBookForEdit(1L)).thenReturn(BookEditForm.builder()
                 .title("Spring in Action")
@@ -117,7 +117,7 @@ class AdminBookControllerFeature3Tests {
 
     @Test
     @DisplayName("Redirects to catalog with error message when book ID not found for edit")
-    @WithMockUser(username = "admin@booknet.vn", roles = {"ADMIN"})
+    @WithMockUser(username = "admin@booknet.vn", authorities = {"ROLE_ADMIN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void editNonExistentBookRedirects() throws Exception {
         when(bookService.getBookForEdit(999L)).thenThrow(new IllegalArgumentException("Book not found with ID: 999"));
 
@@ -129,7 +129,7 @@ class AdminBookControllerFeature3Tests {
 
     @Test
     @DisplayName("Admin can successfully submit valid book update and be redirected")
-    @WithMockUser(username = "admin@booknet.vn", roles = {"ADMIN"})
+    @WithMockUser(username = "admin@booknet.vn", authorities = {"ROLE_ADMIN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void adminCanSubmitValidBookUpdate() throws Exception {
         mockMvc.perform(post("/admin/books/1/edit")
                         .with(csrf())
@@ -148,7 +148,7 @@ class AdminBookControllerFeature3Tests {
 
     @Test
     @DisplayName("Librarian can save and publish an edited book")
-    @WithMockUser(username = "librarian@booknet.vn", roles = {"LIBRARIAN"})
+    @WithMockUser(username = "librarian@booknet.vn", authorities = {"ROLE_LIBRARIAN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void librarianCanPublishEditedBook() throws Exception {
         mockMvc.perform(post("/admin/books/1/publish")
                         .with(csrf())
@@ -169,7 +169,7 @@ class AdminBookControllerFeature3Tests {
 
     @Test
     @DisplayName("Validation failure on edit preserves form view with errors")
-    @WithMockUser(username = "admin@booknet.vn", roles = {"ADMIN"})
+    @WithMockUser(username = "admin@booknet.vn", authorities = {"ROLE_ADMIN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void editValidationFailurePreservesView() throws Exception {
         mockMvc.perform(post("/admin/books/1/edit")
                         .with(csrf())
@@ -184,7 +184,7 @@ class AdminBookControllerFeature3Tests {
 
     @Test
     @DisplayName("Conflict error on update is displayed via globalError attribute")
-    @WithMockUser(username = "admin@booknet.vn", roles = {"ADMIN"})
+    @WithMockUser(username = "admin@booknet.vn", authorities = {"ROLE_ADMIN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void editConflictCapturedInGlobalError() throws Exception {
         doThrow(new IllegalArgumentException("Book code 'BK-CONFLICT' is already in use by another book"))
                 .when(bookService).updateBook(eq(1L), any(BookEditForm.class));

@@ -67,6 +67,9 @@ class MyBooksFlowTests {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private grp3.java.booknet.repository.user.RoleDefinitionRepository roles;
+
     private static final String TEST_PASSWORD = TestPasswords.valid();
 
     private User member;
@@ -212,13 +215,33 @@ class MyBooksFlowTests {
         assertThat(updated.getStatus()).isEqualTo(LoanStatus.OVERDUE);
     }
 
+    @Test
+    void disabledRenewPermissionHidesActionsAndRejectsSubmission() throws Exception {
+        var role = roles.findBySystemRole(UserRole.ROLE_USER).orElseThrow();
+        var original = new java.util.HashSet<>(role.getCapabilities());
+        try {
+            role.getCapabilities().remove(grp3.java.booknet.enums.user.RoleCapability.RENEW);
+            roles.saveAndFlush(role);
+            MockHttpSession session = loginMember();
+            String html = mockMvc.perform(get("/member/my-books").session(session))
+                    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+            assertThat(html).doesNotContain("action=\"/member/loans/" + activeLoan.getId() + "/renew\"");
+            mockMvc.perform(post("/member/loans/" + activeLoan.getId() + "/renew").session(session).with(csrf()))
+                    .andExpect(status().isForbidden());
+            assertThat(loanRepository.findById(activeLoan.getId()).orElseThrow().getStatus()).isEqualTo(LoanStatus.BORROWING);
+        } finally {
+            var current = roles.findById(role.getId()).orElseThrow();
+            current.setCapabilities(original);roles.saveAndFlush(current);
+        }
+    }
+
     private MockHttpSession loginMember() throws Exception {
         return (MockHttpSession) mockMvc.perform(post("/login")
                         .with(csrf())
                         .param("email", "minhanh@booknet.test")
                         .param("password", TEST_PASSWORD))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/"))
+                .andExpect(redirectedUrl("/account/profile"))
                 .andReturn().getRequest().getSession();
     }
 }

@@ -92,7 +92,7 @@ class AuthorizationTests {
                 .andExpect(status().is(role == UserRole.ROLE_USER ? 403 : 200));
         // A staff URL does not grant Librarian the Admin-only method permission.
         mvc.perform(post("/api/staff/probe/role").with(signedIn).with(csrf()))
-                .andExpect(status().is(role == UserRole.ROLE_ADMIN ? 200 : 403));
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -116,12 +116,23 @@ class AuthorizationTests {
     }
 
     @Test
+    void accountSessionFilterRejectsStaleAuthoritiesAndAllowsOnlyCurrentRoleAuthorities() throws Exception {
+        User admin = account(UserRole.ROLE_ADMIN);
+        MockHttpSession session = login(admin);
+        admin.setRole(UserRole.ROLE_LIBRARIAN);
+        users.saveAndFlush(admin);
+        mvc.perform(get("/staff/probe").session(session)).andExpect(redirectedUrl("/login?error=true"));
+        assertThat(session.isInvalid()).isTrue();
+    }
+
+    @Test
     void rememberMeReloadsCurrentRoleAndDisabledApiSessionReturns401() throws Exception {
         User admin = account(UserRole.ROLE_ADMIN);
         var remembered = mvc.perform(post("/login").with(csrf()).param("email", admin.getEmail())
                         .param("password", PASSWORD).param("remember-me", "on"))
-                .andExpect(redirectedUrl("/")).andReturn().getResponse().getCookie("remember-me");
+                .andExpect(redirectedUrl("/admin/dashboard")).andReturn().getResponse().getCookie("remember-me");
         assertThat(remembered).isNotNull();
+        assertThat(remembered.getMaxAge()).isEqualTo(30 * 24 * 60 * 60);
         admin.setRole(UserRole.ROLE_USER);
         users.saveAndFlush(admin);
         mvc.perform(get("/api/member/probe").cookie(remembered)).andExpect(status().isOk());
@@ -133,15 +144,31 @@ class AuthorizationTests {
         mvc.perform(get("/api/member/probe").session(session)).andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void loginRedirectsEachRoleToItsOwnArea() throws Exception {
+        for (UserRole role : new UserRole[]{UserRole.ROLE_USER, UserRole.ROLE_LIBRARIAN, UserRole.ROLE_ADMIN}) {
+            User account = account(role);
+            String expected = switch (role) {
+                case ROLE_USER -> "/account/profile";
+                case ROLE_LIBRARIAN -> "/staff/members";
+                case ROLE_ADMIN -> "/admin/dashboard";
+                case ROLE_GUEST -> "/";
+            };
+            mvc.perform(post("/login").with(csrf()).param("email", account.getEmail()).param("password", PASSWORD))
+                    .andExpect(redirectedUrl(expected));
+            users.delete(account);
+        }
+    }
+
     @ParameterizedTest
     @EnumSource(value = UserRole.class, names = "ROLE_GUEST", mode = EnumSource.Mode.EXCLUDE)
     void navbarRendersMemberLinksOnlyForMembersAndKeepsAccountAndLogoutForm(UserRole role) throws Exception {
         String html = mvc.perform(get("/about").with(user(new CustomUserDetails(account(role)))))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        assertThat(html).contains("/account/profile", "action=\"/logout\"", "name=\"_csrf\"")
+        assertThat(html).contains("action=\"/logout\"", "name=\"_csrf\"")
                 .doesNotContain("sec:authorize");
         if (role == UserRole.ROLE_USER) assertThat(html).contains("My books", ">Reservations<");
-        else assertThat(html).doesNotContain("My books", ">Reservations<");
+        else assertThat(html).doesNotContain("My books", "href=\"#\" class=\"bn-nav-link\">Reservations");
     }
 
     private void checkMatrix(RequestPostProcessor signedIn, UserRole role) throws Exception {
@@ -162,8 +189,9 @@ class AuthorizationTests {
     }
 
     private MockHttpSession login(User account) throws Exception {
+        String destination = account.getRole() == UserRole.ROLE_ADMIN ? "/admin/dashboard" : account.getRole() == UserRole.ROLE_LIBRARIAN ? "/staff/members" : "/account/profile";
         return (MockHttpSession) mvc.perform(post("/login").with(csrf()).param("email", account.getEmail())
-                        .param("password", PASSWORD)).andExpect(redirectedUrl("/"))
+                        .param("password", PASSWORD)).andExpect(redirectedUrl(destination))
                 .andReturn().getRequest().getSession(false);
     }
 

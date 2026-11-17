@@ -71,7 +71,7 @@ public class MemberLoansController {
     }
 
     @PostMapping("/loans/{id}/renew")
-    @PreAuthorize("hasAnyRole('MEMBER', 'USER', 'ADMIN')")
+    @PreAuthorize("hasRole('MEMBER') and hasAuthority('RENEW')")
     public String requestRenew(
             Authentication authentication,
             @PathVariable("id") Long loanId,
@@ -97,7 +97,7 @@ public class MemberLoansController {
      * Trang Returns & receipts — member (chủ phiếu) + librarian đều xem được.
      */
     @GetMapping("/loans/{id}/return-detail")
-    @PreAuthorize("hasAnyRole('MEMBER', 'USER', 'ADMIN', 'LIBRARIAN')")
+    @PreAuthorize("hasRole('MEMBER') or hasAuthority('MEMBER_READ') or hasAuthority('CIRCULATION')")
     public String showReturnDetail(
             Authentication authentication,
             @PathVariable("id") Long loanId,
@@ -105,7 +105,7 @@ public class MemberLoansController {
 
         Long requesterId = AccountPrincipal.id(authentication);
         boolean isLibrarian = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_LIBRARIAN") || a.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals("MEMBER_READ") || a.getAuthority().equals("CIRCULATION"));
 
         try {
             ReturnDetailView detail = memberLoanService.getReturnDetail(requesterId, loanId, isLibrarian);
@@ -123,7 +123,7 @@ public class MemberLoansController {
      * Librarian xác nhận đã nhận sách tại quầy → status RETURNED.
      */
     @PostMapping("/loans/{id}/return/confirm")
-    @PreAuthorize("hasAnyRole('LIBRARIAN', 'ADMIN')")
+    @PreAuthorize("hasAuthority('CIRCULATION')")
     public String confirmReturn(
             Authentication authentication,
             @PathVariable("id") Long loanId,

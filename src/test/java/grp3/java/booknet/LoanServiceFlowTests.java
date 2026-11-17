@@ -46,6 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
+@WithMockUser(authorities={"ROLE_LIBRARIAN", "CIRCULATION"})
 class LoanServiceFlowTests {
 
     @Autowired MockMvc mvc;
@@ -87,12 +88,17 @@ class LoanServiceFlowTests {
                 .email("member.flow@booknet.local")
                 .password("Password123")
                 .role(UserRole.ROLE_USER)
+                .enabled(true)
                 .status(UserStatus.ACTIVE)
                 .provider(AuthProvider.LOCAL)
                 .emailVerified(true)
                 .phone("0912345678")
                 .memberCode("MB-FLOW-01")
                 .build());
+
+        var card = new grp3.java.booknet.entity.user.MemberCard();
+        card.setUser(member);card.setCardNumber("CARD-FLOW-01");card.setIssuedOn(LocalDate.now().minusDays(1));card.setExpiresOn(LocalDate.now().plusYears(1));
+        member.setMemberCard(card);userRepository.saveAndFlush(member);
 
         Author author = authorRepository.save(Author.builder().name("Joshua Bloch").build());
         Category category = categoryRepository.save(Category.builder().name("Software").build());
@@ -318,7 +324,7 @@ class LoanServiceFlowTests {
 
     @Test
     @DisplayName("MVC UI: /librarian/loans and /admin/loans render dark sidebar, account topbar and stats tables")
-    @WithMockUser(username = "librarian.flow@booknet.local", roles = {"ADMIN"})
+    @WithMockUser(username = "librarian.flow@booknet.local", authorities = {"ROLE_ADMIN", "CIRCULATION"})
     void testMvc_LibrarianDeskPagesRenderWithSecurityAndSidebar() throws Exception {
         mvc.perform(get("/librarian/loans"))
                 .andExpect(status().isOk())
@@ -336,10 +342,62 @@ class LoanServiceFlowTests {
 
     @Test
     @DisplayName("Librarian circulation desk accessible via /staff/loans")
-    @WithMockUser(username = "librarian@booknet.local", roles = {"LIBRARIAN"})
+    @WithMockUser(username = "librarian@booknet.local", authorities = {"ROLE_LIBRARIAN", "CIRCULATION"})
     void testLibrarianAccessCirculationDesk() throws Exception {
         mvc.perform(get("/staff/loans"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("librarian/loans"));
+    }
+
+    @Test
+    void circulationAliasesRejectUsersWithoutCirculationPermission() throws Exception {
+        for (String role : List.of("ROLE_MEMBER", "ROLE_LIBRARIAN", "ROLE_ADMIN")) {
+            for (String base : List.of("/staff/loans", "/librarian/loans", "/admin/loans")) {
+                var principal = org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("restricted")
+                        .authorities(new org.springframework.security.core.authority.SimpleGrantedAuthority(role),
+                                new org.springframework.security.core.authority.SimpleGrantedAuthority("MEMBER_READ"));
+                mvc.perform(get(base).with(principal)).andExpect(status().isForbidden());
+                mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(base + "/requests/1/approve")
+                        .with(principal).with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                        .andExpect(status().isForbidden());
+            }
+        }
+    }
+
+    @Test
+    void expiredCardCannotBeApprovedOrHandedOver() {
+        member.getMemberCard().setExpiresOn(LocalDate.now().minusDays(1));
+        userRepository.saveAndFlush(member);
+        assertThat(loanService.lookupMember(member.getEmail()).isEligible()).isFalse();
+        var request = borrowRequestRepository.saveAndFlush(BorrowRequest.builder()
+                .requestCode("BR-EXPIRED").member(member).status(BorrowRequestStatus.PENDING).build());
+        assertThatThrownBy(() -> loanService.approveBorrowRequest(request.getId(), librarian.getEmail()))
+                .isInstanceOf(grp3.java.booknet.exception.borrowing.LoanException.class);
+        request.setStatus(BorrowRequestStatus.APPROVED);borrowRequestRepository.saveAndFlush(request);
+        assertThatThrownBy(() -> loanService.handoverLoan(request.getId(), List.of(copy1.getBarcode()), null, librarian.getEmail()))
+                .isInstanceOf(grp3.java.booknet.exception.borrowing.LoanException.class);
+        assertThat(copy1.getStatus()).isEqualTo(CopyStatus.AVAILABLE);
+    }
+
+    @Test
+    void activeAccountStatusAloneDoesNotMakeMemberEligible() {
+        assertThat(loanService.lookupMember(librarian.getEmail())).isNull();
+        member.setEnabled(false);userRepository.saveAndFlush(member);
+        assertThat(loanService.lookupMember(member.getEmail()).isEligible()).isFalse();
+        member.setEnabled(true);member.setEmailVerified(false);userRepository.saveAndFlush(member);
+        assertThat(loanService.lookupMember(member.getEmail()).isEligible()).isFalse();
+    }
+
+    @Test
+    void circulationTabsAndSharedNavigationRender() throws Exception {
+        var output = java.nio.file.Path.of("target/post-pull-ui");java.nio.file.Files.createDirectories(output);
+        String assets = java.nio.file.Path.of("src/main/resources/static").toAbsolutePath().toUri().toString();
+        for (String tab : List.of("pending_approval", "awaiting_handover", "active_loans", "pending_returns", "history")) {
+            String html = mvc.perform(get("/staff/loans").param("tab",tab)).andExpect(status().isOk())
+                    .andExpect(content().string(org.hamcrest.Matchers.containsString("admin-sidebar")))
+                    .andReturn().getResponse().getContentAsString();
+            java.nio.file.Files.writeString(output.resolve(tab+".html"),html.replace("href=\"/css/","href=\""+assets+"css/")
+                    .replace("src=\"/images/","src=\""+assets+"images/").replace("src=\"/js/","src=\""+assets+"js/"));
+        }
     }
 }

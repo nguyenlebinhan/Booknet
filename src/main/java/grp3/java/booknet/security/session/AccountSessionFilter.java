@@ -42,7 +42,12 @@ public class AccountSessionFilter extends OncePerRequestFilter {
                     .map(authority -> authority.getAuthority()).collect(Collectors.toSet());
             boolean valid = users.findById(id).map(user -> user.isEnabled() && user.isEmailVerified()
                     && user.getStatus() == UserStatus.ACTIVE && user.getAuthVersion() == expectedVersion
-                    && sessionAuthorities.contains(user.getRole().authorityName())).orElse(false);
+                    && user.effectiveAuthorities().stream().map(org.springframework.security.core.GrantedAuthority::getAuthority)
+                            .collect(Collectors.toSet()).containsAll(sessionAuthorities.stream()
+                                    .filter(authority -> !authority.startsWith("FACTOR_")).collect(Collectors.toSet()))
+                    && sessionAuthorities.containsAll(user.effectiveAuthorities().stream()
+                            .map(org.springframework.security.core.GrantedAuthority::getAuthority).collect(Collectors.toSet())))
+                    .orElse(false);
             if (!valid) {
                 SecurityContextHolder.clearContext();
                 if (request.getSession(false) != null) request.getSession(false).invalidate();
@@ -65,4 +70,5 @@ public class AccountSessionFilter extends OncePerRequestFilter {
         }
         chain.doFilter(request, response);
     }
+
 }

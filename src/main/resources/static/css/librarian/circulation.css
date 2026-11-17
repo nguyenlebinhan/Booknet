@@ -512,7 +512,7 @@
   border: 1px solid transparent;
 }
 
-.bn-btn-primary {
+.admin-page .bn-btn-primary {
   background-color: var(--bn-forest);
   color: #fff;
 }

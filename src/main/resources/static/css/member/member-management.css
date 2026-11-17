@@ -142,3 +142,45 @@
   .mg-loan { display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: start; }
   .mg-loan-due { grid-column: 2; margin-left: 0; }
 }
+/* Member management — Figma 2:50600, composed with the shared staff navigation. */
+.mg-main { padding: 40px; }
+.mg-page-heading > div > p:last-child { font-size: 14px; line-height: 1.65; }
+.mg-stats { gap: 18px; margin-bottom: 28px; }
+.mg-stats article, .mg-stats article:first-child { padding: 22px; background: var(--bn-surface); color: var(--bn-ink); border-color: var(--bn-line); border-radius: 10px; }
+.mg-stats strong { font-size: 30px; color: var(--bn-forest); }
+.mg-stats article:first-child p { color: var(--bn-muted); }
+.mg-stats h2 { font-size: 12px; font-weight: 500; }
+.mg-stats p { font-size: 11px; }
+.mg-stat-mark { width: 22px; height: 22px; top: 28px; right: 22px; }
+.mg-panel { border-radius: 12px; }
+.mg-table th { text-transform: uppercase; font-weight: 400; }
+.mg-table td { height: 80px; }
+.mg-row-link { display: inline-flex; align-items: center; gap: 7px; }
+.mg-card-tabs { display: flex; flex-wrap: wrap; gap: 8px; flex-basis: 100%; padding-top: 8px; }
+.mg-card-tabs button { border: 0; padding: 10px 14px; border-radius: 6px; background: var(--bn-paper); color: var(--bn-muted); cursor: pointer; }
+.mg-card-tabs button.is-current { background: var(--bn-forest); color: white; }
+.mg-card-tabs span { margin-left: 9px; font-size: 11px; }
+.mg-activation fieldset { border: 0; padding: 0; display: grid; gap: 14px; }
+.mg-activation label:not(.mg-confirm) { display: grid; gap: 8px; }
+.mg-confirm { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.mg-confirm input { min-height: auto; }
+.mg-activation form { margin: 18px 0; }
+.mg-access-panel form + form { border-top: 1px solid var(--bn-line); margin-top: 22px; padding-top: 22px; }
+.mg-form-errors { padding: 12px; margin: 12px 0; background: #f9ede8; color: var(--bn-danger); border-radius: 6px; }
+.mg-success { background: var(--bn-sage); color: var(--bn-forest); padding: 16px; border-radius: 6px; margin-bottom: 20px; }
+.mg-note { background: var(--bn-sage); border-radius: 6px; padding: 20px; }
+.mg-note > img { flex-shrink: 0; }
+.mg-loan .mg-cover { width: 42px; height: 60px; }
+@media (max-width: 760px) { .mg-main { padding: 24px 16px; } .mg-page-heading { align-items: flex-start; } .mg-topbar { padding: 16px; } }
+
+.au-create{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(260px,1fr);gap:28px}.au-create .mg-panel{padding:25px;margin-bottom:24px}.au-create label{display:block;margin:20px 0;font-weight:600}.au-create input{display:block;width:100%;box-sizing:border-box;border:1px solid #dedfd6;background:#fffefa;border-radius:5px;padding:13px;margin-top:9px;font:inherit}.au-create p{color:#73786e;line-height:1.6}.au-actions{display:flex;justify-content:flex-end;gap:12px}@media(max-width:900px){.au-create{grid-template-columns:1fr}}
+
+.mg-page-heading > div:first-child { min-width: 0; }
+.mg-heading-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-shrink: 0; margin-left: auto; }
+@media (max-width: 760px) {
+  .mg-page-heading { flex-wrap: wrap; gap: 20px; }
+  .mg-heading-actions { flex-wrap: wrap; gap: 10px; }
+}
+@media (max-width: 440px) {
+  .mg-heading-actions { width: 100%; justify-content: flex-start; margin-left: 0; }
+}

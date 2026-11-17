@@ -35,7 +35,7 @@ public class CustomUserDetails implements UserDetails {
         this.emailVerified = user.isEmailVerified();
         this.status = user.getStatus();
         this.authVersion = user.getAuthVersion();
-        this.authorities = user.getRole().authorities();
+        this.authorities = user.effectiveAuthorities();
     }
 
     @Override

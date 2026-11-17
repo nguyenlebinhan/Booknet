@@ -29,18 +29,7 @@
     });
   });
 
-  // 1. Account type tabs (sign in page)
-  const tabs = document.querySelectorAll('.auth-tab');
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      tabs.forEach(other => {
-        other.classList.toggle('active', other === tab);
-        other.setAttribute('aria-pressed', other === tab);
-      });
-    });
-  });
-
-  // 2. Show / hide password
+  // Show / hide password
   document.querySelectorAll('.auth-password-toggle').forEach(toggle => {
     const input = toggle.parentElement.querySelector('input');
     toggle.addEventListener('click', () => {
@@ -53,7 +42,7 @@
     });
   });
 
-  // 3. Password strength meter (registration page)
+  // Password strength meter (registration page)
   const strength = document.getElementById('password-strength');
   const password = document.getElementById('password');
   if (strength && password) {
@@ -72,7 +61,7 @@
     update();
   }
 
-  // 4. Resend countdown (forgot password page)
+  // Resend countdown (forgot password page)
   const countdown = document.getElementById('resend-countdown');
   if (countdown) {
     let seconds = 60;

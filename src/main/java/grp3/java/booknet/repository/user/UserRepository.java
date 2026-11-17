@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -17,6 +18,11 @@ import org.springframework.data.repository.query.Param;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     long countByRole(UserRole role);
+
+    // ── Người 7: Dashboard role distribution ─────────────────────────────────
+    /** Đếm tất cả user theo từng role (dùng cho biểu đồ phân bố tài khoản). */
+    @Query("SELECT u.role, COUNT(u) FROM User u GROUP BY u.role")
+    List<Object[]> countByRoleGrouped();
 
     @Query("""
         select u from User u

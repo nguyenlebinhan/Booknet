@@ -23,4 +23,34 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
     List<Loan> findByMember_IdAndStatusOrderByReturnedAtDesc(Long memberId, LoanStatus status);
 
     List<Loan> findByMember_IdOrderByBorrowedAtDesc(Long memberId);
+
+    // ── Người 7: Dashboard / Reports ─────────────────────────────────────────
+
+    /** 10 giao dịch mượn/trả gần nhất (cho Recent activity trên Librarian dashboard). */
+    List<Loan> findTop10ByOrderByUpdatedAtDesc();
+
+    /** Đếm theo status (count bản sao đang mượn, đang quá hạn, ...). */
+    long countByStatus(LoanStatus status);
+
+    /** Đếm loans được tạo trong khoảng thời gian (cho reports). */
+    long countByBorrowedAtBetween(java.time.LocalDateTime from, java.time.LocalDateTime to);
+
+    /** Đếm loans được trả trong khoảng thời gian. */
+    long countByReturnedAtBetween(java.time.LocalDateTime from, java.time.LocalDateTime to);
+
+    /** Danh sách loans được trả trong khoảng thời gian (dùng để tính tỷ lệ đúng hạn & phân bố quá hạn). */
+    List<Loan> findByReturnedAtBetween(java.time.LocalDateTime from, java.time.LocalDateTime to);
+
+    /** Top sách được mượn nhiều nhất. */
+    @org.springframework.data.jpa.repository.Query("""
+        SELECT l.copy.book.title, COUNT(l) as cnt
+        FROM Loan l
+        WHERE l.borrowedAt BETWEEN :from AND :to
+        GROUP BY l.copy.book.id, l.copy.book.title
+        ORDER BY cnt DESC
+        """)
+    List<Object[]> findTopBorrowedTitles(
+            @org.springframework.data.repository.query.Param("from") java.time.LocalDateTime from,
+            @org.springframework.data.repository.query.Param("to") java.time.LocalDateTime to,
+            org.springframework.data.domain.Pageable pageable);
 }

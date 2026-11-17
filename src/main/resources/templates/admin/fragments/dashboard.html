@@ -16,7 +16,15 @@
   <nav class="admin-navigation" aria-label="Administration">
     <section class="admin-nav-group" aria-labelledby="workspace-nav">
       <h2 id="workspace-nav">WORKSPACE</h2>
+      <!-- Dashboard: ADMIN → /admin/dashboard | LIBRARIAN → /staff/dashboard -->
       <a class="admin-nav-link" sec:authorize="hasRole('ADMIN')" th:href="@{/admin/dashboard}"
+         th:classappend="${activePage == 'dashboard'} ? ' is-current'"
+         th:attr="aria-current=${activePage == 'dashboard' ? 'page' : null}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="4" rx="1"/><rect x="14" y="10" width="7" height="11" rx="1"/><rect x="3" y="13" width="7" height="8" rx="1"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <!-- LIBRARIAN: Dashboard visible via /staff/dashboard -->
+      <a class="admin-nav-link" sec:authorize="hasRole('LIBRARIAN')" th:href="@{/staff/dashboard}"
          th:classappend="${activePage == 'dashboard'} ? ' is-current'"
          th:attr="aria-current=${activePage == 'dashboard' ? 'page' : null}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="4" rx="1"/><rect x="14" y="10" width="7" height="11" rx="1"/><rect x="3" y="13" width="7" height="8" rx="1"/></svg>
@@ -48,10 +56,12 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h12v17l-6-4-6 4z"/></svg>
         <span>Reservations</span>
       </span>
-      <span class="admin-nav-disabled" aria-disabled="true" title="Reports are not available yet">
+      <a class="admin-nav-link" th:href="@{/staff/reports}"
+         th:classappend="${activePage == 'reports'} ? ' is-current'"
+         th:attr="aria-current=${activePage == 'reports' ? 'page' : null}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h17M8 15l4-4 3 2 5-7"/></svg>
         <span>Reports</span>
-      </span>
+      </a>
     </section>
 
     <section class="admin-nav-group" aria-labelledby="administration-nav">
@@ -66,26 +76,32 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 6v5c0 5-3.4 8.3-8 10-4.6-1.7-8-5-8-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
         <span>Roles &amp; permissions</span>
       </span>
-      <span class="admin-nav-disabled" aria-disabled="true" title="Fine and payment tools are not available yet">
+      <a class="admin-nav-link" th:href="@{/staff/fines}"
+         th:classappend="${activePage == 'fines'} ? ' is-current'"
+         th:attr="aria-current=${activePage == 'fines' ? 'page' : null}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></svg>
         <span>Fines &amp; payments</span>
-      </span>
+      </a>
       <span class="admin-nav-disabled" aria-disabled="true" title="Notification settings are not available yet">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
         <span>Email notifications</span>
       </span>
-      <span class="admin-nav-disabled" aria-disabled="true" title="Audit history is not available yet">
+      <a class="admin-nav-link" sec:authorize="hasRole('ADMIN')" th:href="@{/admin/audit-logs}"
+         th:classappend="${activePage == 'audit-logs'} ? ' is-current'"
+         th:attr="aria-current=${activePage == 'audit-logs' ? 'page' : null}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18H5V5zM8 8h7M8 12h7M8 16h5"/></svg>
         <span>Audit log</span>
-      </span>
+      </a>
     </section>
 
     <section class="admin-nav-group" aria-labelledby="system-nav">
       <h2 id="system-nav">SYSTEM</h2>
-      <span class="admin-nav-disabled" aria-disabled="true" title="Library settings are not available yet">
+      <a class="admin-nav-link" sec:authorize="hasRole('ADMIN')" th:href="@{/admin/settings}"
+         th:classappend="${activePage == 'settings'} ? ' is-current'"
+         th:attr="aria-current=${activePage == 'settings' ? 'page' : null}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/></svg>
         <span>Library settings</span>
-      </span>
+      </a>
     </section>
   </nav>
 

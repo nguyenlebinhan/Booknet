@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Official Return Receipt | booknet Librarian</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Serif:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/dashboard.css}">
+  <link rel="stylesheet" th:href="@{/css/librarian/circulation.css}">
+  <style>
+    @media print {
+      .admin-sidebar, .admin-topbar, .mg-topbar, .bn-receipt-actions { display: none !important; }
+      .admin-workspace { background: #fff !important; }
+      .admin-main { padding: 0 !important; }
+      .bn-receipt-card { box-shadow: none !important; border: 1px solid #000 !important; width: 100% !important; max-width: 100% !important; }
+    }
+  </style>
+</head>
+<body class="admin-page">
+
+<div class="admin-shell">
+  <!-- Sidebar -->
+  <aside th:replace="~{admin/fragments/dashboard :: sidebar}"></aside>
+
+  <div class="admin-workspace">
+    <!-- Topbar -->
+    <header th:replace="~{member/fragments :: topbar(section='Circulation')}"></header>
+
+    <main class="admin-main">
+      
+      <div class="bn-receipt-actions" style="display: flex; justify-content: space-between; align-items: center; max-width: 800px; margin: 0 auto 24px auto;">
+        <a th:href="@{/staff/loans}" class="bn-btn bn-btn-secondary">← Back to Loans Desk</a>
+        <div style="display: flex; gap: 8px;">
+          <a th:href="@{/staff/loans/receive-return}" class="bn-btn bn-btn-secondary">+ Return another book</a>
+          <button type="button" onclick="window.print()" class="bn-btn bn-btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 6 2 18 2 18 9"></polyline>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+              <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            Print Receipt
+          </button>
+        </div>
+      </div>
+
+      <!-- Receipt Card (UC27) -->
+      <article class="bn-receipt-card">
+        <header class="bn-receipt-header">
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.15em; color: var(--bn-ochre); text-transform: uppercase; margin-bottom: 4px;">
+            BOOKNET COMMUNITY LIBRARY
+          </div>
+          <h1 style="font-family: var(--bn-font-serif); font-size: 26px; font-weight: 600; margin: 0 0 8px 0; color: var(--bn-ink);">
+            Official Return Receipt
+          </h1>
+          <div style="font-size: 13px; color: var(--bn-muted);">
+            Receipt Code: <strong style="color: var(--bn-ink);" th:text="${receipt.receiptCode}">RR-20261117-0001</strong> · 
+            Loan Reference: <span th:text="${receipt.loanCode ?: 'N/A'}">LN-001</span>
+          </div>
+        </header>
+
+        <!-- Meta Information Grid -->
+        <div class="bn-receipt-meta-grid">
+          <div class="bn-receipt-meta-item">
+            <span>Patron Name:</span><br>
+            <strong th:text="${receipt.memberName}">Nguyễn Minh Anh</strong>
+          </div>
+          <div class="bn-receipt-meta-item">
+            <span>Member Card / Code:</span><br>
+            <strong th:text="${receipt.memberCode ?: 'Card Not Assigned'}">MB-FLOW-01</strong>
+          </div>
+          <div class="bn-receipt-meta-item">
+            <span>Received By Librarian:</span><br>
+            <strong th:text="${receipt.librarianName}">Trần Thu Hà</strong>
+          </div>
+          <div class="bn-receipt-meta-item">
+            <span>Date &amp; Time of Return:</span><br>
+            <strong th:text="${#temporals.format(receipt.returnDate, 'dd/MM/yyyy HH:mm:ss')}">17/11/2026 14:30:00</strong>
+          </div>
+        </div>
+
+        <!-- Returned Items Table -->
+        <table class="bn-table" style="margin-top: 16px;">
+          <thead>
+            <tr>
+              <th>Book Title</th>
+              <th>Barcode</th>
+              <th>Condition</th>
+              <th>Inspection Notes</th>
+              <th style="text-align: right;">Fine Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="item : ${receipt.items}">
+              <td><strong th:text="${item.bookTitle}">Effective Java</strong></td>
+              <td th:text="${item.copyBarcode}">BC-EJ-01</td>
+              <td>
+                <span class="bn-badge" 
+                      th:classappend="${item.condition == 'GOOD' ? 'bn-badge-success' : 'bn-badge-danger'}" 
+                      th:text="${item.condition}">GOOD</span>
+              </td>
+              <td th:text="${item.conditionNotes ?: 'Normal condition'}">Clean copy</td>
+              <td style="text-align: right; font-weight: 600;" th:text="${item.fineAmount != null ? item.fineAmount + ' VNĐ' : '0 VNĐ'}">0 VNĐ</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Fine Summary Banner -->
+        <div class="bn-fine-summary-banner">
+          <div>
+            <div style="font-weight: 600; font-size: 14px; color: var(--bn-ink);">Total Fine / Damage Assessment</div>
+            <div style="font-size: 12px; color: var(--bn-muted);">Synchronized to member balance and inventory queue.</div>
+          </div>
+          <div class="bn-fine-total" th:text="${receipt.totalFines != null ? receipt.totalFines + ' VNĐ' : '0 VNĐ'}">
+            0 VNĐ
+          </div>
+        </div>
+
+        <!-- Notes if any -->
+        <div th:if="${receipt.notes}" style="margin-top: 16px; font-size: 12px; color: var(--bn-muted); font-style: italic;">
+          Desk Notes: <span th:text="${receipt.notes}">Notes...</span>
+        </div>
+
+        <footer style="margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--bn-line); text-align: center; font-size: 12px; color: var(--bn-muted);">
+          Thank you for returning library materials. Please keep this receipt for your records.
+        </footer>
+      </article>
+
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

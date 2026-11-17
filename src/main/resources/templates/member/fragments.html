@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
-<header class="mg-topbar" th:fragment="topbar">
-  <a th:href="@{/}">booknet Library <span>/ Administration</span></a>
+<header class="mg-topbar admin-topbar" th:fragment="topbar">
+  <a th:href="@{/}">booknet Library <span th:text="${section != null ? '/ ' + section : (topbarSection != null ? '/ ' + topbarSection : (activePage == 'loans' ? '/ Circulation' : (activePage == 'catalog' ? '/ Book catalog' : (activePage == 'members' ? (adminArea ? '/ Administration' : '/ Member management') : '/ Administration'))))}">/ Administration</span></a>
   <div class="mg-topbar-account"><span class="mg-badge positive" sec:authorize="hasRole('ADMIN')">Admin</span><span class="mg-badge positive" sec:authorize="hasRole('LIBRARIAN')">Librarian</span><a th:href="@{/account/profile}" sec:authentication="name">My account</a></div>
 </header>
 

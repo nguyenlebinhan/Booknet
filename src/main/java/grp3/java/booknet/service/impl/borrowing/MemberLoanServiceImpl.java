@@ -1,8 +1,8 @@
-package grp3.java.booknet.service.impl;
+package grp3.java.booknet.service.impl.borrowing;
 
-import grp3.java.booknet.dto.MemberLoansView;
-import grp3.java.booknet.dto.ReturnDetailView;
-import grp3.java.booknet.dto.ReturnReceiptDto;
+import grp3.java.booknet.dto.borrowing.MemberLoansView;
+import grp3.java.booknet.dto.borrowing.ReturnDetailView;
+import grp3.java.booknet.dto.borrowing.ReturnReceiptDto;
 import grp3.java.booknet.entity.book.Author;
 import grp3.java.booknet.entity.book.Book;
 import grp3.java.booknet.entity.book_service.Loan;
@@ -17,7 +17,7 @@ import grp3.java.booknet.repository.book.BookCopyRepository;
 import grp3.java.booknet.repository.book_service.LoanRepository;
 import grp3.java.booknet.repository.book_service.ReservationRepository;
 import grp3.java.booknet.repository.user.UserRepository;
-import grp3.java.booknet.service.MemberLoanService;
+import grp3.java.booknet.service.borrowing.MemberLoanService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

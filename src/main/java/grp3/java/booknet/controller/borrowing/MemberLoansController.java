@@ -1,11 +1,11 @@
-package grp3.java.booknet.controller;
+package grp3.java.booknet.controller.borrowing;
 
-import grp3.java.booknet.dto.MemberLoansView;
-import grp3.java.booknet.dto.ReturnDetailView;
-import grp3.java.booknet.dto.ReturnReceiptDto;
+import grp3.java.booknet.dto.borrowing.MemberLoansView;
+import grp3.java.booknet.dto.borrowing.ReturnDetailView;
+import grp3.java.booknet.dto.borrowing.ReturnReceiptDto;
 import grp3.java.booknet.exception.account.AccountException;
 import grp3.java.booknet.security.principal.AccountPrincipal;
-import grp3.java.booknet.service.MemberLoanService;
+import grp3.java.booknet.service.borrowing.MemberLoanService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;

@@ -17,10 +17,37 @@
 .loan-breadcrumb {
   display: flex;
   align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.btn-nav-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bn-surface);
+  border: 1px solid var(--bn-line);
+  color: var(--bn-ink);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.btn-nav-back:hover {
+  background: var(--bn-shelf);
+  border-color: var(--bn-muted);
+}
+
+.loan-breadcrumb-links {
+  display: flex;
+  align-items: center;
   gap: 8px;
   font-size: 13px;
   color: var(--bn-muted);
-  margin-bottom: 24px;
 }
 
 .loan-breadcrumb a {

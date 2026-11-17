@@ -43,6 +43,8 @@ public class BorrowServiceImpl implements BorrowService {
 
     private static final Set<LoanStatus> ACTIVE_LOAN_STATUSES = Set.of(
             LoanStatus.BORROWING,
+            LoanStatus.RENEW_PENDING,
+            LoanStatus.RETURN_PENDING,
             LoanStatus.OVERDUE
     );
 

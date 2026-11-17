@@ -58,6 +58,14 @@ public class AuditLogServiceImpl implements AuditLogService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<AuditLog> searchWithKeyword(String keyword, String action, Pageable pageable) {
+        String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
+        String act = (action == null || action.isBlank()) ? null : action.trim();
+        return auditLogRepository.searchWithKeyword(kw, act, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<AuditLog> search(String actorEmail, String action,
                                  LocalDateTime from, LocalDateTime to,
                                  Pageable pageable) {

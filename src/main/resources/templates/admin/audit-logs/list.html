@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Audit Log • Admin | booknet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/dashboard.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/staff-fines.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/audit-logs.css}">
+</head>
+<body class="admin-page">
+<a class="admin-skip-link" href="#admin-main">Skip to main</a>
+<div class="admin-shell">
+  <aside th:replace="~{admin/fragments/dashboard :: sidebar}"></aside>
+
+  <div class="admin-workspace">
+    <header class="admin-topbar">
+      <p>Administration <span aria-hidden="true">/</span> Audit log</p>
+      <a class="admin-topbar-account" th:href="@{/account/profile}" th:text="${adminName}">Administrator</a>
+    </header>
+
+    <main class="admin-main" id="admin-main">
+      <p class="admin-breadcrumb">Administration <span aria-hidden="true">/</span> Audit log</p>
+
+      <section class="admin-page-heading">
+        <div>
+          <p class="admin-kicker">GOVERNANCE &amp; SECURITY</p>
+          <h1>System Audit Log</h1>
+          <p>Immutable activity trails of administrative and staff operations across the library platform.</p>
+        </div>
+      </section>
+
+      <!-- Search & Filter Bar -->
+      <section class="staff-fines-filter-bar" aria-label="Filter audit logs">
+        <form method="get" th:action="@{/admin/audit-logs}" class="staff-filter-form">
+          <div class="filter-field-search">
+            <label for="keyword">Search logs</label>
+            <div class="search-input-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input id="keyword" type="text" name="keyword" th:value="${keyword}" placeholder="Email, action, entity, details...">
+            </div>
+          </div>
+
+          <div class="filter-field-select">
+            <label for="action">Action Type</label>
+            <select id="action" name="action">
+              <option value="" th:selected="${currentAction == null or currentAction == ''}">All actions</option>
+              <option value="FINE_CONFIRMED" th:selected="${currentAction == 'FINE_CONFIRMED'}">FINE_CONFIRMED</option>
+              <option value="FINE_WAIVED" th:selected="${currentAction == 'FINE_WAIVED'}">FINE_WAIVED</option>
+              <option value="POLICY_UPDATED" th:selected="${currentAction == 'POLICY_UPDATED'}">POLICY_UPDATED</option>
+              <option value="RETURN_CONFIRMED" th:selected="${currentAction == 'RETURN_CONFIRMED'}">RETURN_CONFIRMED</option>
+              <option value="ROLE_CHANGED" th:selected="${currentAction == 'ROLE_CHANGED'}">ROLE_CHANGED</option>
+              <option value="ACCOUNT_SUSPENDED" th:selected="${currentAction == 'ACCOUNT_SUSPENDED'}">ACCOUNT_SUSPENDED</option>
+            </select>
+          </div>
+
+          <div class="filter-button-group">
+            <button type="submit" class="admin-button primary">Filter</button>
+            <a th:href="@{/admin/audit-logs}" class="admin-button secondary">Reset</a>
+          </div>
+        </form>
+      </section>
+
+      <!-- Audit Logs Table Panel -->
+      <section class="admin-panel staff-fines-panel">
+        <div class="admin-panel-heading">
+          <div>
+            <p class="admin-kicker">ACTIVITY LEDGER</p>
+            <h2>Recorded Events</h2>
+          </div>
+          <span class="fines-count-tag" th:text="${logs.totalElements + ' total events'}">0 total events</span>
+        </div>
+
+        <div th:if="${logs.isEmpty()}" class="staff-fines-empty">
+          <p>No audit trail records matched your filter criteria.</p>
+        </div>
+
+        <div th:unless="${logs.isEmpty()}" class="staff-table-wrapper">
+          <table class="staff-fines-table audit-table">
+            <thead>
+              <tr>
+                <th style="width: 160px;">Timestamp</th>
+                <th style="width: 220px;">Actor</th>
+                <th style="width: 170px;">Action</th>
+                <th style="width: 140px;">Target</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="entry : ${logs.content}">
+                <!-- Timestamp -->
+                <td>
+                  <time class="audit-time" th:text="${#temporals.format(entry.occurredAt, 'dd/MM/yyyy HH:mm:ss')}">17/11/2026 20:30:00</time>
+                </td>
+
+                <!-- Actor -->
+                <td>
+                  <strong class="audit-actor-email" th:text="${entry.actorEmail}">admin@booknet.vn</strong>
+                  <br>
+                  <span class="audit-role-badge" th:text="${entry.actorRole != null ? entry.actorRole : 'STAFF'}">ADMIN</span>
+                </td>
+
+                <!-- Action -->
+                <td>
+                  <span class="audit-action-tag" th:text="${entry.action}">POLICY_UPDATED</span>
+                </td>
+
+                <!-- Target -->
+                <td>
+                  <span class="audit-target-type" th:text="${entry.targetType}">Fine</span>
+                  <code class="audit-target-id" th:if="${entry.targetId != null}" th:text="${'#' + entry.targetId}">#1</code>
+                </td>
+
+                <!-- Details -->
+                <td>
+                  <p class="audit-desc-text" th:text="${entry.description}">Description of the administrative event.</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Pagination -->
+          <nav th:if="${logs.totalPages > 1}" class="audit-pagination" aria-label="Audit log pages">
+            <a th:if="${logs.hasPrevious()}"
+               th:href="@{/admin/audit-logs(page=${logs.number - 1}, keyword=${keyword}, action=${currentAction})}"
+               class="page-link prev-link">← Previous</a>
+            <span class="page-info" th:text="${'Page ' + (logs.number + 1) + ' of ' + logs.totalPages}">Page 1 of 5</span>
+            <a th:if="${logs.hasNext()}"
+               th:href="@{/admin/audit-logs(page=${logs.number + 1}, keyword=${keyword}, action=${currentAction})}"
+               class="page-link next-link">Next →</a>
+          </nav>
+        </div>
+      </section>
+
+    </main>
+    <footer class="admin-footer"><span>booknet Library</span><a th:href="@{/contact}">Help &amp; contact</a></footer>
+  </div>
+</div>
+</body>
+</html>

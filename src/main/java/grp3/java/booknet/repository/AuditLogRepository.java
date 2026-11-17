@@ -20,6 +20,22 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     /** Phân trang toàn bộ log cho trang /admin/audit-logs. */
     Page<AuditLog> findAllByOrderByOccurredAtDesc(Pageable pageable);
 
+    /** Tìm kiếm theo keyword (email, action, targetType, description) và action. */
+    @Query("""
+        SELECT a FROM AuditLog a WHERE
+           (:keyword IS NULL OR :keyword = ''
+            OR LOWER(a.actorEmail) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(a.action) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(a.targetType) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(a.description) LIKE LOWER(CONCAT('%', :keyword, '%')))
+           AND (:action IS NULL OR :action = '' OR a.action = :action)
+        ORDER BY a.occurredAt DESC
+        """)
+    Page<AuditLog> searchWithKeyword(
+            @Param("keyword") String keyword,
+            @Param("action") String action,
+            Pageable pageable);
+
     /** Lọc theo actor + khoảng thời gian (cho bộ lọc trang audit-log). */
     @Query("SELECT a FROM AuditLog a WHERE " +
            "(:actorEmail IS NULL OR a.actorEmail = :actorEmail) AND " +

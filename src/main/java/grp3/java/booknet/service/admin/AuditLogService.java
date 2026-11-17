@@ -21,6 +21,9 @@ public interface AuditLogService {
     /** Toàn bộ log phân trang (cho /admin/audit-logs). */
     Page<AuditLog> findAll(Pageable pageable);
 
+    /** Tìm kiếm theo keyword và action cho trang /admin/audit-logs. */
+    Page<AuditLog> searchWithKeyword(String keyword, String action, Pageable pageable);
+
     /** Tìm kiếm có lọc. */
     Page<AuditLog> search(String actorEmail, String action,
                           LocalDateTime from, LocalDateTime to,

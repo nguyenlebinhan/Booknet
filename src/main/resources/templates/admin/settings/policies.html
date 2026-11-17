@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Circulation Policies • Admin | booknet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/dashboard.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/settings.css}">
+</head>
+<body class="admin-page">
+<a class="admin-skip-link" href="#admin-main">Skip to main</a>
+<div class="admin-shell">
+  <aside th:replace="~{admin/fragments/dashboard :: sidebar}"></aside>
+
+  <div class="admin-workspace">
+    <header class="admin-topbar">
+      <p>System <span aria-hidden="true">/</span> Library settings</p>
+      <a class="admin-topbar-account" th:href="@{/account/profile}" th:text="${adminName}">Administrator</a>
+    </header>
+
+    <main class="admin-main" id="admin-main">
+      <p class="admin-breadcrumb">System <span aria-hidden="true">/</span> Library settings</p>
+
+      <section class="admin-page-heading">
+        <div>
+          <p class="admin-kicker">CIRCULATION RULES &amp; CONFIGURATION</p>
+          <h1>Circulation Policies</h1>
+          <p>Define global operational constraints for borrowing limits, overdue daily penalties, and reservation windows.</p>
+        </div>
+      </section>
+
+      <!-- Flash Success Alert -->
+      <div th:if="${successMessage}" class="settings-alert-success" role="alert">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        <span th:text="${successMessage}">Circulation policies have been updated successfully.</span>
+      </div>
+
+      <!-- Settings Layout -->
+      <div class="settings-layout-grid">
+
+        <!-- Main Form Card -->
+        <article class="admin-panel settings-form-panel">
+          <div class="settings-panel-header">
+            <div>
+              <h2>Global Circulation Parameters</h2>
+              <p>These settings take effect immediately across all circulation desk transactions and automatic fine assessments.</p>
+            </div>
+            <div class="settings-meta-box" th:if="${policy.updatedBy != null}">
+              <small>Last updated by <strong th:text="${policy.updatedBy}">admin</strong></small>
+              <small th:if="${policy.updatedAt != null}" th:text="${#temporals.format(policy.updatedAt, 'dd MMM yyyy, HH:mm')}">17 Nov 2026</small>
+            </div>
+          </div>
+
+          <form method="post" th:action="@{/admin/settings}" th:object="${policyForm}" class="settings-form">
+            <!-- CSRF token automatically handled by Thymeleaf -->
+
+            <!-- Field 1: Max Loans -->
+            <div class="settings-field-group">
+              <label for="maxLoansPerMember">
+                <span>Borrowing Quota (Books per Member)</span>
+                <small>Maximum number of copies an active member can have checked out concurrently.</small>
+              </label>
+              <div class="input-with-unit">
+                <input id="maxLoansPerMember" type="number" min="1" max="20" th:field="*{maxLoansPerMember}" required>
+                <span class="unit-tag">copies</span>
+              </div>
+              <p class="field-error" th:if="${#fields.hasErrors('maxLoansPerMember')}" th:errors="*{maxLoansPerMember}">Error</p>
+            </div>
+
+            <!-- Field 2: Standard Loan Period -->
+            <div class="settings-field-group">
+              <label for="loanPeriodDays">
+                <span>Standard Loan Duration</span>
+                <small>Default loan period granted when checking out a book copy at the desk.</small>
+              </label>
+              <div class="input-with-unit">
+                <input id="loanPeriodDays" type="number" min="1" max="90" th:field="*{loanPeriodDays}" required>
+                <span class="unit-tag">days</span>
+              </div>
+              <p class="field-error" th:if="${#fields.hasErrors('loanPeriodDays')}" th:errors="*{loanPeriodDays}">Error</p>
+            </div>
+
+            <!-- Field 3: Renewal Period -->
+            <div class="settings-field-group">
+              <label for="renewPeriodDays">
+                <span>Extension / Renewal Period</span>
+                <small>Additional loan duration added when a reader requests an eligible loan renewal.</small>
+              </label>
+              <div class="input-with-unit">
+                <input id="renewPeriodDays" type="number" min="0" max="60" th:field="*{renewPeriodDays}" required>
+                <span class="unit-tag">days</span>
+              </div>
+              <p class="field-error" th:if="${#fields.hasErrors('renewPeriodDays')}" th:errors="*{renewPeriodDays}">Error</p>
+            </div>
+
+            <!-- Field 4: Daily Overdue Fine Rate -->
+            <div class="settings-field-group">
+              <label for="dailyFineRate">
+                <span>Daily Overdue Penalty Rate</span>
+                <small>Penalty charged per copy for each day overdue beyond the due date.</small>
+              </label>
+              <div class="input-with-unit">
+                <input id="dailyFineRate" type="number" min="0" step="500" th:field="*{dailyFineRate}" required>
+                <span class="unit-tag">₫ / day</span>
+              </div>
+              <p class="field-error" th:if="${#fields.hasErrors('dailyFineRate')}" th:errors="*{dailyFineRate}">Error</p>
+            </div>
+
+            <!-- Field 5: Reservation Hold Days -->
+            <div class="settings-field-group">
+              <label for="reservationHoldDays">
+                <span>Reservation Pickup Window</span>
+                <small>Number of calendar days a reserved copy is held on the hold shelf before expiry.</small>
+              </label>
+              <div class="input-with-unit">
+                <input id="reservationHoldDays" type="number" min="1" max="14" th:field="*{reservationHoldDays}" required>
+                <span class="unit-tag">days</span>
+              </div>
+              <p class="field-error" th:if="${#fields.hasErrors('reservationHoldDays')}" th:errors="*{reservationHoldDays}">Error</p>
+            </div>
+
+            <!-- Form Action Footer -->
+            <div class="settings-form-actions">
+              <button type="submit" class="admin-button primary">Save Policy Changes</button>
+              <a th:href="@{/admin/settings}" class="admin-button secondary">Discard Changes</a>
+            </div>
+          </form>
+        </article>
+
+        <!-- Informational Sidebar / Guide Card -->
+        <aside class="settings-info-card">
+          <p class="admin-kicker">GOVERNANCE NOTES</p>
+          <h3>Policy Impact Matrix</h3>
+          <ul class="policy-impact-list">
+            <li>
+              <strong>Quota Enforcement:</strong>
+              <p>Borrowing service checks this limit before issuing new loans to members.</p>
+            </li>
+            <li>
+              <strong>Fine Calculation:</strong>
+              <p>Applies to finalized fees upon check-in and ongoing estimated charges for overdue copies.</p>
+            </li>
+            <li>
+              <strong>Audit Logging:</strong>
+              <p>Every policy change is permanently timestamped and attributed in the System Audit Log.</p>
+            </li>
+          </ul>
+        </aside>
+
+      </div>
+
+    </main>
+    <footer class="admin-footer"><span>booknet Library</span><a th:href="@{/contact}">Help &amp; contact</a></footer>
+  </div>
+</div>
+</body>
+</html>

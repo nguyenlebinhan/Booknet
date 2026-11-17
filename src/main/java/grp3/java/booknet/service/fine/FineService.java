@@ -71,6 +71,22 @@ public interface FineService {
     List<Fine> getMemberFines(Long memberId);
 
     /**
+     * Lấy danh sách DTO phí của member (bao gồm cả các khoản ước tính chưa chốt).
+     * Dùng cho giao diện Member Overdue Fines (UC20).
+     */
+    List<grp3.java.booknet.dto.member.MemberFineDto> getMemberFineDtos(Long memberId);
+
+    /**
+     * Tra cứu một khoản phí phạt theo ID.
+     */
+    Fine getFineById(Long fineId);
+
+    /**
+     * Tìm kiếm và lọc danh sách phí phạt hệ thống (UC29).
+     */
+    List<Fine> searchFines(grp3.java.booknet.enums.book_service.FineStatus status, String keyword);
+
+    /**
      * Admin miễn/điều chỉnh phí → status = WAIVED.
      *
      * @param fineId ID phiếu phạt.

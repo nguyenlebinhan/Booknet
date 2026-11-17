@@ -22,6 +22,7 @@
         <li><a th:href="@{/contact}" href="/contact" class="bn-nav-link" th:classappend="${activePage == 'contact'} ? ' is-active' : ''">Contact</a></li>
         <li sec:authorize="hasAnyRole('MEMBER', 'USER', 'ADMIN')"><a th:href="@{/member/my-books}" href="/member/my-books" class="bn-nav-link" th:classappend="${activePage == 'my-books'} ? ' is-active' : ''">My books</a></li>
         <li sec:authorize="hasAnyRole('MEMBER', 'USER', 'ADMIN')"><a href="#" class="bn-nav-link">Reservations</a></li>
+        <li sec:authorize="hasRole('MEMBER')"><a th:href="@{/member/fines}" href="/member/fines" class="bn-nav-link" th:classappend="${activePage == 'fines'} ? ' is-active' : ''">Overdue fines</a></li>
       </ul>
     </nav>
 
@@ -43,6 +44,7 @@
         </button>
         <div class="bn-user-menu" id="bn-user-menu" hidden>
           <a th:href="@{/account/profile}">My profile</a>
+          <a sec:authorize="hasRole('MEMBER')" th:href="@{/member/fines}">Overdue fines</a>
           <a sec:authorize="hasAuthority('MEMBER_READ')" th:href="@{/staff/members}">Member management</a>
           <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/users}">Authorization</a>
           <a th:href="@{/account/change-password}">Password settings</a>

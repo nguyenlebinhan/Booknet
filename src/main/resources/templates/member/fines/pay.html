@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pay Overdue Fine via QR · booknet Library</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/layout/navbar.css}">
+  <link rel="stylesheet" th:href="@{/css/layout/footer.css}">
+  <link rel="stylesheet" th:href="@{/css/member/fines.css}">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+</head>
+<body class="member-fines-body">
+
+  <th:block th:replace="~{shared/navigation :: navigation}"></th:block>
+
+  <main class="fines-main">
+    <div class="fines-container fines-pay-container">
+
+      <!-- Breadcrumb -->
+      <nav class="fines-breadcrumb" aria-label="Breadcrumb">
+        <a th:href="@{/member/fines}" class="btn-nav-back">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          Back to Fines
+        </a>
+        <span class="fines-crumb-sep">/</span>
+        <span class="fines-crumb-current">QR Settlement</span>
+      </nav>
+
+      <!-- Pay Header -->
+      <header class="pay-header">
+        <span class="fines-kicker">SETTLEMENT · OVERDUE PENALTY</span>
+        <h1 class="fines-title">Pay Overdue Fine by QR</h1>
+        <p class="fines-subtitle">Use your mobile banking app to scan the QR code and complete your penalty transfer.</p>
+      </header>
+
+      <!-- Pay Card Layout -->
+      <div class="pay-grid">
+
+        <!-- Left: Fee & Loan Info -->
+        <div class="pay-card pay-details-card">
+          <div class="pay-card-header">
+            <h2>Statement Details</h2>
+            <span class="fine-badge badge-unpaid">Finalized · Unpaid</span>
+          </div>
+
+          <div class="pay-amount-box">
+            <span class="pay-amount-label">Amount to Pay</span>
+            <strong class="pay-amount-number" th:text="${#numbers.formatDecimal(fine.amount, 1, 'COMMA', 0, 'POINT') + ' ₫'}">15,000 ₫</strong>
+            <small class="pay-amount-formula" th:text="${(fine.overdueDays != null ? fine.overdueDays : 1) + ' days overdue × ' + #numbers.formatDecimal(fine.dailyRate != null ? fine.dailyRate : 5000, 1, 'COMMA', 0, 'POINT') + ' ₫/day'}">
+              3 days × 5,000 ₫/day
+            </small>
+          </div>
+
+          <dl class="pay-meta-list">
+            <div class="pay-meta-row">
+              <dt>Statement Code</dt>
+              <dd><strong th:text="${fine.fineCode}">FN-2026-0001</strong></dd>
+            </div>
+            <div class="pay-meta-row" th:if="${fine.loan != null and fine.loan.copy != null and fine.loan.copy.book != null}">
+              <dt>Book Title</dt>
+              <dd th:text="${fine.loan.copy.book.title}">Book Title</dd>
+            </div>
+            <div class="pay-meta-row" th:if="${fine.loan != null and fine.loan.copy != null}">
+              <dt>Barcode</dt>
+              <dd><code th:text="${fine.loan.copy.barcode}">BC-12345</code></dd>
+            </div>
+            <div class="pay-meta-row">
+              <dt>Member Name</dt>
+              <dd th:text="${fine.member.fullName}">Member Name</dd>
+            </div>
+            <div class="pay-meta-row">
+              <dt>Member Code</dt>
+              <dd th:text="${fine.member.memberCode != null ? fine.member.memberCode : ('TV-' + fine.member.id)}">TV-00001</dd>
+            </div>
+            <div class="pay-meta-row">
+              <dt>Payment Ref</dt>
+              <dd><code class="ref-code" th:text="${transactionRef}">REF-12345</code></dd>
+            </div>
+          </dl>
+
+          <div class="pay-important-notice">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div>
+              <strong>Manual Verification:</strong>
+              <p>After transferring, please keep your bank receipt. The librarian will reconcile and mark this statement as <strong>PAID</strong> at the desk or during end-of-day audit.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Static QR Code Mockup -->
+        <div class="pay-card pay-qr-card">
+          <div class="qr-box-header">
+            <img th:src="@{/images/home/nav-book-open.svg}" width="24" height="24" alt="" class="qr-brand-logo">
+            <span>booknet VietQR</span>
+          </div>
+
+          <!-- Static Styled QR Container -->
+          <div class="qr-image-wrapper">
+            <!-- Simulated QR Pattern with centered badge -->
+            <div class="qr-pattern-box">
+              <svg viewBox="0 0 220 220" width="220" height="220" xmlns="http://www.w3.org/2000/svg">
+                <!-- Background -->
+                <rect width="220" height="220" fill="#ffffff" rx="10"/>
+                
+                <!-- Position Detection Patterns (Corners) -->
+                <!-- Top-Left -->
+                <rect x="20" y="20" width="50" height="50" fill="#173f35" rx="6"/>
+                <rect x="27" y="27" width="36" height="36" fill="#ffffff" rx="4"/>
+                <rect x="34" y="34" width="22" height="22" fill="#173f35" rx="3"/>
+
+                <!-- Top-Right -->
+                <rect x="150" y="20" width="50" height="50" fill="#173f35" rx="6"/>
+                <rect x="157" y="27" width="36" height="36" fill="#ffffff" rx="4"/>
+                <rect x="164" y="34" width="22" height="22" fill="#173f35" rx="3"/>
+
+                <!-- Bottom-Left -->
+                <rect x="20" y="150" width="50" height="50" fill="#173f35" rx="6"/>
+                <rect x="27" y="157" width="36" height="36" fill="#ffffff" rx="4"/>
+                <rect x="34" y="164" width="22" height="22" fill="#173f35" rx="3"/>
+
+                <!-- QR Data Matrix Dots Simulation -->
+                <rect x="80" y="25" width="10" height="10" fill="#173f35"/>
+                <rect x="100" y="25" width="10" height="10" fill="#173f35"/>
+                <rect x="120" y="25" width="10" height="10" fill="#173f35"/>
+                <rect x="85" y="45" width="15" height="10" fill="#173f35"/>
+                <rect x="110" y="45" width="10" height="15" fill="#173f35"/>
+                <rect x="80" y="70" width="20" height="10" fill="#173f35"/>
+                <rect x="110" y="70" width="15" height="10" fill="#173f35"/>
+                
+                <rect x="25" y="85" width="15" height="10" fill="#173f35"/>
+                <rect x="50" y="85" width="10" height="20" fill="#173f35"/>
+                <rect x="25" y="115" width="20" height="15" fill="#173f35"/>
+                <rect x="55" y="115" width="15" height="10" fill="#173f35"/>
+                
+                <rect x="150" y="85" width="15" height="15" fill="#173f35"/>
+                <rect x="180" y="85" width="15" height="10" fill="#173f35"/>
+                <rect x="150" y="115" width="10" height="20" fill="#173f35"/>
+                <rect x="175" y="115" width="20" height="15" fill="#173f35"/>
+
+                <rect x="85" y="150" width="15" height="15" fill="#173f35"/>
+                <rect x="110" y="150" width="20" height="10" fill="#173f35"/>
+                <rect x="85" y="180" width="10" height="15" fill="#173f35"/>
+                <rect x="105" y="175" width="25" height="15" fill="#173f35"/>
+                <rect x="145" y="150" width="20" height="15" fill="#173f35"/>
+                <rect x="175" y="150" width="15" height="20" fill="#173f35"/>
+                <rect x="150" y="185" width="20" height="10" fill="#173f35"/>
+                <rect x="180" y="180" width="15" height="15" fill="#173f35"/>
+
+                <!-- Center Logo Shield -->
+                <circle cx="110" cy="110" r="22" fill="#ffffff" stroke="#173f35" stroke-width="2"/>
+                <text x="110" y="115" font-family="'Inter', sans-serif" font-size="11" font-weight="bold" fill="#173f35" text-anchor="middle">BN</text>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Transfer Info -->
+          <div class="qr-transfer-info">
+            <div class="qr-info-row">
+              <span>Beneficiary Bank:</span>
+              <strong>Techcombank (TCB)</strong>
+            </div>
+            <div class="qr-info-row">
+              <span>Account Number:</span>
+              <strong>1903 8888 666 01</strong>
+            </div>
+            <div class="qr-info-row">
+              <span>Account Name:</span>
+              <strong>BOOKNET COMMUNITY LIBRARY</strong>
+            </div>
+            <div class="qr-info-row">
+              <span>Transfer Remark:</span>
+              <strong class="highlight-remark" th:text="${transactionRef + ' ' + (fine.fineCode != null ? fine.fineCode : '')}">REF-12345 FN-2026-0001</strong>
+            </div>
+          </div>
+
+          <div class="qr-action-group">
+            <a th:href="@{/member/fines}" class="btn-return-fines">Done / Return to Fines</a>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <footer th:replace="~{shared/footer :: footer}"></footer>
+</body>
+</html>

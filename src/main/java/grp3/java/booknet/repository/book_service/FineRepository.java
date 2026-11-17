@@ -29,6 +29,19 @@ public interface FineRepository extends JpaRepository<Fine, Long> {
     // ── Mã phiếu ────────────────────────────────────────────────────────────
     Optional<Fine> findByFineCode(String fineCode);
 
+    // ── Search & Filter cho Librarian / Admin (UC29) ──────────────────────
+    @Query("""
+        SELECT f FROM Fine f
+        WHERE (:status IS NULL OR f.status = :status)
+          AND (:keyword IS NULL OR :keyword = ''
+               OR LOWER(f.member.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(f.member.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(f.member.memberCode) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(f.fineCode) LIKE LOWER(CONCAT('%', :keyword, '%')))
+        ORDER BY f.createdAt DESC
+        """)
+    List<Fine> searchFines(@Param("status") FineStatus status, @Param("keyword") String keyword);
+
     // ── Aggregate cho reports ────────────────────────────────────────────────
     @Query("SELECT COALESCE(SUM(f.amount), 0) FROM Fine f WHERE f.status = :status")
     BigDecimal sumAmountByStatus(@Param("status") FineStatus status);

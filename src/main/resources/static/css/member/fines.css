@@ -1,0 +1,600 @@
+/* ==========================================================================
+   member/fines.css — Member Overdue Fines & QR Settlement (UC20)
+   ========================================================================== */
+
+.member-fines-body {
+  background-color: var(--bn-paper, #fdfbf7);
+  min-height: 100vh;
+}
+
+.fines-main {
+  padding: 36px 24px 80px;
+  min-height: calc(100vh - 80px);
+}
+
+.fines-container {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.fines-pay-container {
+  max-width: 920px;
+}
+
+/* ── Breadcrumb ────────────────────────────────────────────── */
+.fines-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  font-size: 13px;
+}
+
+.btn-nav-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid var(--bn-line, #e5e2da);
+  color: var(--bn-ink, #1f2937);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.btn-nav-back:hover {
+  background: var(--bn-shelf, #f4f0e6);
+  border-color: #ccc;
+}
+
+.fines-crumb-sep {
+  color: var(--bn-muted, #9ca3af);
+}
+
+.fines-crumb-current {
+  color: var(--bn-forest, #173f35);
+  font-weight: 600;
+}
+
+/* ── Page Header ───────────────────────────────────────────── */
+.fines-page-header, .pay-header {
+  margin-bottom: 28px;
+}
+
+.fines-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--bn-ochre, #ae7837);
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.fines-title {
+  font-family: var(--bn-font-serif, 'Noto Serif', Georgia, serif);
+  font-size: 32px;
+  color: var(--bn-forest, #173f35);
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.fines-subtitle {
+  color: #555;
+  font-size: 14px;
+  margin: 0;
+  max-width: 640px;
+  line-height: 1.5;
+}
+
+/* ── Summary Grid ──────────────────────────────────────────── */
+.fines-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.fines-summary-card {
+  padding: 22px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1.5px solid var(--bn-line, #e8e4dc);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.card-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #666;
+}
+
+.card-value {
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.card-hint {
+  font-size: 12px;
+  color: #777;
+}
+
+.danger-text  { color: #b91c1c; }
+.warning-text { color: #b45309; }
+.success-text { color: #15803d; }
+
+.card-unpaid { border-left: 5px solid #b91c1c; }
+.card-estimated { border-left: 5px solid #d97706; }
+.card-paid { border-left: 5px solid #16a34a; }
+
+/* ── Policy Notice ─────────────────────────────────────────── */
+.fines-policy-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: #fef9ee;
+  border: 1px solid #fae8c3;
+  margin-bottom: 28px;
+  font-size: 13px;
+  color: #854d0e;
+  line-height: 1.5;
+}
+
+.fines-policy-note svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #d97706;
+}
+
+.fines-policy-note p {
+  margin: 0;
+}
+
+/* ── Table Section ─────────────────────────────────────────── */
+.fines-table-section {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1.5px solid var(--bn-line, #e8e4dc);
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.fines-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--bn-line, #e8e4dc);
+}
+
+.fines-section-head h2 {
+  font-family: var(--bn-font-serif, 'Noto Serif', serif);
+  font-size: 20px;
+  color: var(--bn-forest, #173f35);
+  margin: 0;
+}
+
+.fines-count-badge {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--bn-shelf, #f4f0e6);
+  color: var(--bn-forest, #173f35);
+  font-weight: 600;
+}
+
+/* Empty State */
+.fines-empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: #6b7280;
+}
+
+.fines-empty-state svg {
+  color: #10b981;
+  margin-bottom: 12px;
+}
+
+.fines-empty-state h3 {
+  font-size: 18px;
+  color: var(--bn-forest, #173f35);
+  margin: 0 0 6px;
+}
+
+.fines-empty-state p {
+  font-size: 13.5px;
+  margin: 0 0 18px;
+}
+
+.btn-browse-books {
+  display: inline-block;
+  padding: 8px 18px;
+  background: var(--bn-forest, #173f35);
+  color: #fff;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Table */
+.fines-table-wrapper {
+  overflow-x: auto;
+}
+
+.fines-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.fines-table th {
+  padding: 12px 14px;
+  background: #fbf9f4;
+  color: var(--bn-forest, #173f35);
+  font-weight: 600;
+  border-bottom: 1.5px solid var(--bn-line, #e8e4dc);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+.fines-table td {
+  padding: 16px 14px;
+  border-bottom: 1px solid #f0ede6;
+  vertical-align: middle;
+}
+
+.fine-book-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fine-cover-thumb {
+  width: 38px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  flex: 0 0 auto;
+}
+
+.fine-cover-placeholder {
+  width: 38px;
+  height: 52px;
+  background: var(--bn-shelf, #f4f0e6);
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  flex: 0 0 auto;
+}
+
+.fine-book-title {
+  display: block;
+  font-size: 13.5px;
+  color: #111;
+  font-weight: 600;
+}
+
+.fine-book-author {
+  display: block;
+  font-size: 12px;
+  color: #666;
+}
+
+.fine-code {
+  font-size: 11px;
+  color: #888;
+  font-family: monospace;
+}
+
+.fine-date-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+  color: #444;
+}
+
+.unreturned-hint {
+  color: #d97706;
+  font-weight: 500;
+}
+
+.overdue-days {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.fine-amount {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--bn-forest, #173f35);
+}
+
+/* Badges */
+.fine-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.badge-unpaid    { background: #fee2e2; color: #991b1b; }
+.badge-estimated { background: #fef3c7; color: #92400e; }
+.badge-paid      { background: #dcfce7; color: #166534; }
+.badge-waived    { background: #f3f4f6; color: #4b5563; }
+
+/* Actions */
+.btn-action-pay {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: 7px;
+  background: var(--bn-forest, #173f35);
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.btn-action-pay:hover {
+  background: var(--bn-forest-hover, #102d27);
+}
+
+.btn-action-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: not-allowed;
+}
+
+.fine-settled-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #16a34a;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.fine-waived-check {
+  color: #6b7280;
+  font-size: 12.5px;
+  font-style: italic;
+}
+
+/* ==========================================================================
+   Pay via QR Screen Styles
+   ========================================================================== */
+.pay-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .pay-grid { grid-template-columns: 1fr; }
+}
+
+.pay-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1.5px solid var(--bn-line, #e8e4dc);
+  padding: 24px;
+}
+
+.pay-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.pay-card-header h2 {
+  font-family: var(--bn-font-serif, serif);
+  font-size: 18px;
+  color: var(--bn-forest, #173f35);
+  margin: 0;
+}
+
+.pay-amount-box {
+  padding: 16px;
+  border-radius: 10px;
+  background: #fdf6ec;
+  border: 1px solid #fae8c3;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.pay-amount-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #b45309;
+}
+
+.pay-amount-number {
+  display: block;
+  font-size: 28px;
+  font-weight: 800;
+  color: #b91c1c;
+  margin: 4px 0;
+}
+
+.pay-amount-formula {
+  font-size: 12px;
+  color: #78350f;
+}
+
+.pay-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 0 20px;
+}
+
+.pay-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #eee;
+}
+
+.pay-meta-row dt {
+  color: #666;
+}
+
+.pay-meta-row dd {
+  margin: 0;
+  color: #111;
+  text-align: right;
+}
+
+.ref-code {
+  font-family: monospace;
+  font-weight: bold;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--bn-forest, #173f35);
+}
+
+.pay-important-notice {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #f4f6f5;
+  border: 1px solid #dbe2df;
+  font-size: 12px;
+  color: var(--bn-forest, #173f35);
+  line-height: 1.4;
+}
+
+.pay-important-notice svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.pay-important-notice p {
+  margin: 2px 0 0;
+}
+
+/* QR Side */
+.pay-qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.qr-box-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--bn-forest, #173f35);
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.qr-image-wrapper {
+  padding: 14px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 2px solid var(--bn-forest, #173f35);
+  margin-bottom: 18px;
+  box-shadow: 0 4px 12px rgba(23,63,53,0.08);
+}
+
+.qr-pattern-box {
+  display: grid;
+  place-items: center;
+}
+
+.qr-transfer-info {
+  width: 100%;
+  background: #faf8f5;
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12.5px;
+  margin-bottom: 18px;
+}
+
+.qr-info-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.qr-info-row span {
+  color: #666;
+}
+
+.qr-info-row strong {
+  color: var(--bn-forest, #173f35);
+}
+
+.highlight-remark {
+  color: #b91c1c !important;
+  font-family: monospace;
+}
+
+.qr-action-group {
+  width: 100%;
+}
+
+.btn-return-fines {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--bn-forest, #173f35);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13.5px;
+  box-sizing: border-box;
+}
+
+.btn-return-fines:hover {
+  background: var(--bn-forest-hover, #102d27);
+}

@@ -103,7 +103,7 @@ public class StaffDashboardServiceImpl implements StaffDashboardService {
 
             LocalDateTime ts = loan.getUpdatedAt() != null
                     ? loan.getUpdatedAt()
-                    : (loan.getBorrowedAt() != null ? loan.getBorrowedAt().atStartOfDay() : LocalDateTime.now());
+                    : (loan.getBorrowedAt() != null ? loan.getBorrowedAt() : LocalDateTime.now());
 
             items.add(new RecentActivityItem(
                     action, description, actorEmail, "MEMBER",

@@ -24,9 +24,11 @@
 
       <!-- Breadcrumb -->
       <nav class="loan-breadcrumb" aria-label="Breadcrumb">
-        <a th:href="@{/}">Home</a>
-        <span class="sep">/</span>
-        <span class="current">Confirm loan</span>
+        <div class="loan-breadcrumb-links">
+          <a th:href="@{/}">Home</a>
+          <span class="sep">/</span>
+          <span class="current">Confirm loan</span>
+        </div>
       </nav>
 
       <!-- Page Header -->
@@ -69,8 +71,11 @@
 
       <!-- State 2: Main Form Grid khi có sách -->
       <form th:if="${view != null and !#lists.isEmpty(view.books)}" th:action="@{/loans/confirm}" th:object="${borrowForm}" method="post">
-        <!-- Hidden bookIds inputs -->
-        <input type="hidden" th:each="bookId : *{bookIds}" name="bookIds" th:value="${bookId}">
+        <!-- Hidden bookIds inputs – indexed binding so Spring MVC maps to List<Long> -->
+        <input type="hidden"
+               th:each="bookId,iter : *{bookIds}"
+               th:name="${'bookIds[' + iter.index + ']'}"
+               th:value="${bookId}">
 
         <div class="loan-grid">
           <!-- Left Column -->
@@ -100,8 +105,10 @@
 
                   <!-- Nút bỏ bớt cuốn sách này khỏi danh sách mượn -->
                   <form th:action="@{/loans/confirm/remove}" method="post">
-                    <!-- Giữ lại tất cả ID hiện tại -->
-                    <input type="hidden" th:each="id : ${borrowForm.bookIds}" name="bookIds" th:value="${id}">
+                    <!-- Giữ lại tất cả ID hiện tại (dùng name="bookIds" vì controller nhận @RequestParam) -->
+                    <input type="hidden" th:each="id : ${borrowForm.bookIds}"
+                           name="bookIds"
+                           th:value="${id}">
                     <!-- ID của cuốn sách muốn bỏ -->
                     <input type="hidden" name="removeBookId" th:value="${book.id}">
                     <button type="submit" class="btn-remove-book" title="Remove this book from loan request">

@@ -1,0 +1,214 @@
+/* ═══════════════════════════════════════════
+   return-detail.css  –  Returns & receipts page
+   ═══════════════════════════════════════════ */
+
+/* ── Layout ── */
+.rd-main       { background: var(--bn-bg, #f5f4f0); min-height: 100vh; padding: 32px 0 64px; }
+.rd-container  { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+/* ── Breadcrumb ── */
+.rd-breadcrumb       { margin-bottom: 24px; }
+.rd-breadcrumb-links { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--bn-muted, #888); }
+.rd-breadcrumb-links a { color: var(--bn-muted, #888); text-decoration: none; }
+.rd-breadcrumb-links a:hover { text-decoration: underline; }
+.rd-breadcrumb-links .sep { opacity: .5; }
+.rd-breadcrumb-links .current { color: var(--bn-text, #1a1a1a); }
+
+/* ── Page header ── */
+.rd-header    { margin-bottom: 32px; }
+.rd-kicker    { font-size: 11px; font-weight: 600; letter-spacing: .1em; color: var(--bn-accent, #c8702a); margin: 0 0 8px; text-transform: uppercase; }
+.rd-title     { font-family: 'Noto Serif', serif; font-size: clamp(28px, 4vw, 40px); font-weight: 500; margin: 0 0 10px; color: var(--bn-text, #1a1a1a); }
+.rd-subtitle  { font-size: 14px; color: var(--bn-muted, #888); margin: 0; }
+
+/* ── Flash ── */
+.rd-flash { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+.rd-flash--success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+.rd-flash--error   { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+
+/* ── Two-column grid ── */
+.rd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+@media (max-width: 768px) { .rd-grid { grid-template-columns: 1fr; } }
+
+/* ── Card ── */
+.rd-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e8e5de;
+  padding: 28px;
+}
+.rd-card--receipt { display: flex; flex-direction: column; }
+
+/* ── Section label ── */
+.rd-section-label {
+  font-size: 11px; font-weight: 600; letter-spacing: .1em;
+  color: var(--bn-accent, #c8702a); margin: 0 0 16px; text-transform: uppercase;
+}
+
+/* ── Card title ── */
+.rd-card-title { font-size: 16px; font-weight: 600; margin: 0 0 20px; color: var(--bn-text, #1a1a1a); }
+
+/* ── Book block ── */
+.rd-book-block { display: flex; gap: 16px; margin-bottom: 24px; }
+.rd-book-cover { width: 72px; height: 100px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+.rd-book-info  { display: flex; flex-direction: column; gap: 4px; }
+.rd-book-title { font-size: 16px; font-weight: 600; color: var(--bn-text, #1a1a1a); margin: 0; }
+.rd-book-author{ font-size: 13px; color: var(--bn-muted, #888); margin: 0; }
+.rd-book-meta  { font-size: 12px; color: var(--bn-muted, #888); margin: 4px 0; }
+
+/* ── Due badge (reuse from mybooks) ── */
+.due-badge {
+  display: inline-block; padding: 2px 10px; border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+}
+.due-badge.overdue  { background: #fef2f2; color: #dc2626; }
+.due-badge.due-soon { background: #fffbeb; color: #d97706; }
+.due-badge.normal   { background: #f0fdf4; color: #16a34a; }
+
+/* ── Dates DL ── */
+.rd-dates     { margin: 0 0 24px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid #f0ede6; padding-top: 20px; }
+.rd-date-row  { display: flex; justify-content: space-between; font-size: 14px; }
+.rd-date-row dt { color: var(--bn-muted, #888); }
+.rd-date-row dd { font-weight: 500; color: var(--bn-text, #1a1a1a); }
+
+/* ── Librarian confirm form ── */
+.rd-textarea-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--bn-text, #1a1a1a); }
+.rd-textarea {
+  width: 100%; padding: 12px 14px; border: 1px solid #ddd8cc; border-radius: 8px;
+  font-size: 14px; font-family: inherit; resize: vertical; min-height: 90px;
+  color: var(--bn-text, #1a1a1a); background: #fafaf8;
+  box-sizing: border-box; margin-bottom: 16px;
+}
+.rd-textarea:focus { outline: none; border-color: var(--bn-accent, #c8702a); box-shadow: 0 0 0 3px rgba(200,112,42,.1); }
+
+.rd-checkbox-label {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 14px; color: var(--bn-text, #1a1a1a); margin-bottom: 20px; cursor: pointer;
+}
+.rd-checkbox-label input[type="checkbox"] { margin-top: 2px; accent-color: var(--bn-accent, #c8702a); flex-shrink: 0; }
+
+.rd-form-actions { display: flex; align-items: center; gap: 12px; }
+
+.btn-rd-confirm {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--bn-text, #1a1a1a); color: #fff;
+  border: none; border-radius: 8px; padding: 10px 20px;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .15s;
+}
+.btn-rd-confirm:hover { opacity: .85; }
+
+.btn-rd-back {
+  font-size: 14px; color: var(--bn-muted, #888); text-decoration: none;
+  padding: 10px 16px; border: 1px solid #ddd8cc; border-radius: 8px;
+  transition: background .15s;
+}
+.btn-rd-back:hover { background: #f5f4f0; }
+
+/* ── Notices (pending / returned) ── */
+.rd-pending-notice, .rd-returned-notice {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 14px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;
+}
+.rd-pending-notice  { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+.rd-returned-notice { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+.rd-pending-notice strong, .rd-returned-notice strong { display: block; font-weight: 600; margin-bottom: 2px; }
+.rd-pending-notice p, .rd-returned-notice p { margin: 0; font-size: 13px; opacity: .85; }
+
+/* ── Receipt waiting ── */
+.rd-receipt-waiting {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; text-align: center; color: var(--bn-muted, #888);
+  padding: 48px 24px; font-size: 14px;
+}
+
+/* ── Receipt content ── */
+.rd-receipt-content { display: flex; flex-direction: column; align-items: center; text-align: center; }
+
+.rd-receipt-check {
+  width: 56px; height: 56px; border-radius: 50%;
+  border: 2px solid #d1fae5; background: #f0fdf4; color: #16a34a;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px;
+}
+
+.rd-receipt-heading {
+  font-family: 'Noto Serif', serif; font-size: 22px; font-weight: 500;
+  color: var(--bn-text, #1a1a1a); margin: 0 0 8px;
+}
+.rd-receipt-sub { font-size: 13px; color: var(--bn-muted, #888); margin: 0 0 14px; line-height: 1.6; }
+
+.rd-receipt-badge {
+  display: inline-block; padding: 3px 12px; border-radius: 20px;
+  background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d;
+  font-size: 12px; font-weight: 600; margin-bottom: 24px;
+}
+
+/* ── Receipt detail list ── */
+.rd-receipt-dl {
+  width: 100%; text-align: left; margin: 0 0 24px;
+  display: flex; flex-direction: column; gap: 12px;
+  border-top: 1px solid #f0ede6; padding-top: 20px;
+}
+.rd-receipt-row { display: flex; justify-content: space-between; font-size: 14px; }
+.rd-receipt-row dt { color: var(--bn-muted, #888); }
+.rd-receipt-row dd { font-weight: 500; color: var(--bn-text, #1a1a1a); text-align: right; }
+
+/* ── Receipt actions ── */
+.rd-receipt-actions { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+
+.btn-rd-mybooks {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+  background: var(--bn-text, #1a1a1a); color: #fff; text-decoration: none;
+  border-radius: 8px; padding: 12px 20px; font-size: 14px; font-weight: 600;
+  transition: opacity .15s;
+}
+.btn-rd-mybooks:hover { opacity: .85; }
+
+.btn-rd-print {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: none; border: none; cursor: pointer;
+  font-size: 13px; color: var(--bn-muted, #888); text-decoration: underline;
+  padding: 0; font-family: inherit;
+}
+.btn-rd-print:hover { color: var(--bn-text, #1a1a1a); }
+
+/* ── Bottom row ── */
+.rd-bottom-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+}
+@media (max-width: 768px) { .rd-bottom-grid { grid-template-columns: 1fr; } }
+
+.rd-notice-card {
+  background: #fff; border-radius: 12px; border: 1px solid #e8e5de;
+  padding: 20px 24px; display: flex; align-items: flex-start; gap: 12px;
+  font-size: 14px;
+}
+.rd-notice-card--warn    { background: #fff9f0; border-color: #fde8cc; color: #92400e; }
+.rd-notice-card--neutral { border-color: transparent; background: transparent; }
+.rd-notice-card--discover { color: var(--bn-muted, #888); }
+.rd-notice-card--discover a { color: var(--bn-text, #1a1a1a); font-weight: 500; text-decoration: none; }
+.rd-notice-card--discover a:hover { text-decoration: underline; }
+.rd-notice-card strong { display: block; font-weight: 600; margin-bottom: 4px; }
+.rd-notice-card p { margin: 0; font-size: 13px; line-height: 1.6; }
+
+/* ═══════════════════════════════════════════
+   Print styles — browser Print → PDF
+   ═══════════════════════════════════════════ */
+@media print {
+  header, footer, .rd-breadcrumb, .rd-header, .rd-flash,
+  section.rd-card:first-of-type,   /* hide left panel */
+  .rd-bottom-grid, .no-print { display: none !important; }
+
+  .rd-main    { padding: 0; background: #fff; }
+  .rd-grid    { display: block; }
+  .rd-card--receipt { border: none; padding: 0; box-shadow: none; }
+
+  .rd-receipt-content { align-items: flex-start; text-align: left; }
+  .rd-receipt-heading { font-size: 20px; }
+
+  .rd-section-label { color: #000; }
+}

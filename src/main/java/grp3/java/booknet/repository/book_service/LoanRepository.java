@@ -17,4 +17,10 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
     long countByMember_IdAndStatusIn(Long memberId, Collection<LoanStatus> statuses);
 
     List<Loan> findByMember_IdAndStatus(Long memberId, LoanStatus status);
+
+    List<Loan> findByMember_IdAndStatusInOrderByBorrowedAtDesc(Long memberId, Collection<LoanStatus> statuses);
+
+    List<Loan> findByMember_IdAndStatusOrderByReturnedAtDesc(Long memberId, LoanStatus status);
+
+    List<Loan> findByMember_IdOrderByBorrowedAtDesc(Long memberId);
 }

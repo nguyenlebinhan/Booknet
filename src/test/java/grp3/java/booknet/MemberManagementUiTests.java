@@ -3,7 +3,7 @@ package grp3.java.booknet;
 import grp3.java.booknet.entity.user.User;
 import grp3.java.booknet.enums.user.*;
 import grp3.java.booknet.repository.user.*;
-import grp3.java.booknet.security.CustomUserDetails;
+import grp3.java.booknet.security.dto.CustomUserDetails;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,9 +51,33 @@ class MemberManagementUiTests {
         String html = mvc.perform(get("/staff/members").with(user(new CustomUserDetails(librarian))))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         assertThat(html).contains("Actual Reader", "LIVE DIRECTORY", "Not connected", "Showing 1–1 of 1 records")
+                .contains("class=\"admin-sidebar\"", "STAFF SPACE", "href=\"/staff/members\"")
                 .doesNotContain("Nguyễn Minh Anh", "TV-02481", "Library Admin", "th:each");
         mvc.perform(get("/staff/members").param("keyword", "nothing").with(user(new CustomUserDetails(librarian))))
                 .andExpect(content().string(containsString("No matching records")));
+    }
+
+    @Test
+    void staffGetsSidebarWhileMembersAndGuestsKeepNavbar() throws Exception {
+        String librarianCatalog = mvc.perform(get("/catalog").with(user(new CustomUserDetails(librarian))))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(librarianCatalog).contains("class=\"admin-sidebar\"", "STAFF SPACE")
+                .doesNotContain("id=\"booknet-navbar\"", "href=\"/admin/dashboard\"", "href=\"/admin/users\"");
+
+        String adminCatalog = mvc.perform(get("/catalog").with(user(new CustomUserDetails(admin))))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(adminCatalog).contains("class=\"admin-sidebar\"", "ADMIN SPACE")
+                .doesNotContain("id=\"booknet-navbar\"");
+
+        String memberCatalog = mvc.perform(get("/catalog").with(user(new CustomUserDetails(member))))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(memberCatalog).contains("id=\"booknet-navbar\"")
+                .doesNotContain("class=\"admin-sidebar\"");
+
+        String guestCatalog = mvc.perform(get("/catalog"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(guestCatalog).contains("id=\"booknet-navbar\"")
+                .doesNotContain("class=\"admin-sidebar\"");
     }
 
     @Test
@@ -104,7 +128,8 @@ class MemberManagementUiTests {
                 .doesNotContain("Save role", "Lock / unlock account");
         String adminHtml = mvc.perform(get("/admin/users/" + member.getId()).with(user(new CustomUserDetails(admin))))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        assertThat(adminHtml).contains("Save role", "Lock / unlock account", "disabled", "Preview only", "Actual Reader");
+        assertThat(adminHtml).contains("class=\"admin-sidebar\"", "ADMIN SPACE", "Save role",
+                "Lock / unlock account", "disabled", "Preview only", "Actual Reader");
         mvc.perform(post("/admin/users/" + member.getId()).with(user(new CustomUserDetails(admin))).with(csrf())
                         .param("role", "ROLE_ADMIN")).andExpect(status().isMethodNotAllowed());
         assertThat(users.findById(member.getId()).orElseThrow().getRole()).isEqualTo(UserRole.ROLE_USER);
@@ -120,7 +145,8 @@ class MemberManagementUiTests {
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
         String account = mvc.perform(get("/account/profile").with(user(new CustomUserDetails(member))))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        assertThat(account).contains("name=\"fullName\"", "name=\"_csrf\"", "Card information not connected", "This is not your card")
+        assertThat(account).contains("name=\"fullName\"", "name=\"_csrf\"", "Card information not connected", "This is not your card",
+                        "id=\"booknet-navbar\"")
                 .doesNotContain("th:field", "Member management</a>", "Authorization</a>");
         write("account", account);
         write("reset-expired", mvc.perform(get("/reset-password")).andExpect(status().isOk())

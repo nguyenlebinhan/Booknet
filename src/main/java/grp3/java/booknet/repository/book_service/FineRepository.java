@@ -14,4 +14,3 @@ public interface FineRepository extends JpaRepository<Fine, Long> {
 
     List<Fine> findByMember_IdAndStatus(Long memberId, FineStatus status);
 }
-

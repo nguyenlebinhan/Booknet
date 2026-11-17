@@ -122,7 +122,7 @@ class BorrowFlowTests {
                         .session(session)
                         .param("bookId", String.valueOf(sampleBook.getId())))
                 .andExpect(status().isOk())
-                .andExpect(view().name("borrow-confirm"))
+                .andExpect(view().name("borrowing/confirm"))
                 .andExpect(model().attributeExists("view", "borrowForm"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Tôi thấy hoa vàng trên cỏ xanh")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Nguyễn Minh Anh")))
@@ -142,7 +142,7 @@ class BorrowFlowTests {
                         .param("bookIds", String.valueOf(sampleBook.getId()))
                         .param("termsAccepted", "false"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("borrow-confirm"))
+                .andExpect(view().name("borrowing/confirm"))
                 .andExpect(model().hasErrors());
 
         assertThat(reservationRepository.count()).isZero();

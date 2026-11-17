@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${'Edit ' + book.title + ' | booknet'}">Edit book | booknet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/book-management.css}">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+</head>
+<body>
+  <th:block th:replace="~{shared/navigation :: navigation}"></th:block>
+
+  <main class="book-management-page">
+    <nav class="book-breadcrumb" aria-label="Breadcrumb">
+      <a th:href="@{/catalog}">Explore books</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">Edit book</span>
+    </nav>
+
+    <div class="page-heading">
+      <div>
+        <h1>Edit book</h1>
+        <p>
+          <span th:text="${book.title}">Book title</span>
+          <span aria-hidden="true"> · </span>
+          <span th:text="${book.bookCode}">BK-001</span>
+          <span aria-hidden="true"> · </span>
+          <span class="status-text"
+                th:text="${book.publicationStatus.name() == 'DRAFT' ? 'Unpublished draft' : #strings.capitalize(#strings.toLowerCase(book.publicationStatus.name()))}">Unpublished draft</span>
+        </p>
+      </div>
+      <a class="button button-secondary" th:href="@{/catalog}">
+        <span aria-hidden="true">←</span> Back to catalog
+      </a>
+    </div>
+
+    <div class="notice notice-error" role="alert" th:if="${globalError}" th:text="${globalError}"></div>
+    <div class="notice notice-error" role="alert" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+    <div class="notice notice-success" role="status" th:if="${successMessage}" th:text="${successMessage}"></div>
+
+    <form id="book-edit-form" class="book-edit-grid" th:action="@{/admin/books/{id}/edit(id=${bookId})}"
+          th:object="${bookForm}" method="post">
+      <div class="book-edit-main">
+        <section class="form-card">
+          <div class="card-heading">
+            <h2>Basic information</h2>
+            <p>Fields marked * are required.</p>
+          </div>
+
+          <div class="form-field">
+            <label for="title">Book title *</label>
+            <input id="title" type="text" th:field="*{title}" maxlength="255" required>
+            <small class="field-error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></small>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label for="bookCode">Book code *</label>
+              <input id="bookCode" type="text" th:field="*{bookCode}" maxlength="50" required>
+              <small>Unique catalog code; separate from the auto-generated book ID.</small>
+              <small class="field-error" th:if="${#fields.hasErrors('bookCode')}" th:errors="*{bookCode}"></small>
+            </div>
+            <div class="form-field">
+              <label for="isbn">ISBN *</label>
+              <input id="isbn" type="text" th:field="*{isbn}" maxlength="17" required>
+              <small>Enter ISBN-10 or ISBN-13.</small>
+              <small class="field-error" th:if="${#fields.hasErrors('isbn')}" th:errors="*{isbn}"></small>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label for="authorIds">Author *</label>
+              <select id="authorIds" th:field="*{authorIds}" multiple required>
+                <option th:each="author : ${authors}" th:value="${author.id}" th:text="${author.name}">Author</option>
+              </select>
+              <small>Use Ctrl (Windows) or Command (Mac) to select more than one.</small>
+              <small class="field-error" th:if="${#fields.hasErrors('authorIds')}" th:errors="*{authorIds}"></small>
+            </div>
+            <div class="form-field">
+              <label for="translator">Translator</label>
+              <input id="translator" type="text" th:field="*{translator}" maxlength="150" placeholder="Not applicable">
+              <small class="field-error" th:if="${#fields.hasErrors('translator')}" th:errors="*{translator}"></small>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label for="categoryIds">Genre *</label>
+              <select id="categoryIds" th:field="*{categoryIds}" multiple required>
+                <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}">Genre</option>
+              </select>
+              <small class="field-error" th:if="${#fields.hasErrors('categoryIds')}" th:errors="*{categoryIds}"></small>
+            </div>
+            <div class="form-field">
+              <label for="language">Language *</label>
+              <select id="language" th:field="*{language}" required>
+                <option value="vi">Vietnamese</option>
+                <option value="en">English</option>
+                <option value="other">Other</option>
+              </select>
+              <small class="field-error" th:if="${#fields.hasErrors('language')}" th:errors="*{language}"></small>
+            </div>
+          </div>
+
+          <div class="form-row form-row-three">
+            <div class="form-field">
+              <label for="publisherId">Publisher</label>
+              <select id="publisherId" th:field="*{publisherId}">
+                <option value="">Select publisher</option>
+                <option th:each="publisher : ${publishers}" th:value="${publisher.id}" th:text="${publisher.name}">Publisher</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="publishYear">Publication year *</label>
+              <input id="publishYear" type="number" th:field="*{publishYear}" min="1000" max="2100" required>
+              <small class="field-error" th:if="${#fields.hasErrors('publishYear')}" th:errors="*{publishYear}"></small>
+            </div>
+            <div class="form-field">
+              <label for="pageCount">Page count</label>
+              <input id="pageCount" type="number" th:field="*{pageCount}" min="1" max="20000">
+              <small class="field-error" th:if="${#fields.hasErrors('pageCount')}" th:errors="*{pageCount}"></small>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="edition">Edition</label>
+            <input id="edition" type="text" th:field="*{edition}" maxlength="50">
+            <small class="field-error" th:if="${#fields.hasErrors('edition')}" th:errors="*{edition}"></small>
+          </div>
+        </section>
+
+        <section class="form-card">
+          <div class="card-heading">
+            <h2>Description &amp; keywords</h2>
+          </div>
+          <div class="form-field">
+            <label for="description">Synopsis</label>
+            <textarea id="description" th:field="*{description}" maxlength="5000" rows="5"></textarea>
+            <small><span id="description-count" th:text="${bookForm.description == null ? 0 : #strings.length(bookForm.description)}">0</span>/5,000 characters. Shown on the book details page.</small>
+            <small class="field-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></small>
+          </div>
+          <div class="form-field">
+            <label for="keywords">Search keywords</label>
+            <input id="keywords" type="text" th:field="*{keywords}" maxlength="255">
+            <small>Separate keywords with commas.</small>
+            <small class="field-error" th:if="${#fields.hasErrors('keywords')}" th:errors="*{keywords}"></small>
+          </div>
+        </section>
+      </div>
+
+      <aside class="book-edit-sidebar">
+        <section class="form-card cover-card">
+          <div class="card-heading"><h2>Cover image</h2></div>
+          <div class="cover-preview">
+            <img id="cover-preview-image" th:if="${bookForm.coverUrl != null and !#strings.isEmpty(bookForm.coverUrl)}"
+                 th:src="${bookForm.coverUrl}" th:alt="${'Cover of ' + book.title}">
+            <span id="cover-placeholder" th:if="${bookForm.coverUrl == null or #strings.isEmpty(bookForm.coverUrl)}">Cover preview</span>
+          </div>
+          <div class="form-field">
+            <label class="button button-secondary cover-change-button" for="coverUrl"><span aria-hidden="true">↥</span> Change cover</label>
+            <label class="cover-url-label" for="coverUrl">Cover image URL</label>
+            <input id="coverUrl" type="url" th:field="*{coverUrl}" maxlength="500" placeholder="https://...">
+            <small>Use a publicly accessible JPG, PNG or WebP image URL.</small>
+            <small class="field-error" th:if="${#fields.hasErrors('coverUrl')}" th:errors="*{coverUrl}"></small>
+          </div>
+        </section>
+
+        <section class="form-card publish-card">
+          <div class="card-heading"><h2>Publish</h2></div>
+          <div class="status-panel">
+            <span>Status</span>
+            <strong th:text="${#strings.capitalize(#strings.toLowerCase(book.publicationStatus.name()))}">Draft</strong>
+          </div>
+          <p class="help-copy">Drafts are visible only to librarians. Publish so readers can find and borrow this book.</p>
+          <button class="button button-primary button-wide" type="submit" form="book-edit-form"
+                  th:if="${book.publicationStatus.name() == 'DRAFT'}"
+                  th:formaction="@{/admin/books/{id}/publish(id=${bookId})}">
+            <span aria-hidden="true">↗</span> Save &amp; publish
+          </button>
+          <p class="published-note" th:if="${book.publicationStatus.name() == 'PUBLISHED'}">This book is visible in the public catalog.</p>
+          <p class="field-error" th:if="${book.publicationStatus.name() == 'DISCONTINUED'}">Discontinued books cannot be published.</p>
+        </section>
+
+        <section class="form-card danger-card">
+          <h2>Remove from catalog</h2>
+          <p>Delete only when there are no active loans or reservations.</p>
+          <a class="button button-danger-outline button-wide"
+             href="#confirm-deletion">
+            <span aria-hidden="true">⌫</span> Delete book
+          </a>
+        </section>
+      </aside>
+
+    </form>
+
+    <section class="form-card copies-card">
+      <div class="card-heading inventory-heading">
+        <div>
+          <h2>Copies &amp; shelf locations</h2>
+          <p th:text="${inventoryStats.totalCopies + ' total · ' + inventoryStats.availableCopies + ' available · ' + inventoryStats.borrowedCopies + ' on loan'}">Inventory</p>
+        </div>
+      </div>
+      <div class="copy-list" th:if="${!copies.isEmpty()}">
+        <details class="copy-row" th:each="copy : ${copies}">
+          <summary>
+            <span class="copy-code" th:text="${copy.barcode}">BK-001-01</span>
+            <span class="copy-location" th:text="${copy.shelfLocation == null ? 'No shelf assigned' : copy.shelfLocation}">Shelf A2</span>
+            <span class="copy-status" th:classappend="${' status-' + #strings.toLowerCase(copy.status.name())}"
+                  th:text="${#strings.capitalize(#strings.toLowerCase(copy.status.name()))}">Available</span>
+            <span class="copy-edit-label">Edit</span>
+          </summary>
+          <form class="copy-edit-form" th:action="@{/admin/books/{bookId}/copies/{copyId}/edit(bookId=${bookId},copyId=${copy.id})}"
+                method="post">
+            <input type="hidden" name="barcode" th:value="${copy.barcode}">
+            <div class="form-row">
+              <div class="form-field">
+                <label th:for="${'shelf-' + copy.id}">Shelf location</label>
+                <input th:id="${'shelf-' + copy.id}" type="text" name="shelfLocation" maxlength="50" th:value="${copy.shelfLocation}">
+              </div>
+              <div class="form-field">
+                <label th:for="${'condition-' + copy.id}">Condition</label>
+                <input th:id="${'condition-' + copy.id}" type="text" name="condition" maxlength="255" th:value="${copy.condition}">
+              </div>
+            </div>
+            <input type="hidden" name="acquiredDate" th:value="${copy.acquiredDate}">
+            <button class="button button-secondary button-small" type="submit">Save copy details</button>
+          </form>
+        </details>
+      </div>
+      <p class="empty-copies" th:if="${copies.isEmpty()}">No physical copies have been added to this title yet.</p>
+
+      <details class="add-copy-details">
+        <summary>+ Add copy</summary>
+        <form class="copy-edit-form" th:action="@{/admin/books/{bookId}/copies/create(bookId=${bookId})}"
+              th:object="${copyForm}" method="post">
+          <p>A unique barcode will be generated automatically.</p>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="newShelfLocation">Shelf location</label>
+              <input id="newShelfLocation" type="text" th:field="*{shelfLocation}" maxlength="50">
+              <small class="field-error" th:if="${#fields.hasErrors('shelfLocation')}" th:errors="*{shelfLocation}"></small>
+            </div>
+            <div class="form-field">
+              <label for="newCopyCondition">Condition</label>
+              <input id="newCopyCondition" type="text" th:field="*{condition}" maxlength="255">
+              <small class="field-error" th:if="${#fields.hasErrors('condition')}" th:errors="*{condition}"></small>
+            </div>
+          </div>
+          <button class="button button-secondary button-small" type="submit">Add copy</button>
+        </form>
+      </details>
+    </section>
+
+    <div class="form-actions edit-form-actions">
+      <button class="button button-primary" type="submit" form="book-edit-form"><span aria-hidden="true">✓</span> Save changes</button>
+      <a class="button button-secondary" th:href="@{/admin/books/{id}/edit(id=${bookId})}">Discard changes</a>
+      <span class="saved-note">Changes are saved when you submit.</span>
+    </div>
+
+    <section id="confirm-deletion" class="delete-confirm-section">
+      <div class="delete-copy">
+        <p class="section-eyebrow">STATUS / CONFIRM DELETION</p>
+        <h2>An action that requires certainty.</h2>
+        <p th:text="${'Title ' + book.bookCode + ' · ' + inventoryStats.totalCopies + ' physical copies.'}">Book details</p>
+      </div>
+      <div class="delete-panel">
+        <div class="delete-panel-heading">
+          <span aria-hidden="true">⌫</span>
+          <div>
+            <h3 th:text="${'Delete “' + book.title + '”?'}">Delete this book?</h3>
+            <p>This action permanently removes the title and cannot be undone.</p>
+          </div>
+        </div>
+        <div class="delete-blockers" th:if="${!deletionCheck.hardDeleteAllowed}">
+          <p>Permanent deletion is unavailable because this book has retained records:</p>
+          <ul><li th:each="blocker : ${deletionCheck.blockingReferences}" th:text="${blocker}">Historical reference</li></ul>
+          <form th:action="@{/admin/books/{id}/discontinue(id=${bookId})}" method="post">
+            <button class="button button-danger" type="submit">Discontinue book instead</button>
+          </form>
+        </div>
+        <form class="delete-form" th:if="${deletionCheck.hardDeleteAllowed}"
+              th:action="@{/admin/books/{id}/delete(id=${bookId})}" th:object="${deleteForm}" method="post">
+          <label for="confirmationCode">Enter book code to confirm</label>
+          <input id="confirmationCode" type="text" th:field="*{confirmationCode}" autocomplete="off" required>
+          <small class="field-error" th:if="${#fields.hasErrors('confirmationCode')}" th:errors="*{confirmationCode}"></small>
+          <small>Confirmation code must exactly match <strong th:text="${book.bookCode}">BK-001</strong>.</small>
+          <div class="delete-actions">
+            <a class="button button-secondary" th:href="@{/admin/books/{id}/edit(id=${bookId})}">No, keep book</a>
+            <button class="button button-danger" type="submit"><span aria-hidden="true">⌫</span> Delete permanently</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const description = document.getElementById('description');
+      const counter = document.getElementById('description-count');
+      if (description && counter) {
+        description.addEventListener('input', () => {
+          counter.textContent = String(description.value.length);
+        });
+      }
+
+      const coverUrl = document.getElementById('coverUrl');
+      const coverImage = document.getElementById('cover-preview-image');
+      const placeholder = document.getElementById('cover-placeholder');
+      if (coverUrl) {
+        coverUrl.addEventListener('input', () => {
+          if (!coverImage || !placeholder) return;
+          const value = coverUrl.value.trim();
+          if (value) {
+            coverImage.src = value;
+            coverImage.hidden = false;
+            placeholder.hidden = true;
+          } else {
+            coverImage.hidden = true;
+            placeholder.hidden = false;
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

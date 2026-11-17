@@ -1,7 +1,7 @@
 package grp3.java.booknet;
 
-import grp3.java.booknet.dto.ContactForm;
-import grp3.java.booknet.service.ContactMailService;
+import grp3.java.booknet.dto.contact.ContactForm;
+import grp3.java.booknet.service.contact.ContactMailService;
 import org.junit.jupiter.api.Test;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;

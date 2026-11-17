@@ -1,13 +1,14 @@
 package grp3.java.booknet.entity.book;
 
 import grp3.java.booknet.entity.BaseEntity;
+import grp3.java.booknet.enums.book.PublicationStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -23,6 +24,9 @@ public class Book extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @ToString.Include
     private Long id;
+
+    @Column(name = "book_code", unique = true, length = 50)
+    private String bookCode;
 
     @Column(unique = true, length = 20)
     private String isbn;
@@ -51,8 +55,19 @@ public class Book extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(length = 150)
+    private String translator;
+
+    @Column(length = 255)
+    private String keywords;
+
     @Column(name = "cover_url")
     private String coverUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "publication_status", nullable = false, length = 20)
+    @Builder.Default
+    private PublicationStatus publicationStatus = PublicationStatus.DRAFT;
 
     @Column(name = "is_deleted", nullable = false)
     @Builder.Default
@@ -72,5 +87,7 @@ public class Book extends BaseEntity {
     @Builder.Default
     private Set<Category> categories = new HashSet<>();
 
-
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<BookCopy> copies = new ArrayList<>();
 }

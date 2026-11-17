@@ -55,7 +55,9 @@ reset, hồ sơ và đổi mật khẩu; lỗi custom validity được xóa khi
 
 ## Hồ sơ, phiên và CSRF
 
-- `AccountController` dùng lại `AccountService`, `AccountRequests` và DTO `ProfileResponse` an toàn.
+- `AccountController` dùng `AccountServiceImpl`, các form `ProfileUpdateRequest`/`ChangePasswordRequest`
+  và DTO `ProfileResponse` an toàn. `PasswordRecoveryController` dùng `PasswordResetForm`
+  và `ResetPasswordRequest`; không bind trực tiếp entity.
 - Hồ sơ chỉ cập nhật họ tên, điện thoại, địa chỉ, avatar HTTP(S). Không bind Entity.
   Form record dùng constructor binding; email, role, provider, status, ID, memberCode, password không được sửa.
 - Họ tên bắt buộc 2–120 ký tự, điện thoại tối đa 20, địa chỉ tối đa 255, URL avatar HTTP(S) tối đa 500.
@@ -88,10 +90,9 @@ reset, hồ sơ và đổi mật khẩu; lỗi custom validity được xóa khi
   From lấy từ `MAIL_FROM`, Reply-To là email người liên hệ. Contact không gửi thư xác nhận cho người điền form và chưa lưu DB.
   Thông báo thành công nghĩa là SMTP chấp nhận yêu cầu, không đảm bảo thư đã vào Inbox.
 
-- Ngày 10/11/2026: **47/47 test đạt**, không lỗi/skip; gồm 20 AccountFlow, 6 OAuthCallback,
-  20 ThymeleafAccountFlow và 1 application context. Baseline trước chuyển đổi: 37/37 đạt.
-- Ngày 13/11/2026, workspace nhánh `feat/google-password-contact`: **55/55 test đạt**, không lỗi/skip;
-  gồm 23 AccountFlow, 6 OAuthCallback, 24 ThymeleafAccountFlow, 1 ContactMailService và 1 application context.
+- Ngày 16/11/2026: `mvnw.cmd test` đạt **122/122 test**, không lỗi/skip;
+  gồm 23 AccountFlow, 6 OAuthCallback, 24 ThymeleafAccountFlow, 1 ContactMailService,
+  1 application context, 16 Authorization, 4 BorrowFlow, 6 MemberManagement UI và 41 test catalog.
 - Dùng JDK 21 cho Maven. Chạy `mvn test` hoặc `./mvnw.cmd test`.
 - Test dùng profile `test`, H2 riêng với `create-drop`, mock SMTP/Google; không xóa dữ liệu DB thật.
 - Local dùng MySQL, mặc định `ddl-auto=update`. Môi trường `validate`/`none` cần migration

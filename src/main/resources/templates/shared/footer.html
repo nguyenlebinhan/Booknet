@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+  <!-- Include with: <footer th:replace="~{shared/footer :: footer-section}"></footer> -->
+  <footer class="bn-footer" th:fragment="footer-section">
+    <div class="bn-footer-columns">
+      <div class="bn-footer-about">
+        <a th:href="@{/}" class="bn-footer-brand" aria-label="booknet Library home">
+          <span class="bn-footer-mark">
+            <img th:src="@{/images/auth/book-open.svg}" width="24" height="24" alt="">
+          </span>
+          <span class="bn-footer-brand-text">
+            <span class="bn-footer-name">booknet</span>
+            <span class="bn-footer-tagline">COMMUNITY LIBRARY</span>
+          </span>
+        </a>
+        <p>A book opens. A world stays with you.<br>A reading space for everyone.</p>
+      </div>
+
+      <div class="bn-footer-contact">
+        <p class="bn-footer-heading">Come visit booknet.</p>
+        <p>28 Nguyễn Du, Hai Bà Trưng, Hà Nội<br>hello@booknet.vn &nbsp;•&nbsp; 024 3822 2026</p>
+      </div>
+
+      <div class="bn-footer-hours">
+        <p class="bn-footer-heading">Opening hours</p>
+        <p>Mon – Sat: 08:00 – 20:00<br>Sunday: 09:00 – 17:00</p>
+      </div>
+    </div>
+
+    <p class="bn-footer-legal">© 2026 booknet Library      /      <a th:href="@{/about}" href="/about">About</a>      /      <a th:href="@{/contact}" href="/contact">Contact</a>      /      <a href="#">Privacy policy</a>      /      <a href="#">Terms of use</a></p>
+  </footer>
+
+</body>
+</html>

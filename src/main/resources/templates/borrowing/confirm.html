@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirm Loan · booknet Library</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}" href="/css/base/tokens.css">
+  <link rel="stylesheet" th:href="@{/css/layout/navbar.css}" href="/css/layout/navbar.css">
+  <link rel="stylesheet" th:href="@{/css/pages/loan.css}" href="/css/pages/loan.css">
+  <link rel="stylesheet" th:href="@{/css/layout/footer.css}" href="/css/layout/footer.css">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+</head>
+<body>
+
+  <th:block th:replace="~{shared/navigation :: navigation}"></th:block>
+
+  <main class="loan-main">
+    <div class="loan-container">
+
+      <!-- Breadcrumb -->
+      <nav class="loan-breadcrumb" aria-label="Breadcrumb">
+        <a th:href="@{/}">Home</a>
+        <span class="sep">/</span>
+        <span class="current">Confirm loan</span>
+      </nav>
+
+      <!-- Page Header -->
+      <header class="loan-header">
+        <p class="loan-kicker">BORROW AT BOOKNET</p>
+        <h1 class="loan-title">A book is about to join your journey.</h1>
+        <p class="loan-subtitle">Review the details and borrowing terms before confirming.</p>
+      </header>
+
+      <!-- Stepper Progress -->
+      <div class="loan-stepper" aria-label="Borrowing steps">
+        <div class="step-item is-completed">
+          <span class="step-badge">✓</span>
+          <span>Choose a book</span>
+        </div>
+        <div class="step-item is-active">
+          <span class="step-badge">2</span>
+          <span>Confirm loan</span>
+        </div>
+        <div class="step-item">
+          <span class="step-badge">3</span>
+          <span>Collect at desk</span>
+        </div>
+      </div>
+
+      <!-- Ineligible warning message if any -->
+      <div th:if="${errorMessage}" class="error-alert-box" role="alert" th:text="${errorMessage}"></div>
+      <div th:if="${view != null and !view.eligibleToBorrow}" class="error-alert-box" role="alert" th:text="${view.ineligibleReason}"></div>
+
+      <!-- State 1: Khi giỏ hàng trống (không có sách nào được chọn) -->
+      <div th:if="${view == null or #lists.isEmpty(view.books)}" class="loan-card" style="text-align: center; padding: 48px 24px;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--bn-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px;">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+        <h2 class="loan-card-title" style="margin-bottom: 12px;">Your borrowing list is empty</h2>
+        <p style="color: var(--bn-muted); font-size: 15px; margin-bottom: 24px;">You haven't selected any books to borrow yet.</p>
+        <a th:href="@{/}" class="btn-confirm-loan" style="display: inline-flex; width: auto; text-decoration: none;">Explore catalog</a>
+      </div>
+
+      <!-- State 2: Main Form Grid khi có sách -->
+      <form th:if="${view != null and !#lists.isEmpty(view.books)}" th:action="@{/loans/confirm}" th:object="${borrowForm}" method="post">
+        <!-- Hidden bookIds inputs -->
+        <input type="hidden" th:each="bookId : *{bookIds}" name="bookIds" th:value="${bookId}">
+
+        <div class="loan-grid">
+          <!-- Left Column -->
+          <div class="loan-left">
+
+            <!-- Selected Books Card -->
+            <section class="loan-card" aria-labelledby="selected-books-heading">
+              <h2 id="selected-books-heading" class="loan-card-title" th:text="${#lists.size(view.books) > 1 ? 'Your selected books (' + #lists.size(view.books) + ')' : 'Your selected book'}">Your selected book</h2>
+
+              <div class="book-item-list">
+                <article class="selected-book-card" th:each="book : ${view.books}">
+                  <div class="selected-book-card-main">
+                    <img class="selected-book-cover" th:src="${book.coverUrl}" th:alt="${book.title}">
+                    <div class="selected-book-info">
+                      <h3 class="selected-book-title" th:text="${book.title}">Title</h3>
+                      <p class="selected-book-meta">
+                        <span th:text="${book.authors}">Author</span>
+                        <span th:if="${!#strings.isEmpty(book.publisherAndYear)}" th:text="' · ' + ${book.publisherAndYear}"> · Publisher</span>
+                      </p>
+                      <span class="selected-book-badge" th:text="'Copy ' + ${book.sampleCopyBarcode}">Copy VN001-06</span>
+                      <p class="selected-book-location">
+                        Collect at: <span th:text="${book.shelfLocation}">Circulation desk · Floor 1</span><br>
+                        28 Nguyễn Du, Hai Bà Trưng, Hà Nội
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Nút bỏ bớt cuốn sách này khỏi danh sách mượn -->
+                  <form th:action="@{/loans/confirm/remove}" method="post">
+                    <!-- Giữ lại tất cả ID hiện tại -->
+                    <input type="hidden" th:each="id : ${borrowForm.bookIds}" name="bookIds" th:value="${id}">
+                    <!-- ID của cuốn sách muốn bỏ -->
+                    <input type="hidden" name="removeBookId" th:value="${book.id}">
+                    <button type="submit" class="btn-remove-book" title="Remove this book from loan request">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                      </svg>
+                      <span>Remove</span>
+                    </button>
+                  </form>
+                </article>
+              </div>
+            </section>
+
+            <!-- Borrowing Terms Card -->
+            <section class="loan-card" aria-labelledby="borrowing-terms-heading">
+              <h2 id="borrowing-terms-heading" class="loan-card-title">Borrowing terms</h2>
+
+              <div class="terms-list">
+                <div class="term-row">
+                  <svg class="term-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  <div>
+                    <h4 class="term-heading">14-day loan</h4>
+                    <p class="term-desc">Starts on pickup day. Renew once for 7 more days if there are no reservations.</p>
+                  </div>
+                </div>
+
+                <div class="term-row">
+                  <svg class="term-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                  </svg>
+                  <div>
+                    <h4 class="term-heading">Up to 5 books at a time</h4>
+                    <p class="term-desc" th:text="'You have ' + ${view.currentActiveLoansCount} + '/' + ${view.maxAllowedLoans} + ' books on loan. This loan will bring your total to ' + (${view.currentActiveLoansCount} + ${#lists.size(view.books)}) + '/' + ${view.maxAllowedLoans} + '.'">
+                      You have 2/5 books on loan. This loan will bring your total to 3/5.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="term-row">
+                  <svg class="term-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                  <div>
+                    <h4 class="term-heading">Care for books we share</h4>
+                    <p class="term-desc">Return books at the desk, keep them clean and do not write in them.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Right Column -->
+          <div class="loan-right">
+
+            <!-- Loan Details Summary Card -->
+            <div class="details-card">
+              <h2 class="loan-card-title">Loan details</h2>
+
+              <div class="details-row">
+                <span class="details-label">Member</span>
+                <span class="details-val" th:text="${view.memberName}">Nguyễn Minh Anh</span>
+              </div>
+
+              <div class="details-row">
+                <span class="details-label">Card ID</span>
+                <span class="details-val" th:text="${view.memberCode}">TV-02481</span>
+              </div>
+
+              <div class="details-row" style="margin-top: 8px;">
+                <span class="details-label">Expected pickup date</span>
+                <span class="details-val" th:text="${#temporals.format(view.pickupDate, 'dd/MM/yyyy')}">02/11/2026</span>
+              </div>
+
+              <!-- Return Banner -->
+              <div class="return-banner">
+                <div class="return-banner-kicker">PLEASE RETURN BY</div>
+                <div class="return-banner-date" th:text="${#temporals.format(view.returnDueDate, 'dd/MM/yyyy')}">16/11/2026</div>
+                <div class="return-banner-sub" th:text="${#temporals.format(view.returnDueDate, 'EEEE') + ' · Before 20:00'}">Monday · Before 20:00</div>
+              </div>
+
+              <div class="details-row">
+                <span class="details-label">Borrowing fee</span>
+                <span class="details-val">Free</span>
+              </div>
+
+              <!-- Policy Agreement Checkbox -->
+              <label class="loan-agreement">
+                <input type="checkbox" th:field="*{termsAccepted}" required>
+                <span class="loan-agreement-text">I have read and agree to booknet Library's borrowing policy.</span>
+              </label>
+              <div th:if="${#fields.hasErrors('termsAccepted')}" class="error-alert-box" style="padding: 8px 12px; margin-bottom: 14px;" th:errors="*{termsAccepted}"></div>
+
+              <!-- Confirm Loan Button -->
+              <button type="submit" class="btn-confirm-loan" th:disabled="${!view.eligibleToBorrow}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Confirm loan</span>
+              </button>
+
+              <a th:href="@{/}" class="btn-back-details">← Back to book details</a>
+            </div>
+
+            <!-- Notice / Desk Reminder Box -->
+            <aside class="notice-card">
+              <svg class="notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              <div class="notice-content">
+                <h4>Remember your member card</h4>
+                <p>Collect your book at the desk today. A librarian will confirm the official loan and due dates.</p>
+              </div>
+            </aside>
+
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </main>
+
+  <footer th:replace="~{shared/footer :: footer-section}"></footer>
+
+</body>
+</html>

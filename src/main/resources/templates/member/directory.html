@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${adminArea ? 'Authorization | booknet Library' : 'Member management | booknet Library'}">Member management | booknet Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Serif:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}"><link rel="stylesheet" th:href="@{/css/member/member-management.css}">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+</head>
+<body class="mg-page">
+<a class="mg-skip" href="#main-content">Skip to content</a>
+<div class="mg-shell">
+  <aside th:replace="~{admin/fragments/dashboard :: sidebar}"></aside>
+  <div class="mg-workspace">
+    <header th:replace="~{member/fragments :: topbar}"></header>
+    <main class="mg-main" id="main-content">
+      <p class="mg-breadcrumb">Library management <span>/</span> <span th:text="${adminArea ? 'Authorization' : 'Member management'}">Member management</span></p>
+      <div class="mg-page-heading"><div><p class="mg-kicker" th:text="${adminArea ? 'ADMINISTRATION' : 'THE BOOKNET COMMUNITY'}">THE BOOKNET COMMUNITY</p><h1 th:text="${adminArea ? 'Authorization' : 'Member management'}">Member management</h1><p th:text="${adminArea ? 'Review accounts and the permissions that keep your library running.' : 'Look up members, track library cards and review loans and returns.'}"></p></div><button class="mg-button" disabled title="Export will be available after integration">Export list <span aria-hidden="true">↗</span></button></div>
+      <div th:replace="~{member/fragments :: dataNotice}"></div>
+      <section class="mg-stats" aria-label="Member overview">
+        <article><span class="mg-stat-mark">01</span><strong th:text="${directory.registered}">8</strong><h2 th:text="${adminArea ? 'Registered accounts' : 'Registered members'}">Registered members</h2><p>All records in this directory</p></article>
+        <article><span class="mg-stat-mark">02</span><strong th:text="${directory.active != null ? directory.active : '—'}">6</strong><h2>Active cards</h2><p th:text="${directory.expired != null ? directory.expired + ' expired cards' : 'Card data not connected'}"></p></article>
+        <article><span class="mg-stat-mark">03</span><strong th:text="${directory.withLoans != null ? directory.withLoans : '—'}">5</strong><h2>Members with loans</h2><p>At least one book not yet returned</p></article>
+        <article><span class="mg-stat-mark">04</span><strong class="mg-overdue" th:text="${directory.withOverdue != null ? directory.withOverdue : '—'}">2</strong><h2>Members with overdue books</h2><p>Follow-up and reminders needed</p></article>
+      </section>
+      <section class="mg-panel mg-directory" aria-labelledby="directory-title">
+        <div class="mg-panel-heading"><h2 id="directory-title" th:text="${adminArea ? 'Account directory' : 'Member list'}">Member list</h2><span class="mg-small" th:text="${demo ? 'Sample snapshot · 08/11/2026' : 'Account records from booknet'}"></span></div>
+        <form class="mg-filters" th:action="@{${basePath}}" method="get">
+          <input type="hidden" name="demo" th:value="${demo}">
+          <label class="mg-search"><span class="mg-sr-only">Search members</span><img th:src="@{/images/home/search.svg}" width="18" height="18" alt=""><input name="keyword" maxlength="120" th:value="${keyword}" th:placeholder="${demo ? 'Search by member name, card ID or email…' : 'Search by name, member code or email…'}"></label>
+          <label><span class="mg-sr-only">Card status</span><select name="card" th:disabled="${!demo}" aria-label="Card status"><option value="">All card statuses</option><option value="Active" th:selected="${card == 'Active'}">Active cards</option><option value="Expired" th:selected="${card == 'Expired'}">Expired cards</option><option value="Pending" th:selected="${card == 'Pending'}">Pending activation</option></select></label>
+          <label><span class="mg-sr-only">Loan status</span><select name="loan" th:disabled="${!demo}" aria-label="Loan status"><option value="">All loan statuses</option><option value="borrowed" th:selected="${loan == 'borrowed'}">Has current loans</option><option value="overdue" th:selected="${loan == 'overdue'}">Has overdue books</option><option value="none" th:selected="${loan == 'none'}">No current loans</option></select></label>
+          <label><span class="mg-sr-only">Fine status</span><select name="fine" th:disabled="${!demo}" aria-label="Fine status"><option value="">All fine statuses</option><option value="unpaid" th:selected="${fine == 'unpaid'}">Finalized outstanding</option><option value="clear" th:selected="${fine == 'clear'}">No finalized balance</option></select></label>
+          <button class="mg-button primary" type="submit">Search</button><a class="mg-reset" th:href="@{${basePath}(demo=${demo})}">Clear</a>
+        </form>
+        <p th:unless="${demo}" class="mg-filter-help">Card, loan and fine filters are available in sample preview until connected.</p>
+        <div class="mg-table-scroll" tabindex="0" role="region" aria-label="Member directory table">
+          <table class="mg-table"><caption class="mg-sr-only">Members, library cards and borrowing overview</caption><thead><tr><th scope="col">Card ID</th><th scope="col">Member / contact</th><th scope="col" th:text="${adminArea ? 'Role / access' : 'Card status'}">Card status</th><th scope="col">On loan</th><th scope="col">Overdue</th><th scope="col">Finalized outstanding</th><th scope="col">Actions</th></tr></thead>
+          <tbody><tr th:each="person : ${directory.people}"><td class="mg-card-id" th:text="${person.cardNumber ?: '—'}">TV-02481</td><td><div class="mg-person"><span class="mg-avatar" th:text="${person.initials()}">MA</span><div><strong th:text="${person.fullName}"></strong><span th:text="${person.email}"></span></div></div></td><td><th:block th:unless="${adminArea}"><span class="mg-badge" th:classappend="${person.cardTone()}" th:text="${person.cardStatus}"></span><small th:if="${person.expires != null}" th:text="'Until ' + ${person.expires}"></small></th:block><th:block th:if="${adminArea}"><span class="mg-badge positive" th:text="${person.role}"></span><small th:text="${person.access}"></small></th:block></td><td th:text="${person.onLoan != null ? person.onLoan : '—'}"></td><td th:classappend="${person.overdue != null and person.overdue > 0} ? 'mg-overdue'" th:text="${person.overdue != null ? person.overdue : '—'}"></td><td class="mg-money" th:text="${person.outstanding ?: '—'}"></td><td><a class="mg-row-link" th:href="@{${basePath + '/' + person.id}(demo=${demo})}" th:attr="aria-label=${'Details for ' + person.fullName}">Details <span aria-hidden="true">↗</span></a></td></tr>
+          <tr th:if="${#lists.isEmpty(directory.people)}"><td colspan="7"><div class="mg-empty"><h3>No matching records</h3><p>Try another name, email or filter.</p><a th:href="@{${basePath}(demo=${demo})}">Clear search and filters →</a></div></td></tr></tbody></table>
+        </div>
+        <div class="mg-pagination"><p th:text="${'Showing ' + directory.first() + '–' + directory.last() + ' of ' + directory.total + ' records'}"></p><nav aria-label="Directory pages"><a th:if="${directory.page > 0}" th:href="@{${basePath}(demo=${demo},keyword=${keyword},card=${card},loan=${loan},fine=${fine},page=${directory.page - 1})}">← Previous</a><span th:unless="${directory.page > 0}" class="mg-disabled">← Previous</span><span class="mg-page-number" th:text="${directory.page + 1}" aria-current="page">1</span><span th:text="${'of ' + directory.pages}"></span><a th:if="${directory.page + 1 < directory.pages}" th:href="@{${basePath}(demo=${demo},keyword=${keyword},card=${card},loan=${loan},fine=${fine},page=${directory.page + 1})}">Next →</a><span th:unless="${directory.page + 1 < directory.pages}" class="mg-disabled">Next →</span></nav></div>
+      </section>
+      <div class="mg-note"><span aria-hidden="true">↳</span><div><strong>Track cards and loans separately</strong><p>Overdue books do not mean an account is locked. Librarians look up records and activate cards; only administrators manage account access. Estimated fines are excluded from finalized outstanding balances.</p></div></div>
+    </main>
+    <footer th:replace="~{member/fragments :: footer}"></footer>
+  </div>
+</div>
+</body></html>

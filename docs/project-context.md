@@ -1,7 +1,7 @@
 # Context dự án Booknet
 
 > Tài liệu để mention khi giao việc tiếp theo: `@docs/project-context.md`.
-> Cập nhật ngày 10/11/2026, theo source chuyển REST sang MVC và thông báo tiếng Anh trên nhánh `HaiQuach-clean`.
+> Cập nhật ngày 16/11/2026; bổ sung trạng thái trang quản lý sách và kết quả kiểm thử mới nhất.
 > Đây là ảnh chụp trạng thái dự án, không xác nhận nhánh đã merge vào `main`.
 > Trước mỗi công việc, đọc lại source liên quan và Git diff vì dự án có thể đã thay đổi.
 
@@ -19,9 +19,50 @@ Phần này thay thế các mô tả cũ bên dưới về Contact chưa gửi m
 - Tài khoản có password hash được đăng nhập bằng email/mật khẩu, không phụ thuộc provider gốc.
   Forgot/reset hỗ trợ tài khoản Google đang hoạt động, đã xác thực. Google identity và user ID được giữ nguyên.
   Đặt/đổi/reset mật khẩu tăng `auth_version` và thu hồi phiên cũ; không tự gộp tài khoản trùng email.
-- Bộ test hiện có 55 trường hợp: 23 AccountFlow, 24 ThymeleafAccountFlow, 6 OAuthCallback,
-  1 ContactMailService và 1 application context. Test dùng H2 và mock Google/SMTP;
+- Bộ test hiện có 125 trường hợp, bao gồm 4 test khởi tạo tài khoản seed. Test dùng H2 và mock Google/SMTP;
   kết quả đạt không chứng minh toàn bộ luồng Google/nhận thư thực tế. Chi tiết: [account-api.md](account-api.md).
+
+## Catalog công khai — 16/11/2026
+
+- Trang Thymeleaf `/catalog` tìm theo tên sách, tác giả, ISBN hoặc mã sách. Khách và thành viên chỉ thấy
+  sách `PUBLISHED`; librarian/admin còn thấy sách nháp và ngừng phát hành để tiếp tục quản lý sách.
+  Sách đã xóa không hiển thị. Có lọc thể loại, trạng thái bản sao, ngôn ngữ và năm xuất bản; sắp xếp
+  theo mới thêm, tên sách hoặc năm xuất bản; phân trang 6 sách.
+- Số bản sao và khả năng mượn/đặt trước lấy từ trạng thái `BookCopy`, không dùng dữ liệu mẫu.
+  Sắp xếp theo độ phổ biến chưa có vì hệ thống chưa lưu hoặc tổng hợp lượt xem/mượn cho mục đích đó.
+- Ô tìm kiếm và các liên kết Explore trên Home mở trang catalog. Các sách trưng bày khác trên Home
+  vẫn là nội dung mẫu, không đại diện cho kết quả tìm kiếm hay tồn kho thật.
+- Librarian/admin có liên kết thêm và sửa sách trên catalog; quyền được kiểm tra riêng cho `/admin/books/**`.
+
+## Quản lý sách cho librarian — 16/11/2026
+
+- Trang duyệt sách chung là `/catalog`; URL cũ `/admin/books` chuyển hướng đến catalog.
+  `/admin/books/create` và `/admin/books/{id}/edit` vẫn hỗ trợ tạo sách nháp, sửa metadata và xuất bản.
+- ID nội bộ của sách tự tăng trong database và không nhập trên form; `bookCode` là mã catalog riêng.
+- Trang sửa hiển thị tồn kho bản sao, cho phép thêm/sửa bản sao qua các luồng hiện có,
+  và có xác nhận xóa theo mã sách. Nếu có lịch sử tham chiếu không thể xóa, có thể ngừng phát hành sách.
+- Quyền quản lý sách dành cho `ROLE_LIBRARIAN` và `ROLE_ADMIN`; các trang `/admin/**` khác vẫn theo
+  quy tắc admin hiện có. Các test MVC kiểm tra quyền librarian/admin và render template nguồn.
+- Ảnh bìa hiện dùng URL vì entity lưu `coverUrl`; chưa có upload ảnh. Không hiển thị checkbox đặt trước
+  khi hết bản sao vì mô hình hiện tại không có thuộc tính tương ứng.
+
+## Local seed accounts — 16/11/2026
+
+- `DevelopmentUserDataInitializer` là `CommandLineRunner` chỉ hoạt động với profile `local`.
+- Có thể cấu hình `BOOKNET_SEED_ADMIN_EMAIL` / `BOOKNET_SEED_ADMIN_PASSWORD` và
+  `BOOKNET_SEED_LIBRARIAN_EMAIL` / `BOOKNET_SEED_LIBRARIAN_PASSWORD`,
+  `BOOKNET_SEED_USER_EMAIL` / `BOOKNET_SEED_USER_PASSWORD` trong `.env`.
+- Mỗi cặp credential đều tùy chọn. Nếu đặt thiếu email hoặc mật khẩu, hoặc mật khẩu không đạt
+  chính sách tài khoản, ứng dụng báo lỗi cấu hình. Tài khoản hiện hữu được giữ nguyên; mật khẩu
+  chỉ lưu dưới dạng BCrypt hash. Không có credential mặc định hoặc mật khẩu được ghi log.
+
+## Admin dashboard — 16/11/2026
+
+- Đăng nhập bằng `ROLE_ADMIN` mở `/admin/dashboard`; member/librarian giữ redirect hiện có.
+- Dashboard hiển thị số liệu hiện tại từ database (sách đã xuất bản, thành viên, bản sao đang mượn,
+  khoản mượn quá hạn, sách nháp và reservation chờ duyệt). Không có số liệu lịch sử/audit giả.
+- Sidebar liên kết đến các trang đã hoạt động; tính năng chưa có backend được đánh dấu chưa khả dụng.
+- Guest/member tiếp tục dùng navbar; admin và librarian dùng sidebar trên các trang chung và trang quản lý.
 
 ## 1. Những điều cần nắm trước khi làm
 
@@ -61,23 +102,84 @@ nhưng cấu hình/dependency hiện tại dùng MySQL; chưa coi SQL Server là
 ```text
 src/main/java/grp3/java/booknet/
   BooknetApplication.java       # Entry point, bật JPA auditing
-  config/                      # Security, Clock, quy tắc tài khoản
-  controller/                  # MVC HTML, form và redirect
-  dto/                         # Form/request/response; không bind trực tiếp Entity
-  service/                     # Nghiệp vụ tài khoản, token, email và Google
-  security/                    # Principal local/OAuth/OIDC, kiểm tra phiên
+  config/
+    account/                   # Clock và quy tắc tài khoản
+    development/               # Dữ liệu seed local
+    security/                  # Security và trạng thái OAuth link
+  controller/
+    account/                   # Đăng nhập, hồ sơ, xác minh và liên kết tài khoản
+    admin/                     # Dashboard quản trị
+    book/                      # Quản lý sách và bản sao
+    borrowing/                 # Yêu cầu mượn
+    catalog/                   # Duyệt danh mục
+    contact/                   # Liên hệ
+    home/                      # Trang chủ
+    member/                    # Quản lý thành viên
+  dto/
+    admin/                     # Dữ liệu dashboard
+    book/                      # Form và dữ liệu sách/bản sao
+    borrowing/                 # Form và dữ liệu yêu cầu mượn
+    catalog/                   # Bộ lọc và kết quả catalog
+    contact/                   # Form liên hệ
+    member/                    # Dữ liệu danh sách/chi tiết thành viên
+    user/                      # Request/response tài khoản
+      legacy/                  # DTO cũ chưa được gỡ bỏ
+  service/
+    account/                   # Tài khoản, xác thực, email và Google
+    admin/                     # Dashboard quản trị
+    book/                      # Sách và bản sao
+    borrowing/                 # Yêu cầu mượn
+    catalog/                   # Duyệt danh mục
+    contact/                   # Gửi liên hệ
+    member/                    # Danh sách thành viên
+    impl/
+      account/                 # Cài đặt service tài khoản
+      admin/                   # Cài đặt dashboard
+      book/                    # Cài đặt sách và bản sao
+      borrowing/               # Cài đặt yêu cầu mượn
+      catalog/                 # Cài đặt catalog
+  security/
+    dto/                       # Principal details
+    principal/                 # Principal local/OAuth/OIDC
+    service/                   # Adapter xác thực OAuth/OIDC/local
+    session/                   # Kiểm tra và thu hồi phiên
   entity/
+    BaseEntity.java            # Trường và auditing dùng chung
     user/                      # User, OAuthIdentity, AccountToken
     book/                      # Book, BookCopy, Author, Category, Publisher
     book_service/              # Loan, Reservation, Fine
     notification/              # Notification
-  repository/                  # JPA repositories theo các nhóm Entity
-  enums/                       # Vai trò, trạng thái, provider và nghiệp vụ
-  exception/                   # AccountException
+  repository/
+    user/                      # Repository tài khoản
+    book/                      # Repository sách và catalog
+    book_service/              # Repository mượn và tiền phạt
+    notification/              # Repository thông báo
+  enums/
+    user/                      # Vai trò, trạng thái, provider và token
+    book/                      # Trạng thái phát hành và bản sao
+    book_service/              # Trạng thái mượn, đặt trước và tiền phạt
+    notification/              # Loại thông báo
+  exception/account/           # Lỗi nghiệp vụ tài khoản
 
 src/main/resources/
-  templates/                   # Trang và fragments Thymeleaf
-  static/css/                  # auth, home, navbar, footer, tokens...
+  templates/
+    account/                   # Hồ sơ và cài đặt tài khoản
+    admin/
+      books/                   # Tạo/sửa sách
+      fragments/               # Sidebar dashboard
+      dashboard.html
+    auth/                       # Đăng nhập, đăng ký, khôi phục mật khẩu
+    borrowing/                  # Xác nhận mượn sách
+    catalog/                    # Duyệt danh mục
+    member/                     # Danh sách, chi tiết và fragments quản lý thành viên
+    pages/                      # Home, About, Contact
+    shared/                     # Navbar, footer và fragments auth dùng chung
+  static/css/
+    admin/                     # Dashboard and book management
+    base/                      # Design tokens and shared base styles
+    layout/                    # Navbar and footer
+    member/                    # Member management
+    pages/                     # Auth, account, home, about, contact, catalog, loans
   static/js/auth.js            # Toggle password, strength meter, countdown...
   static/images/               # Ảnh và icon đang dùng
   application*.properties      # Cấu hình chung, local, prod
@@ -87,13 +189,13 @@ src/test/resources/            # application-test.properties, H2 riêng
 docs/                          # Context dự án và tài liệu luồng tài khoản
 ```
 
-Template hiện có: `home.html`, `login.html`, `register.html`, `forgot-password.html`,
-`reset-password.html`, `profile.html`, `change-password.html`, `authFragments.html`, `Navbar.html`, `footer.html`.
-Đã tích hợp thêm `about.html`, `contact.html`, assets và routes tương ứng từ `origin/main` vào `HaiQuach`.
+Templates được nhóm theo chức năng trong các thư mục `account/`, `admin/`, `auth/`, `borrowing/`,
+`catalog/`, `member/`, `pages/` và `shared/`; tên view và fragment Thymeleaf dùng đường dẫn tương ứng.
 About/Contact giữ giao diện từ main, đã dịch nội dung, nhãn form, FAQ và mô tả ảnh sang tiếng Anh.
-Hai template dùng `lang="en"`, tham chiếu `footer` đúng chữ thường. Contact dùng `auth.js` cho HTML validation
-tiếng Anh và bản đồ nhúng đặt ngôn ngữ English. Form Contact hiện chỉ redirect/flash thông báo, chưa có service gửi/lưu liên hệ.
-About/Contact phải nạp `tokens.css` trước `navbar.css`/`footer.css` để các biến màu của fragment được định nghĩa.
+`pages/about.html` và `pages/contact.html` dùng `lang="en"` và fragment từ `shared/`. Contact dùng `auth.js`
+cho HTML validation tiếng Anh và bản đồ nhúng đặt ngôn ngữ English. Contact gửi email đồng bộ qua SMTP,
+dùng Reply-To của người gửi; chưa lưu feedback vào DB.
+About/Contact phải nạp `base/tokens.css` trước `layout/navbar.css`/`layout/footer.css` để các biến màu của fragment được định nghĩa.
 Giữ đúng tên và chữ hoa/thường khi tham chiếu fragment để tránh lỗi khi đóng gói/chạy Linux.
 
 ## 4. Chức năng hiện có và phần còn thiếu
@@ -105,31 +207,33 @@ Giữ đúng tên và chữ hoa/thường khi tham chiếu fragment để tránh
 | Google | Tạo tài khoản, đăng nhập, liên kết local, xử lý OAuth2/OIDC | Chưa có hủy liên kết; cần thử Google thật |
 | Email và mật khẩu | Xác thực/gửi lại email, quên/reset và đổi mật khẩu qua form Thymeleaf | SMTP thật cần kiểm tra môi trường |
 | Hồ sơ cá nhân | Service, DTO, form Thymeleaf xem/cập nhật hồ sơ và link menu | Chưa xác nhận triển khai thực tế |
-| Home | Có giao diện, dữ liệu sách mẫu, trạng thái/liên kết Google | Chưa nối catalog/tìm kiếm sách thực |
-| Quản lý sách | Entity và Repository cho sách, bản sao, tác giả, thể loại, NXB | Chưa có đầy đủ service/controller/trang CRUD |
-| Mượn/trả/gia hạn | Entity và Repository `Loan` | Chưa có luồng nghiệp vụ hoàn chỉnh |
-| Đặt trước | Entity và Repository `Reservation` | Chưa có luồng đặt/hủy/hàng chờ |
+| Home | Có giao diện, dữ liệu trưng bày mẫu và trạng thái/liên kết Google; ô tìm kiếm mở `/catalog` | Kệ sách/genre trưng bày trên Home vẫn là dữ liệu mẫu |
+| Catalog | Trang công khai `/catalog` tìm kiếm sách đã xuất bản, lọc genre/trạng thái/ngôn ngữ/năm, sắp xếp và phân trang; số lượng bản sao lấy từ DB | Chưa có dữ liệu lượt xem/mượn tổng hợp để xếp hạng phổ biến hoặc trang chi tiết sách |
+| Quản lý sách | CRUD quản trị sách/bản sao, service, repository và kiểm thử | — |
+| Yêu cầu mượn | Form `/loans/confirm`; POST tạo `Reservation` trạng thái PENDING sau khi kiểm tra quota, fine và CSRF | Chưa có quy trình thủ thư duyệt, phát hành bản sao hoặc trả/gia hạn |
+| Quản lý thành viên | Danh sách/tìm kiếm/chi tiết tại `/staff/members` và `/admin/users`; role/permission kiểm thử | Bộ lọc circulation chỉ chạy ở preview; điều khiển cập nhật role/trạng thái trên UI đang disabled, chưa có backend mutation |
+| Đặt trước | Repository và tạo reservation chờ duyệt từ yêu cầu mượn | Chưa có hủy/hàng chờ và xử lý reservation của thủ thư |
 | Tiền phạt | Entity và Repository `Fine` | Chưa có tính/phê duyệt/thanh toán phạt |
 | Thông báo | Entity và Repository `Notification` | Chưa có luồng thông báo nghiệp vụ/gửi nhắc |
-| Quản trị | Rule `/admin/**` yêu cầu ADMIN | Chưa có dashboard/quản lý người dùng/báo cáo |
+| Phân quyền | `ROLE_USER` được ánh xạ thành authority `ROLE_MEMBER`; có `ROLE_LIBRARIAN`, `ROLE_ADMIN` và quyền thành viên | Chưa có đầy đủ luồng kích hoạt thẻ, cập nhật vai trò/trạng thái và báo cáo |
 
 Không coi nút, link menu hoặc dữ liệu mẫu trên Home là chứng cứ backend đã triển khai.
-Các đường dẫn catalog/search/services cần được đối chiếu controller khi làm tiếp. About/Contact có MVC route công khai.
+About/Contact và `/catalog` có MVC route công khai.
 
 ## 5. Luồng tài khoản và nơi cần đọc
 
 | Phần | File chính |
 | --- | --- |
-| Đăng ký, hiển thị Login | [AuthController.java](../src/main/java/grp3/java/booknet/controller/AuthController.java), `UserServiceImpl`, `UserRegisterDto` |
-| Quên/reset mật khẩu qua HTML | [PasswordRecoveryController.java](../src/main/java/grp3/java/booknet/controller/PasswordRecoveryController.java), `PasswordResetForm` |
-| Xác thực/gửi lại email | [EmailVerificationController.java](../src/main/java/grp3/java/booknet/controller/EmailVerificationController.java) |
-| Token, mật khẩu, hồ sơ | [AccountService.java](../src/main/java/grp3/java/booknet/service/AccountService.java) |
-| Gửi email và tạo link | `AccountMailService` |
-| Google và liên kết | [OAuthAccountService.java](../src/main/java/grp3/java/booknet/service/OAuthAccountService.java), `AccountLinkController` |
-| Google adapters | `CustomOAuth2UserService`, `CustomOidcUserService` và các principal tương ứng |
-| Phân quyền, phiên | [SecurityConfig.java](../src/main/java/grp3/java/booknet/config/SecurityConfig.java), `AccountSessionFilter`, `CustomUserDetailsService` |
-| Chính sách mật khẩu/thời hạn | [AccountPolicy.java](../src/main/java/grp3/java/booknet/config/AccountPolicy.java) |
-| Hồ sơ/đổi mật khẩu qua HTML | [AccountController.java](../src/main/java/grp3/java/booknet/controller/AccountController.java), `AccountRequests`, `ProfileResponse`, `profile.html`, `change-password.html` |
+| Đăng ký, hiển thị Login | [AuthController.java](../src/main/java/grp3/java/booknet/controller/account/AuthController.java), `UserServiceImpl`, `UserRegisterDto` |
+| Quên/reset mật khẩu qua HTML | [PasswordRecoveryController.java](../src/main/java/grp3/java/booknet/controller/account/PasswordRecoveryController.java), `PasswordResetForm` |
+| Xác thực/gửi lại email | [EmailVerificationController.java](../src/main/java/grp3/java/booknet/controller/account/EmailVerificationController.java) |
+| Token, mật khẩu, hồ sơ | [AccountService.java](../src/main/java/grp3/java/booknet/service/account/AccountService.java) |
+| Gửi email và tạo link | `AccountMailService` trong `service/account/` |
+| Google và liên kết | [OAuthAccountService.java](../src/main/java/grp3/java/booknet/service/account/OAuthAccountService.java), `AccountLinkController` |
+| Google adapters | `CustomOAuth2UserService`, `CustomOidcUserService` trong `security/service/` và principals trong `security/principal/` |
+| Phân quyền, phiên | [SecurityConfig.java](../src/main/java/grp3/java/booknet/config/security/SecurityConfig.java), `AccountSessionFilter`, `CustomUserDetailsService` |
+| Chính sách mật khẩu/thời hạn | [AccountPolicy.java](../src/main/java/grp3/java/booknet/config/account/AccountPolicy.java) |
+| Hồ sơ/đổi mật khẩu qua HTML | [AccountController.java](../src/main/java/grp3/java/booknet/controller/account/AccountController.java), `ProfileUpdateRequest`, `ChangePasswordRequest`, `ProfileResponse`, `profile.html`, `change-password.html` |
 
 ### Đăng ký và đăng nhập local
 
@@ -157,7 +261,8 @@ Các đường dẫn catalog/search/services cần được đối chiếu contr
   và Google cũ bị từ chối ở request tiếp theo. Remember-me cũ hết hiệu lực theo password hash.
 - Mật khẩu mới: **8–32 ký tự, có chữ hoa, chữ thường, số, tối đa 72 byte UTF-8**.
   Quy tắc này không ép người dùng đổi mật khẩu cũ chỉ để đăng nhập.
-- Google-only chưa có mật khẩu local; không tự chuyển provider hoặc tạo mật khẩu qua reset.
+- Google-only không có password hash ban đầu; có thể yêu cầu link Set password từ Profile.
+  Reset/set password giữ nguyên provider GOOGLE và identity; sau đó email/mật khẩu và Google đều đăng nhập cùng user.
 
 ### Đăng nhập và liên kết Google
 
@@ -176,13 +281,15 @@ Các đường dẫn catalog/search/services cần được đối chiếu contr
 
 ### Vai trò và hồ sơ
 
-- Role hiện có: `ROLE_GUEST`, `ROLE_USER`, `ROLE_ADMIN`. Chưa có role LIBRARIAN riêng;
-  tab Member/Librarian trên Login không phải cơ chế gán quyền.
+- Role hiện có: `ROLE_GUEST`, `ROLE_USER`, `ROLE_LIBRARIAN`, `ROLE_ADMIN`.
+  `ROLE_USER` được giữ nguyên trong DB nhưng có authority `ROLE_MEMBER` để tương thích tài khoản cũ.
+  Quyền member/staff/admin được kiểm soát ở filter chain và method security.
 - Status user: `ACTIVE`, `SUSPENDED`, `EXPIRED`; provider: `LOCAL`, `GOOGLE`.
 - Form `GET/POST /account/profile` chỉ cho sửa họ tên, điện thoại, địa chỉ, avatar HTTP(S). Email, mật khẩu,
   role, provider, status và memberCode không được sửa qua request hồ sơ.
 - Hồ sơ dùng DTO an toàn để render; form dùng constructor binding của record và validation.
-  Đổi mật khẩu không điền lại giá trị mật khẩu trong HTML lỗi. Google-only chỉ thấy hướng dẫn đăng nhập Google.
+  Đổi mật khẩu không điền lại giá trị mật khẩu trong HTML lỗi. Google-only thấy Set password trong Profile;
+  trang Change password hướng dẫn đăng nhập Google nếu chưa có password hash.
 
 ## 6. Dữ liệu và cấu hình cần lưu ý
 
@@ -226,23 +333,14 @@ mvn test
 mvn spring-boot:run
 ```
 
-Xác nhận ngày 10/11/2026 bằng JDK 21 và Maven, profile `test`: **47 test đạt, không lỗi/skip**.
-Trước chuyển đổi MVC: 37/37 test đạt. Sau chuyển đổi đã bổ sung 10 trường hợp kiểm thử HTML,
-form hồ sơ/đổi mật khẩu, CSRF và giới hạn validation đăng ký.
-Sau chuyển thông báo sang tiếng Anh: chạy lại 47/47 test đạt, gồm kiểm tra HTML lỗi với
-`Accept-Language: vi-VN` và tiêu đề/nội dung email. JavaScript qua kiểm tra cú pháp và 8 ca smoke
-cho message validation cùng việc xóa custom validity khi input/change; chưa kiểm tra popup trên trình duyệt thật.
-Sau tích hợp `origin/main` tại `fdd22c7` vào `HaiQuach`: chạy lại 47/47 test đạt, gồm render công khai
-About/Contact. Giữ helper `TestPasswords` từ main để tạo mật khẩu ngẫu nhiên cho tài khoản H2 test.
-Sau dịch About/Contact sang tiếng Anh: 47/47 test đạt; đã kiểm tra HTML render của hai trang,
-`lang="en"`, nhãn/nội dung form Contact, CSRF và script validation. Chưa kiểm tra trực quan trên trình duyệt thật.
-
-| Bộ test | Số test tại mốc này | Phạm vi |
-| --- | --- | --- |
-| `BooknetApplicationTests` | 1 | Khởi tạo application context |
-| `AccountFlowTests` | 20 | Form tài khoản, token, race reset, phiên, quyền hồ sơ, CSRF |
-| `OAuthCallbackTests` | 6 | Filter chain thật, redirect/callback/state của Google |
-| `ThymeleafAccountFlowTests` | 20 | HTML render, tên field, CSRF từ form thật, lỗi/flash/redirect, email link, hồ sơ/đổi mật khẩu, validation đăng ký |
+Xác nhận ngày 16/11/2026 bằng JDK 21 và Maven Wrapper, profile `test`: **125 test đạt, không lỗi/skip**.
+Ba lớp `AdminBookControllerFeature1/2/3Tests` đạt 13/13, kiểm tra chuyển hướng URL cũ,
+render form, quyền librarian/admin và xuất bản. Toàn bộ test cũng bao gồm luồng tài khoản, OAuth,
+Contact, catalog, bản sao/vòng đời sách, mượn sách, thành viên và seed runner.
+Catalog có test H2/MockMvc cho tìm kiếm, lọc, phân trang, giữ bộ lọc qua trang, HTML, trạng thái rỗng,
+và phân biệt sách hiển thị công khai với sách nội bộ dành cho librarian/admin.
+Local seed runner có 4 test đơn vị cho tạo tài khoản, idempotency, disabled-by-default
+và kiểm tra credential.
 
 Test dùng profile `test`, H2 riêng và mock SMTP/Google. Kết quả này **không xác nhận**
 Google client, gửi email thật, migration hoặc concurrency trên MySQL triển khai thực.

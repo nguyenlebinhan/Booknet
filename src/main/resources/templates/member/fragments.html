@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<header class="mg-topbar" th:fragment="topbar">
+  <a th:href="@{/}">booknet Library <span>/ Administration</span></a>
+  <div class="mg-topbar-account"><span class="mg-badge positive" sec:authorize="hasRole('ADMIN')">Admin</span><span class="mg-badge positive" sec:authorize="hasRole('LIBRARIAN')">Librarian</span><a th:href="@{/account/profile}" sec:authentication="name">My account</a></div>
+</header>
+
+<div class="mg-preview" th:fragment="dataNotice">
+  <span class="mg-badge warning" th:text="${demo ? 'DEMO DATA' : 'LIVE DIRECTORY'}">DEMO DATA</span>
+  <p th:if="${demo}">Fictional records · Snapshot 08/11/2026. Previewing this page does not change accounts, cards or payments.</p>
+  <p th:unless="${demo}">Account information is live. Card, loan and fine information is not connected yet.</p>
+  <a th:href="@{${basePath}(demo=${!demo})}" th:text="${demo ? 'View live directory →' : 'Preview sample data →'}">Preview sample data →</a>
+</div>
+
+<section class="mg-panel mg-access-panel" th:fragment="accessControls" sec:authorize="hasRole('ADMIN')">
+  <div class="mg-panel-heading"><div><p class="mg-kicker">ADMIN ONLY</p><h2>Account access</h2></div><span class="mg-badge neutral">Preview only</span></div>
+  <p class="mg-muted">Only administrators can change roles or account access. These controls are a preview; changes cannot be saved yet.</p>
+  <div class="mg-form-row"><label>Account role<select id="preview-role" aria-describedby="access-help"><option th:selected="${member.role == 'Member'}">Member</option><option th:selected="${member.role == 'Librarian'}">Librarian</option><option th:selected="${member.role == 'Admin'}">Admin</option></select></label><label>Access status<input readonly th:value="${member.access}" aria-label="Current access status"></label></div>
+  <p id="access-help" class="mg-small">Selecting a role only previews the form. No account will be updated.</p>
+  <div class="mg-actions"><button class="mg-button primary" type="button" disabled>Save role</button><button class="mg-button danger" type="button" disabled>Lock / unlock account</button></div>
+</section>
+
+<footer class="mg-footer" th:fragment="footer"><span>© 2026 booknet Library. Growing knowledge together.</span><a th:href="@{/contact}">Help &amp; contact ↗</a></footer>
+</body></html>

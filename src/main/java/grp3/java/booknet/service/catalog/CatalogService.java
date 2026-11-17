@@ -1,0 +1,18 @@
+package grp3.java.booknet.service.catalog;
+
+import grp3.java.booknet.dto.catalog.CatalogBookView;
+import grp3.java.booknet.dto.catalog.CatalogFilter;
+import grp3.java.booknet.entity.book.Category;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+
+public interface CatalogService {
+
+    Page<CatalogBookView> search(CatalogFilter filter, Pageable pageable, boolean includeUnpublished);
+
+    List<Category> getCategories();
+
+    List<Short> getPublishYears(boolean includeUnpublished);
+}

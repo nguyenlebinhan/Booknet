@@ -1,6 +1,7 @@
 package grp3.java.booknet.repository.user;
 
 import grp3.java.booknet.entity.user.User;
+import grp3.java.booknet.enums.user.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +15,8 @@ import org.springframework.data.repository.query.Param;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
+
+    long countByRole(UserRole role);
 
     @Query("""
         select u from User u

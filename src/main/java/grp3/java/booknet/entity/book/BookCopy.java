@@ -30,6 +30,9 @@ public class BookCopy extends BaseEntity {
     @Column(name = "shelf_location", length = 50)
     private String shelfLocation;
 
+    @Column(length = 255)
+    private String condition;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default

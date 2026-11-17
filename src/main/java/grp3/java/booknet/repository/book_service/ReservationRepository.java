@@ -11,10 +11,11 @@ import java.util.List;
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
+    long countByStatus(ReservationStatus status);
+
     long countByMember_IdAndStatusIn(Long memberId, Collection<ReservationStatus> statuses);
 
     List<Reservation> findByMember_IdAndStatusIn(Long memberId, Collection<ReservationStatus> statuses);
 
     boolean existsByMember_IdAndBook_IdAndStatusIn(Long memberId, Long bookId, Collection<ReservationStatus> statuses);
 }
-

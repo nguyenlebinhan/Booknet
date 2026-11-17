@@ -3,7 +3,8 @@ package grp3.java.booknet;
 import grp3.java.booknet.entity.user.User;
 import grp3.java.booknet.enums.user.*;
 import grp3.java.booknet.repository.user.*;
-import grp3.java.booknet.security.*;
+import grp3.java.booknet.security.dto.CustomUserDetails;
+import grp3.java.booknet.security.principal.CustomOAuth2User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -69,7 +70,7 @@ class AuthorizationTests {
         User account = account(role);
         MockHttpSession session = login(account);
         mvc.perform(get("/account/profile").session(session)).andExpect(status().isOk())
-                .andExpect(view().name("profile"));
+                .andExpect(view().name("account/profile"));
         checkMatrix(request -> { request.setSession(session); return request; }, role);
     }
 

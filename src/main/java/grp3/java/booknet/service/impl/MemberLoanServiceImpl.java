@@ -18,6 +18,7 @@ import grp3.java.booknet.repository.book_service.LoanRepository;
 import grp3.java.booknet.repository.book_service.ReservationRepository;
 import grp3.java.booknet.repository.user.UserRepository;
 import grp3.java.booknet.service.MemberLoanService;
+import grp3.java.booknet.service.fine.FineService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -59,6 +60,7 @@ public class MemberLoanServiceImpl implements MemberLoanService {
     private final LoanRepository loanRepository;
     private final ReservationRepository reservationRepository;
     private final BookCopyRepository bookCopyRepository;
+    private final FineService fineService;
 
     @Override
     @Transactional
@@ -469,6 +471,9 @@ public class MemberLoanServiceImpl implements MemberLoanService {
             loan.setNote(conditionNote.trim());
         }
         loanRepository.save(loan);
+
+        // ── Tạo Fine nếu trả trễ (Người 7 — UC29/UC20) ──────────────────────
+        fineService.finalizeFine(loan, librarian);
 
         log.info("Librarian {} confirmed return of Loan ID {} (copy: {})",
                 librarian.getId(), loan.getId(), loan.getCopy().getBarcode());

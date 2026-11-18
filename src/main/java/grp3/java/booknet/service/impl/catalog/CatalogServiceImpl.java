@@ -10,14 +10,18 @@ import grp3.java.booknet.repository.book.BookCopyRepository;
 import grp3.java.booknet.repository.book.BookRepository;
 import grp3.java.booknet.repository.book.CatalogSpecifications;
 import grp3.java.booknet.repository.book.CategoryRepository;
+import grp3.java.booknet.repository.catalog.CatalogStatsRepository;
 import grp3.java.booknet.service.catalog.CatalogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,14 +30,20 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CatalogServiceImpl implements CatalogService {
 
+    public static final String POPULAR = "popular";
+
     private final BookRepository bookRepository;
     private final BookCopyRepository bookCopyRepository;
     private final CategoryRepository categoryRepository;
+    private final CatalogStatsRepository catalogStats;
 
     @Override
     @Transactional(readOnly = true)
     public Page<CatalogBookView> search(CatalogFilter filter, Pageable pageable, boolean includeUnpublished) {
-        Page<Book> books = bookRepository.findAll(CatalogSpecifications.withFilter(filter, includeUnpublished), pageable);
+        Specification<Book> specification = CatalogSpecifications.withFilter(filter, includeUnpublished);
+        Page<Book> books = filter != null && POPULAR.equals(filter.getSort())
+                ? mostBorrowedFirst(specification, pageable)
+                : bookRepository.findAll(specification, pageable);
         List<Long> bookIds = books.getContent().stream().map(Book::getId).toList();
         if (bookIds.isEmpty()) {
             return books.map(book -> toView(book, 0, 0, false));
@@ -62,6 +72,24 @@ public class CatalogServiceImpl implements CatalogService {
         return includeUnpublished
                 ? bookRepository.findDistinctPublishYears()
                 : bookRepository.findDistinctPublishedYears(PublicationStatus.PUBLISHED);
+    }
+
+    /**
+     * "Most popular": books borrowed most often come first, then the newest. Loan counts cannot be
+     * ordered inside the filter query (it uses DISTINCT joins), so the matching books are ranked here.
+     */
+    private Page<Book> mostBorrowedFirst(Specification<Book> specification, Pageable pageable) {
+        List<Book> matching = bookRepository.findAll(specification, Sort.by(Sort.Order.desc("id")));
+        if (matching.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
+        Map<Long, Long> loans = copyCountsByBook(catalogStats.countLoansByBook(matching.stream().map(Book::getId).toList()));
+        List<Book> ranked = matching.stream()
+                .sorted(Comparator.comparing((Book book) -> loans.getOrDefault(book.getId(), 0L)).reversed())
+                .toList();
+        int from = (int) Math.min(pageable.getOffset(), ranked.size());
+        int to = Math.min(from + pageable.getPageSize(), ranked.size());
+        return new PageImpl<>(ranked.subList(from, to), pageable, ranked.size());
     }
 
     private CatalogBookView toView(Book book, long totalCopies, long availableCopies, boolean hasReservableCopies) {

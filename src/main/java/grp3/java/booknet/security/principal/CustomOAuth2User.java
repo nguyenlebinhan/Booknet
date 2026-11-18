@@ -21,7 +21,7 @@ public class CustomOAuth2User implements OAuth2User {
         this.oAuth2User = oAuth2User;
         this.user = user;
         this.authVersion = user.getAuthVersion();
-        this.authorities = List.copyOf(user.getRole().authorities());
+        this.authorities = List.copyOf(user.effectiveAuthorities());
     }
 
     @Override

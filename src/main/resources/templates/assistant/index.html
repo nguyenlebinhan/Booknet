@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI assistant | booknet</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}" href="/css/base/tokens.css">
+  <link rel="stylesheet" th:href="@{/css/layout/navbar.css}" href="/css/layout/navbar.css">
+  <link rel="stylesheet" th:href="@{/css/pages/assistant.css}" href="/css/pages/assistant.css">
+  <link rel="stylesheet" th:href="@{/css/layout/footer.css}" href="/css/layout/footer.css">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+</head>
+<body>
+  <th:block th:replace="~{shared/navigation :: navigation}"></th:block>
+
+  <main class="ai-page" id="main-content">
+    <nav class="ai-breadcrumb" aria-label="Breadcrumb">
+      <a th:href="@{/}">Home</a><span aria-hidden="true">/</span><span aria-current="page">AI assistant</span>
+    </nav>
+
+    <header class="ai-heading">
+      <div>
+        <p class="ai-kicker">READ WITH booknet</p>
+        <h1>One conversation. A new book.</h1>
+        <p class="ai-lead">Find books you'll love, learn about loans and returns, and get to know booknet.</p>
+      </div>
+      <span class="ai-sample-badge">Sample experience</span>
+    </header>
+
+    <div class="ai-layout">
+      <section class="ai-chat" aria-labelledby="chat-title">
+        <header class="ai-chat-head">
+          <span class="ai-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
+          </span>
+          <div>
+            <h2 id="chat-title">AI assistant • booknet</h2>
+            <p>Your companion on the reading journey</p>
+          </div>
+          <a class="ai-button" th:href="@{/assistant}">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            New conversation
+          </a>
+        </header>
+
+        <div class="ai-messages" id="ai-messages" aria-live="polite">
+          <p class="ai-divider"><span>Sample conversation</span></p>
+
+          <div class="ai-message from-you">
+            <p class="ai-meta">You</p>
+            <p class="ai-bubble">I'd like a weekend read to help me slow down. Could you suggest a few gentle, heartfelt books?</p>
+          </div>
+
+          <div class="ai-message from-bot">
+            <span class="ai-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg></span>
+            <div class="ai-bot-body">
+              <p class="ai-meta">booknet assistant</p>
+              <p th:if="${!#lists.isEmpty(sampleBooks)}">Here are a few books readers at booknet often borrow. Open one to check its copies and shelf.</p>
+              <p th:if="${#lists.isEmpty(sampleBooks)}">Once the library adds books to the catalog, suggestions will show here as cards you can open.</p>
+              <div class="ai-books" th:unless="${#lists.isEmpty(sampleBooks)}">
+                <article class="ai-book" th:each="book : ${sampleBooks}">
+                  <div class="ai-book-cover" aria-hidden="true">
+                    <img th:if="${book.coverUrl != null and !#strings.isEmpty(book.coverUrl)}" th:src="${book.coverUrl}" alt="">
+                    <span th:unless="${book.coverUrl != null and !#strings.isEmpty(book.coverUrl)}" th:text="${book.title}">Title</span>
+                  </div>
+                  <div class="ai-book-copy">
+                    <p class="ai-book-genre" th:text="${book.categories.isEmpty() ? 'BOOKNET COLLECTION' : #strings.toUpperCase(book.categories.get(0))}">GENRE</p>
+                    <h3 th:text="${book.title}">Title</h3>
+                    <p class="ai-book-author" th:text="${book.authors.isEmpty() ? 'Unknown author' : #strings.listJoin(book.authors, ', ')}">Author</p>
+                    <span class="ai-status" th:classappend="${book.availableCopies > 0 ? '' : 'on-loan'}"
+                          th:text="${book.availableCopies > 0 ? 'Available · ' + book.availableCopies + '/' + book.totalCopies + ' copies' : (book.canReserve ? 'On loan' : 'Not in circulation')}">Available</span>
+                    <a class="ai-book-link" th:href="@{/catalog/{id}(id=${book.id})}">View book <span aria-hidden="true">↗</span></a>
+                  </div>
+                </article>
+              </div>
+              <p class="ai-note">Sample catalog information · Check the book page for actual availability.</p>
+            </div>
+          </div>
+
+          <th:block th:if="${sent != null}">
+            <div class="ai-message from-you">
+              <p class="ai-meta">You</p>
+              <p class="ai-bubble" th:text="${sent}">Your message</p>
+            </div>
+            <div class="ai-message from-bot">
+              <span class="ai-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg></span>
+              <div class="ai-bot-body">
+                <p class="ai-meta">booknet assistant</p>
+                <div class="ai-reply">
+                  <p th:text="${reply}">Reply</p>
+                  <p><a th:href="@{/catalog(keyword=${sent.length() > 80 ? sent.substring(0, 80) : sent})}">Search the catalog for your question <span aria-hidden="true">↗</span></a></p>
+                </div>
+              </div>
+            </div>
+          </th:block>
+        </div>
+
+        <div class="ai-composer">
+        <form class="ai-chips" th:action="@{/assistant}" method="post">
+          <button type="submit" name="message" value="Suggest similar books" class="ai-chip">Suggest similar books</button>
+          <button type="submit" name="message" value="What are the borrowing rules?" class="ai-chip">What are the borrowing rules?</button>
+        </form>
+        <form th:action="@{/assistant}" method="post" id="ai-form" novalidate>
+          <div class="ai-input" th:classappend="${messageError != null} ? 'has-error'">
+            <label for="ai-message">Your message</label>
+            <div class="ai-input-row">
+              <textarea id="ai-message" name="message" rows="2" th:attr="maxlength=${maxMessage}" th:text="${draft}"
+                        placeholder="Example: Suggest Vietnamese books about childhood…" aria-describedby="ai-help"></textarea>
+              <button class="ai-send" type="submit">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+                Send
+              </button>
+            </div>
+            <p class="ai-error" th:if="${messageError != null}" th:text="${messageError}" role="alert">Error</p>
+          </div>
+          <p class="ai-help" id="ai-help"><span>Enter to send · Shift + Enter for a new line</span><span>UI example · AI is not connected</span></p>
+        </form>
+        </div>
+      </section>
+
+      <aside class="ai-side">
+        <section class="ai-starters" aria-labelledby="starters-title">
+          <h2 id="starters-title">Where would you like to start?</h2>
+          <p>Tell me what you like to read, or choose a question to explore the library.</p>
+          <form th:action="@{/assistant}" method="post" class="ai-starter-list">
+            <button type="submit" name="message" value="Suggest Vietnamese childhood stories" class="ai-starter">
+              <strong>Find your next read</strong><span>Suggest Vietnamese childhood stories</span>
+            </button>
+            <button type="submit" name="message" value="How do I borrow a book?" class="ai-starter">
+              <strong>Understand the rules</strong><span>How do I borrow a book?</span>
+            </button>
+            <button type="submit" name="message" value="Where can I find my due dates?" class="ai-starter">
+              <strong>Track due dates</strong><span>Where can I find my due dates?</span>
+            </button>
+            <button type="submit" name="message" value="How do estimated and finalized fines differ?" class="ai-starter">
+              <strong>Understand overdue fines</strong><span>How do estimated and finalized fines differ?</span>
+            </button>
+          </form>
+        </section>
+
+        <section class="ai-account" aria-labelledby="account-title">
+          <h2 id="account-title">For accurate account details</h2>
+          <p sec:authorize="isAuthenticated()">For your account:<br><span sec:authentication="name">member@example.com</span></p>
+          <p sec:authorize="isAnonymous()">The assistant cannot see your account. <a th:href="@{/login}">Sign in</a> to check your own loans and fines.</p>
+          <ul>
+            <li><span class="ai-account-link is-disabled" title="Loan pages are not available yet">My current loans <small>Coming soon</small></span></li>
+            <li><span class="ai-account-link is-disabled" title="Fine pages are not available yet">My overdue fines <small>Coming soon</small></span></li>
+            <li><a class="ai-account-link" th:href="@{/contact}">Contact a librarian <span aria-hidden="true">↗</span></a></li>
+          </ul>
+        </section>
+
+        <section class="ai-facts">
+          <h3>Finalized ≠ estimated fines</h3>
+          <p>Only finalized outstanding fines are payable. Estimates may change until a librarian receives the book.</p>
+          <p class="ai-safety">AI can make mistakes. Verify information with a librarian. Do not share passwords, OTPs, or sensitive account or payment details.</p>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <footer th:replace="~{shared/footer :: footer-section}"></footer>
+  <script th:src="@{/js/assistant.js}" defer th:attr="data-reply=${cannedReply},data-search=@{/catalog}" id="ai-script"></script>
+</body>
+</html>

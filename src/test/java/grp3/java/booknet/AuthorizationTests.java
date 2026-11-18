@@ -120,7 +120,7 @@ class AuthorizationTests {
         User admin = account(UserRole.ROLE_ADMIN);
         var remembered = mvc.perform(post("/login").with(csrf()).param("email", admin.getEmail())
                         .param("password", PASSWORD).param("remember-me", "on"))
-                .andExpect(redirectedUrl("/")).andReturn().getResponse().getCookie("remember-me");
+                .andExpect(redirectedUrl(landing(admin))).andReturn().getResponse().getCookie("remember-me");
         assertThat(remembered).isNotNull();
         admin.setRole(UserRole.ROLE_USER);
         users.saveAndFlush(admin);
@@ -135,13 +135,17 @@ class AuthorizationTests {
 
     @ParameterizedTest
     @EnumSource(value = UserRole.class, names = "ROLE_GUEST", mode = EnumSource.Mode.EXCLUDE)
-    void navbarRendersMemberLinksOnlyForMembersAndKeepsAccountAndLogoutForm(UserRole role) throws Exception {
+    void membersGetTheNavbarAndStaffGetTheSidebarWithALogoutForm(UserRole role) throws Exception {
         String html = mvc.perform(get("/about").with(user(new CustomUserDetails(account(role)))))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        assertThat(html).contains("/account/profile", "action=\"/logout\"", "name=\"_csrf\"")
-                .doesNotContain("sec:authorize");
-        if (role == UserRole.ROLE_USER) assertThat(html).contains("My books", ">Reservations<");
-        else assertThat(html).doesNotContain("My books", ">Reservations<");
+        assertThat(html).contains("action=\"/logout\"", "name=\"_csrf\"").doesNotContain("sec:authorize");
+        if (role == UserRole.ROLE_USER) {
+            assertThat(html).contains("bn-navbar", "/account/profile", "My books", ">Reservations<")
+                    .doesNotContain("admin-sidebar");
+        } else {
+            // Admin and Librarian use the sidebar only; member links never appear for them.
+            assertThat(html).contains("admin-sidebar").doesNotContain("bn-navbar", "My books", ">Reservations</a>");
+        }
     }
 
     private void checkMatrix(RequestPostProcessor signedIn, UserRole role) throws Exception {
@@ -163,8 +167,13 @@ class AuthorizationTests {
 
     private MockHttpSession login(User account) throws Exception {
         return (MockHttpSession) mvc.perform(post("/login").with(csrf()).param("email", account.getEmail())
-                        .param("password", PASSWORD)).andExpect(redirectedUrl("/"))
+                        .param("password", PASSWORD)).andExpect(redirectedUrl(landing(account)))
                 .andReturn().getRequest().getSession(false);
+    }
+
+    /** Admins land on their dashboard after sign-in; everyone else lands on the home page. */
+    private static String landing(User account) {
+        return account.getRole() == UserRole.ROLE_ADMIN ? "/admin/dashboard" : "/";
     }
 
     private CustomOAuth2User google(User account) {

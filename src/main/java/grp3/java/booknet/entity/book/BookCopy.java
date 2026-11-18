@@ -30,7 +30,8 @@ public class BookCopy extends BaseEntity {
     @Column(name = "shelf_location", length = 50)
     private String shelfLocation;
 
-    @Column(name = "`condition`", length = 255)
+    // CONDITION is a reserved word in MySQL, so the column has its own name; the field stays "condition".
+    @Column(name = "book-condition", length = 255)
     private String condition;
 
     @Enumerated(EnumType.STRING)

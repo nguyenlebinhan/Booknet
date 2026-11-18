@@ -23,17 +23,12 @@
         <header class="auth-header">
           <p class="auth-eyebrow">WELCOME BACK</p>
           <h1 class="auth-title">Your reading corner<br>is waiting.</h1>
-          <p class="auth-subtitle">Sign in to continue your reading journey with booknet.</p>
+          <p class="auth-subtitle">Sign in to your booknet account.</p>
         </header>
 
         <div th:if="${successMessage != null}" th:text="${successMessage}" class="auth-notice auth-notice-success" role="status"></div>
         <div th:if="${logoutMessage != null}" th:text="${logoutMessage}" class="auth-notice auth-notice-success" role="status"></div>
         <div th:if="${errorMessage != null and param.error == null}" th:text="${errorMessage}" class="auth-notice auth-notice-error" role="alert"></div>
-
-        <div class="auth-tabs" role="group" aria-label="Account type">
-          <button type="button" class="auth-tab active" aria-pressed="true">Member</button>
-          <button type="button" class="auth-tab" aria-pressed="false">Librarian</button>
-        </div>
 
         <form class="auth-form" th:action="@{/login}" method="post" th:with="loginFailed=${param.error != null}">
 

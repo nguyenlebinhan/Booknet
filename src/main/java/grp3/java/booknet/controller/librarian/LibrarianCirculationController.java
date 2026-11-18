@@ -24,7 +24,7 @@ import java.util.List;
 @Slf4j
 @Controller
 @RequestMapping({"/staff/loans", "/librarian/loans", "/admin/loans"})
-@PreAuthorize("hasAnyRole('LIBRARIAN', 'ADMIN')")
+@PreAuthorize("hasAuthority('CIRCULATION')")
 @RequiredArgsConstructor
 public class LibrarianCirculationController {
 

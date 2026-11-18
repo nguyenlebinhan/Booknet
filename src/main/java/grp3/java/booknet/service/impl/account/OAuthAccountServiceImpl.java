@@ -34,7 +34,9 @@ import java.util.Optional;
 public class OAuthAccountServiceImpl implements OAuthAccountService {
 
     private final UserRepository userRepository;
+    private final grp3.java.booknet.repository.user.RoleDefinitionRepository roles;
     private final OAuthIdentityRepository oauthIdentityRepository;
+    private final grp3.java.booknet.service.member.MemberCardService memberCards;
 
     @Transactional
     public User authenticate(OAuth2User oAuth2User) throws OAuth2AuthenticationException {
@@ -58,7 +60,9 @@ public class OAuthAccountServiceImpl implements OAuthAccountService {
             User user = linkTargetUserId == null
                     ? loadOrCreateGoogleLogin(normalizedEmail, name, picture, googleSub)
                     : linkGoogleToLocalUser(linkTargetUserId, normalizedEmail, googleSub);
+            if(user.getAssignedRole()==null)roles.findBySystemRole(user.getRole()).ifPresent(user::setAssignedRole);
             requireActive(user);
+            memberCards.createPending(user);
             return user;
         } catch (DataIntegrityViolationException ex) {
             throw new OAuth2AuthenticationException("Google identity was changed concurrently. Please try again.");

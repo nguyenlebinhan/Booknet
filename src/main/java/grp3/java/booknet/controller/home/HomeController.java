@@ -1,5 +1,6 @@
 package grp3.java.booknet.controller.home;
 
+import grp3.java.booknet.service.home.HomeService;
 import grp3.java.booknet.entity.user.User;
 import grp3.java.booknet.enums.user.AuthProvider;
 import grp3.java.booknet.repository.user.OAuthIdentityRepository;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class HomeController {
 
     private final OAuthIdentityRepository oauthIdentityRepository;
+    private final HomeService homeService;
 
     @GetMapping({"/", "/home"})
     public String home(
@@ -43,6 +45,7 @@ public class HomeController {
                 && oauthIdentityRepository.existsByUser_IdAndProvider(userId, AuthProvider.GOOGLE);
 
         model.addAttribute("activePage", "home");
+        model.addAttribute("home", homeService.home());
         model.addAttribute("showGoogleLink", canStartLink && localAccount && !linked);
         model.addAttribute("googleLinked", localAccount && linked && googleLinked == null);
         model.addAttribute("googleLinkedMessage", googleLinked != null);

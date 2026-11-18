@@ -60,6 +60,11 @@ class ThymeleafAccountFlowTests {
             MvcResult page = mvc.perform(get(path)).andExpect(status().isOk())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML)).andReturn();
             assertThat(page.getResponse().getContentAsString()).contains("name=\"_csrf\"").doesNotContain("th:action");
+            if (path.equals("/login")) {
+                assertThat(page.getResponse().getContentAsString())
+                        .contains("action=\"/login\"", "name=\"email\"", "name=\"password\"", "name=\"remember-me\"", "href=\"/oauth2/authorization/google\"")
+                        .doesNotContain("auth-tabs", "Account type", "name=\"role\"");
+            }
         }
         mvc.perform(get("/verification/resend")).andExpect(view().name("auth/forgot-password"))
                 .andExpect(content().string(containsString("action=\"/verification/resend\"")));
@@ -147,7 +152,7 @@ class ThymeleafAccountFlowTests {
         mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com").param("password", INITIAL_PASSWORD))
                 .andExpect(redirectedUrl("/login?error=true"));
         mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com").param("password", NEW_PASSWORD))
-                .andExpect(redirectedUrl("/"));
+                .andExpect(redirectedUrl("/account/profile"));
     }
 
     @ParameterizedTest
@@ -193,7 +198,7 @@ class ThymeleafAccountFlowTests {
                 .andExpect(content().string(containsString("This verification link is invalid")))
                 .andExpect(content().string(containsString("href=\"/verification/resend\"")));
         mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com").param("password", INITIAL_PASSWORD))
-                .andExpect(redirectedUrl("/"));
+                .andExpect(redirectedUrl("/account/profile"));
     }
 
     @Test
@@ -306,7 +311,7 @@ class ThymeleafAccountFlowTests {
         mvc.perform(get("/account/profile").with(authentication)).andExpect(redirectedUrl("/login?error=true"));
         MockHttpSession localSession = (MockHttpSession) mvc.perform(post("/login").with(csrf())
                         .param("email", user.getEmail()).param("password", NEW_PASSWORD))
-                .andExpect(redirectedUrl("/")).andReturn().getRequest().getSession(false);
+                .andExpect(redirectedUrl("/account/profile")).andReturn().getRequest().getSession(false);
         mvc.perform(get("/account/profile").session(localSession))
                 .andExpect(content().string(containsString("Change password")))
                 .andExpect(content().string(org.hamcrest.Matchers.not(containsString("action=\"/account/set-password\""))));
@@ -363,7 +368,7 @@ class ThymeleafAccountFlowTests {
         mvc.perform(post("/contact").param("fullName", "Reader")).andExpect(status().isForbidden());
         mvc.perform(post("/contact").with(csrf()).param("fullName", " ").param("email", "invalid")
                         .param("subject", "Other\r\nBcc: attacker@example.com").param("message", " "))
-                .andExpect(view().name("pages/contact")).andExpect(model().attribute("activePage", "contact"))
+                .andExpect(view().name("pages/contact")).andExpect(model().attribute("activePage", "pages/contact"))
                 .andExpect(model().attributeHasFieldErrors("contactForm", "fullName", "email", "subject", "message"))
                 .andExpect(content().string(containsString("Please enter your message.")));
         mvc.perform(post("/contact").with(csrf()).param("fullName", "X".repeat(121))
@@ -410,7 +415,7 @@ class ThymeleafAccountFlowTests {
 
     private MockHttpSession login() throws Exception {
         return (MockHttpSession) mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com")
-                .param("password", INITIAL_PASSWORD)).andExpect(redirectedUrl("/")).andReturn().getRequest().getSession(false);
+                .param("password", INITIAL_PASSWORD)).andExpect(redirectedUrl("/account/profile")).andReturn().getRequest().getSession(false);
     }
 
     private String requestResetThroughForm() throws Exception {

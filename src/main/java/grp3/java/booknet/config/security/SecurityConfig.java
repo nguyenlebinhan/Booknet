@@ -4,6 +4,7 @@ import grp3.java.booknet.security.service.CustomOAuth2UserService;
 import grp3.java.booknet.security.service.CustomUserDetailsService;
 import grp3.java.booknet.security.service.CustomOidcUserService;
 import grp3.java.booknet.security.session.AccountSessionFilter;
+import grp3.java.booknet.security.navigation.LoginDestination;
 import grp3.java.booknet.repository.user.UserRepository;
 import grp3.java.booknet.enums.user.UserRole;
 import jakarta.servlet.http.HttpServletRequest;
@@ -71,7 +72,8 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/",
                     "/home",
-                    "/catalog",
+                    "/catalog", "/catalog/*",
+                    "/assistant",
                     "/about",
                     "/contact",
                     "/login",
@@ -79,16 +81,19 @@ public class SecurityConfig {
                     "/forgot-password", "/reset-password", "/verify-email", "/verification/resend",
                     "/css/**",
                     "/js/**",
-                    "/images/**",
+                    "/images/**", "/fonts/**",
                     "/favicon.ico",
                     "/oauth2/**"
                 ).permitAll()
-                .requestMatchers("/admin/books", "/admin/books/**").hasAnyRole("LIBRARIAN", "ADMIN")
+                .requestMatchers("/staff/loans", "/staff/loans/**", "/librarian/loans", "/librarian/loans/**", "/admin/loans", "/admin/loans/**").hasAuthority("CIRCULATION")
+                .requestMatchers("/member/loans/*/return-detail").hasAnyAuthority("ROLE_MEMBER", "MEMBER_READ", "CIRCULATION")
+                .requestMatchers("/member/loans/*/return/confirm").hasAuthority("CIRCULATION")
+                .requestMatchers("/admin/books", "/admin/books/**").hasAnyAuthority("CATALOG_EDIT", "COPY_MANAGE", "BOOK_RETIRE")
                 .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/staff/**").hasAnyRole("LIBRARIAN", "ADMIN")
-                .requestMatchers("/api/staff/**").hasAnyRole("LIBRARIAN", "ADMIN")
+                .requestMatchers("/staff/**").hasAuthority("MEMBER_READ")
+                .requestMatchers("/api/staff/**").hasAuthority("MEMBER_READ")
                 .requestMatchers("/member/**", "/api/member/**").hasRole("MEMBER")
-                .requestMatchers("/account/**", "/api/account/**").hasAnyRole("MEMBER", "LIBRARIAN", "ADMIN")
+                .requestMatchers("/account/**", "/api/account/**").hasAnyRole("MEMBER", "LIBRARIAN", "ADMIN", "CUSTOM")
                 .anyRequest().authenticated()
             )
             .exceptionHandling(errors -> errors
@@ -133,10 +138,9 @@ public class SecurityConfig {
             )
             .addFilterAfter(new AccountSessionFilter(userRepository), RememberMeAuthenticationFilter.class)
             .rememberMe(remember -> remember
-                .key(configuredRememberMeKey.isBlank() ? ephemeralRememberMeKey : configuredRememberMeKey)
-                .tokenValiditySeconds(7 * 24 * 60 * 60)
-                .rememberMeParameter("remember-me")
-                .userDetailsService(customUserDetailsService)
+                .rememberMeServices(new grp3.java.booknet.security.session.VersionedRememberMeServices(
+                        configuredRememberMeKey.isBlank() ? ephemeralRememberMeKey : configuredRememberMeKey,
+                        customUserDetailsService, userRepository))
             )
             .logout(logout -> logout
                 .logoutUrl("/logout")
@@ -157,9 +161,7 @@ public class SecurityConfig {
     }
 
     private static String landingPage(Authentication authentication) {
-        boolean administrator = authentication.getAuthorities().stream()
-                .anyMatch(authority -> UserRole.ROLE_ADMIN.name().equals(authority.getAuthority()));
-        return administrator ? "/admin/dashboard" : "/";
+        return LoginDestination.forAuthentication(authentication);
     }
 
     private void clearGoogleLinkSession(HttpSession session) {

@@ -18,6 +18,7 @@ import grp3.java.booknet.repository.book_service.LoanRepository;
 import grp3.java.booknet.repository.book_service.ReservationRepository;
 import grp3.java.booknet.repository.user.UserRepository;
 import grp3.java.booknet.service.MemberLoanService;
+import grp3.java.booknet.service.reservation.ReservationQueueService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -58,6 +59,7 @@ public class MemberLoanServiceImpl implements MemberLoanService {
     private final UserRepository userRepository;
     private final LoanRepository loanRepository;
     private final ReservationRepository reservationRepository;
+    private final ReservationQueueService reservationQueueService;
     private final BookCopyRepository bookCopyRepository;
 
     @Override
@@ -120,8 +122,7 @@ public class MemberLoanServiceImpl implements MemberLoanService {
                 dueBadgeType = "normal";
             }
 
-            boolean hasQueue = reservationRepository.existsByMember_IdAndBook_IdAndStatusIn(
-                    userId, book.getId(), ACTIVE_RESERVATIONS);
+            boolean hasQueue = reservationQueueService.hasWaitingQueueForRenewal(book.getId(), userId);
             boolean renewalAllowed = user.effectiveAuthorities().stream().anyMatch(a -> a.getAuthority().equals("RENEW"));
             boolean canRenew = renewalAllowed && loan.getStatus() == LoanStatus.BORROWING
                     && loan.getRenewCount() < MAX_RENEWS_ALLOWED
@@ -314,9 +315,7 @@ public class MemberLoanServiceImpl implements MemberLoanService {
             throw new AccountException(HttpStatus.BAD_REQUEST, "Cannot renew overdue loans. Please return the book to the library.");
         }
 
-        boolean hasQueue = reservationRepository.existsByMember_IdAndBook_IdAndStatusIn(
-                userId, loan.getCopy().getBook().getId(), ACTIVE_RESERVATIONS);
-        if (hasQueue) {
+        if (reservationQueueService.hasWaitingQueueForRenewal(loan.getCopy().getBook().getId(), userId)) {
             throw new AccountException(HttpStatus.BAD_REQUEST, "Cannot renew this book because another reader has reserved it.");
         }
 
@@ -467,8 +466,7 @@ public class MemberLoanServiceImpl implements MemberLoanService {
             throw new AccountException(HttpStatus.BAD_REQUEST, "This loan is marked as lost.");
         }
 
-        loan.getCopy().setStatus(CopyStatus.AVAILABLE);
-        bookCopyRepository.save(loan.getCopy());
+        reservationQueueService.assignCopyToNextPendingReservation(loan.getCopy(), LocalDateTime.now());
 
         loan.setStatus(LoanStatus.RETURNED);
         loan.setReturnedAt(LocalDateTime.now());

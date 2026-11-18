@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications • booknet Library</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}" href="/css/base/tokens.css">
+  <link rel="stylesheet" th:href="@{/css/layout/navbar.css}" href="/css/layout/navbar.css">
+  <link rel="stylesheet" th:href="@{/css/pages/notifications.css}" href="/css/pages/notifications.css">
+  <link rel="stylesheet" th:href="@{/css/layout/footer.css}" href="/css/layout/footer.css">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+</head>
+<body>
+
+  <th:block th:replace="~{shared/navigation :: navigation}"></th:block>
+
+  <main class="ntf-main">
+    <div class="ntf-container">
+
+      <nav class="ntf-breadcrumb" aria-label="Breadcrumb">
+        <a th:href="@{/}">Home</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">Notifications</span>
+      </nav>
+
+      <header class="ntf-header">
+        <div>
+          <p class="ntf-kicker">MEMBER SPACE</p>
+          <h1 class="ntf-title">A reminder from booknet.</h1>
+          <p class="ntf-subtitle">Stay on top of due-soon alerts, held book pickups, reservation updates, and overdue reminders.</p>
+        </div>
+        <form th:action="@{/member/notifications/read-all}" method="post">
+          <input type="hidden" name="filter" th:value="${view.activeFilter}">
+          <button type="submit" class="ntf-btn-outline" th:disabled="${view.unreadCount == 0}">
+            Mark all as read
+          </button>
+        </form>
+      </header>
+
+      <div class="ntf-flash ntf-flash-success" th:if="${successMessage}" th:text="${successMessage}">Updated.</div>
+      <div class="ntf-flash ntf-flash-error" th:if="${errorMessage}" th:text="${errorMessage}">Error.</div>
+
+      <div class="ntf-grid">
+        <section aria-label="Notifications feed">
+          <nav class="ntf-tabs" aria-label="Filter notifications">
+            <a th:href="@{/member/notifications(filter='all')}" class="ntf-tab"
+               th:classappend="${view.activeFilter == 'all'} ? ' is-active' : ''">
+              <span>All</span>
+              <span class="ntf-count" th:text="${view.allCount}">0</span>
+            </a>
+            <a th:href="@{/member/notifications(filter='unread')}" class="ntf-tab"
+               th:classappend="${view.activeFilter == 'unread'} ? ' is-active' : ''">
+              <span>Unread</span>
+              <span class="ntf-count" th:text="${view.unreadCount}">0</span>
+            </a>
+            <a th:href="@{/member/notifications(filter='loans')}" class="ntf-tab"
+               th:classappend="${view.activeFilter == 'loans'} ? ' is-active' : ''">
+              <span>Loans &amp; returns</span>
+              <span class="ntf-count" th:text="${view.loansCount}">0</span>
+            </a>
+            <a th:href="@{/member/notifications(filter='reservations')}" class="ntf-tab"
+               th:classappend="${view.activeFilter == 'reservations'} ? ' is-active' : ''">
+              <span>Reservations</span>
+              <span class="ntf-count" th:text="${view.reservationsCount}">0</span>
+            </a>
+          </nav>
+
+          <div class="ntf-list" th:if="${!view.notifications.isEmpty()}">
+            <article class="ntf-row" th:each="item : ${view.notifications}"
+                     th:classappend="${!item.read} ? ' is-unread' : ''">
+              <div class="ntf-row-left">
+                <div class="ntf-icon" th:classappend="${' tone-' + item.tone}" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path th:if="${item.tone == 'ready'}" d="M20 6 9 17l-5-5"/>
+                    <circle th:if="${item.tone != 'ready'}" cx="12" cy="12" r="9"/>
+                    <path th:if="${item.tone != 'ready'}" d="M12 8v4l3 2"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="ntf-row-title-wrap">
+                    <span class="ntf-unread-dot" th:if="${!item.read}" aria-label="Unread"></span>
+                    <h2 class="ntf-row-title" th:text="${item.title}">Notification title</h2>
+                  </div>
+                  <p class="ntf-row-message" th:text="${item.message}">Notification message body.</p>
+                  <div class="ntf-row-footer">
+                    <a th:href="@{${item.actionUrl}}" class="ntf-action-link" th:text="${item.actionLabel}">View details →</a>
+                    <span class="ntf-email-chip" th:if="${item.emailSent}">Email copy sent</span>
+                  </div>
+                </div>
+              </div>
+              <div class="ntf-row-right">
+                <span class="ntf-time"
+                      th:text="${item.createdAt != null ? #temporals.format(item.createdAt, 'dd/MM/yyyy · HH:mm') : 'Just now'}">dd/MM/yyyy</span>
+                <form th:if="${!item.read}" th:action="@{/member/notifications/{id}/read(id=${item.id})}" method="post">
+                  <input type="hidden" name="filter" th:value="${view.activeFilter}">
+                  <button type="submit" class="ntf-mark-btn">Mark read</button>
+                </form>
+              </div>
+            </article>
+          </div>
+
+          <div class="ntf-empty" th:if="${view.notifications.isEmpty()}">
+            <h2>You're all caught up</h2>
+            <p>There are no notifications matching this filter right now.</p>
+          </div>
+        </section>
+
+        <aside class="ntf-sidebar" aria-label="Notification preferences">
+          <section class="ntf-card">
+            <p class="ntf-card-kicker">CHANNEL SETTINGS</p>
+            <h2>Reminders your way</h2>
+            <p class="ntf-card-sub">Choose where booknet sends pickup notices, due-soon reminders, and community updates.</p>
+
+            <form th:action="@{/member/notifications/preferences}" method="post" th:object="${preferenceForm}">
+              <input type="hidden" name="filter" th:value="${view.activeFilter}">
+              <div class="ntf-pref-list">
+                <label class="ntf-pref-item">
+                  <div>
+                    <strong>On the website</strong>
+                    <span>Show pickup holds and due reminders inside your Member Space bell inbox.</span>
+                  </div>
+                  <input type="checkbox" th:field="*{websiteEnabled}">
+                </label>
+                <label class="ntf-pref-item">
+                  <div>
+                    <strong>By email</strong>
+                    <span>Receive automated &amp; librarian circulation notices at your email address.</span>
+                  </div>
+                  <input type="checkbox" th:field="*{emailEnabled}">
+                </label>
+                <label class="ntf-pref-item">
+                  <div>
+                    <strong>Events newsletter</strong>
+                    <span>Seasonal reading clubs and community announcements from booknet.</span>
+                  </div>
+                  <input type="checkbox" th:field="*{eventsNewsletterEnabled}">
+                </label>
+              </div>
+
+              <div class="ntf-email-box">
+                <span>Notification email</span>
+                <strong th:text="${view.memberEmail}">reader@booknet.local</strong>
+              </div>
+
+              <button type="submit" class="ntf-btn-primary">Save preferences</button>
+            </form>
+          </section>
+
+          <section class="ntf-card">
+            <p class="ntf-card-kicker">NEED ASSISTANCE</p>
+            <h2>booknet is here to listen.</h2>
+            <p class="ntf-card-sub">Have a question about a loan due date, lost copy, or pickup deadline? Reach out to our library desk.</p>
+            <a th:href="@{/contact}" class="ntf-action-link">Contact the circulation desk →</a>
+          </section>
+        </aside>
+      </div>
+
+    </div>
+  </main>
+
+  <footer th:replace="~{shared/footer :: footer-section}"></footer>
+
+</body>
+</html>

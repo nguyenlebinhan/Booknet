@@ -28,13 +28,13 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h3.5a3 3 0 0 1 3 3V20a3 3 0 0 0-3-3H5z"/><path d="M19 4.5h-3.5a3 3 0 0 0-3 3V20a3 3 0 0 1 3-3H19z"/></svg>
         <span>Book catalog</span>
       </a>
-      <a class="admin-nav-link" th:href="@{/staff/loans}"
+      <a class="admin-nav-link" sec:authorize="hasAuthority('CIRCULATION')" th:href="@{/staff/loans}"
          th:classappend="${activePage == 'loans'} ? ' is-current'"
          th:attr="aria-current=${activePage == 'loans' ? 'page' : null}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h13l-4-4M20 7l-4 4M17 17H4l4 4M4 17l4-4"/></svg>
         <span>Loans &amp; returns</span>
       </a>
-      <a class="admin-nav-link" sec:authorize="hasRole('LIBRARIAN')" th:href="@{/staff/members}"
+      <a class="admin-nav-link" sec:authorize="hasRole('LIBRARIAN') and hasAuthority('MEMBER_READ')" th:href="@{/staff/members}"
          th:classappend="${activePage == 'members'} ? ' is-current'"
          th:attr="aria-current=${activePage == 'members' ? 'page' : null}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1zM16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5v1"/></svg>
@@ -64,10 +64,12 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1zM18 8v6M15 11h6"/></svg>
         <span>User accounts</span>
       </a>
-      <span class="admin-nav-disabled" aria-disabled="true" title="Role editing is not available yet">
+      <a class="admin-nav-link" sec:authorize="hasRole('ADMIN')" th:href="@{/admin/roles}"
+         th:classappend="${activePage == 'roles'} ? ' is-current'"
+         th:attr="aria-current=${activePage == 'roles' ? 'page' : null}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 6v5c0 5-3.4 8.3-8 10-4.6-1.7-8-5-8-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
         <span>Roles &amp; permissions</span>
-      </span>
+      </a>
       <span class="admin-nav-disabled" aria-disabled="true" title="Fine and payment tools are not available yet">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></svg>
         <span>Fines &amp; payments</span>

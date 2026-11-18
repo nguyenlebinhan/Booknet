@@ -7,7 +7,6 @@ import grp3.java.booknet.entity.book_service.*;
 import grp3.java.booknet.entity.user.User;
 import grp3.java.booknet.enums.book.CopyStatus;
 import grp3.java.booknet.enums.book_service.*;
-import grp3.java.booknet.enums.user.UserStatus;
 import grp3.java.booknet.exception.borrowing.LoanException;
 import grp3.java.booknet.repository.book.BookCopyRepository;
 import grp3.java.booknet.repository.book_service.*;
@@ -31,6 +30,7 @@ import java.util.*;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
+@org.springframework.security.access.prepost.PreAuthorize("hasAuthority('CIRCULATION')")
 public class LoanServiceImpl implements LoanService {
 
     private static final int MAX_LOANS_PER_MEMBER = 5;
@@ -51,6 +51,8 @@ public class LoanServiceImpl implements LoanService {
     private final FineRepository fineRepository;
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
+    private final grp3.java.booknet.service.member.MemberEligibilityService memberEligibility;
+    private final java.time.Clock clock;
 
     @Override
     @Transactional(readOnly = true)
@@ -151,6 +153,10 @@ public class LoanServiceImpl implements LoanService {
         }
 
         User member = userOpt.get();
+        if (member.getRole() != grp3.java.booknet.enums.user.UserRole.ROLE_USER
+                || (member.getAssignedRole() != null && member.getAssignedRole().getSystemRole() != grp3.java.booknet.enums.user.UserRole.ROLE_USER)) {
+            return null;
+        }
         List<LoanItemStatus> activeStatuses = List.of(LoanItemStatus.BORROWING, LoanItemStatus.BORROWED, LoanItemStatus.RETURN_REQUESTED);
         List<LoanItem> activeItems = loanItemRepository.findByLoan_Member_IdAndStatusIn(member.getId(), activeStatuses);
 
@@ -164,13 +170,13 @@ public class LoanServiceImpl implements LoanService {
         LocalDate today = LocalDate.now();
         boolean hasOverdue = loanItemRepository.existsByLoan_Member_IdAndStatusInAndDueDateBefore(member.getId(), activeStatuses, today);
 
-        boolean cardActive = member.getStatus() == UserStatus.ACTIVE;
+        boolean cardActive = memberEligibility.isEligible(member.getId());
         boolean withinLimit = activeLoansCount < MAX_LOANS_PER_MEMBER;
         boolean noFines = unpaidFines.compareTo(BigDecimal.ZERO) <= 0;
         boolean eligible = cardActive && withinLimit && noFines && !hasOverdue;
 
         StringBuilder reason = new StringBuilder();
-        if (!cardActive) reason.append("Member card is not active (").append(member.getStatus()).append("). ");
+        if (!cardActive) reason.append("Member account or library card is not active: unverified, expired or suspended. ");
         if (!withinLimit) reason.append("Max loan limit reached (").append(activeLoansCount).append("/").append(MAX_LOANS_PER_MEMBER).append("). ");
         if (!noFines) reason.append("Unpaid fine balance of ").append(unpaidFines).append(" VND. ");
         if (hasOverdue) reason.append("Member has overdue book(s) in possession. ");
@@ -185,7 +191,7 @@ public class LoanServiceImpl implements LoanService {
                 .email(member.getEmail())
                 .phone(member.getPhone())
                 .memberCode(member.getMemberCode())
-                .cardStatus(member.getStatus().name())
+                .cardStatus(member.getMemberCard() == null ? "Pending" : member.getMemberCard().status(LocalDate.now(clock)))
                 .activeLoansCount(activeLoansCount)
                 .maxAllowedLoans(MAX_LOANS_PER_MEMBER)
                 .unpaidFines(unpaidFines)
@@ -250,6 +256,11 @@ public class LoanServiceImpl implements LoanService {
 
         if (req.getStatus() == BorrowRequestStatus.COMPLETED) {
             throw new LoanException("This request has already been handed over into an active loan.");
+        }
+
+        MemberCirculationInfoDto memberInfo = lookupMember(req.getMember().getEmail());
+        if (memberInfo == null || !memberInfo.isEligible()) {
+            throw new LoanException("Member is ineligible for handover: " + (memberInfo == null ? "Account not found." : memberInfo.getIneligibilityReason()));
         }
 
         User librarian = findUserByEmail(librarianEmail).orElse(null);

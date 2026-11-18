@@ -122,7 +122,8 @@ public class MemberLoanServiceImpl implements MemberLoanService {
 
             boolean hasQueue = reservationRepository.existsByMember_IdAndBook_IdAndStatusIn(
                     userId, book.getId(), ACTIVE_RESERVATIONS);
-            boolean canRenew = loan.getStatus() == LoanStatus.BORROWING
+            boolean renewalAllowed = user.effectiveAuthorities().stream().anyMatch(a -> a.getAuthority().equals("RENEW"));
+            boolean canRenew = renewalAllowed && loan.getStatus() == LoanStatus.BORROWING
                     && loan.getRenewCount() < MAX_RENEWS_ALLOWED
                     && !dueDate.isBefore(today)
                     && !hasQueue;
@@ -136,6 +137,8 @@ public class MemberLoanServiceImpl implements MemberLoanService {
                 renewalHint = "Please return soon";
             } else if (loan.getRenewCount() >= MAX_RENEWS_ALLOWED) {
                 renewalHint = "Renew limit reached (1/1)";
+            } else if (!renewalAllowed) {
+                renewalHint = "Renewal permission is not enabled for your account";
             } else if (hasQueue) {
                 renewalHint = "Cannot renew (Reserved by another reader)";
             } else {
@@ -292,7 +295,10 @@ public class MemberLoanServiceImpl implements MemberLoanService {
     @Override
     @Transactional
     public void requestRenewLoan(Long userId, Long loanId) {
-        validateAndGetUser(userId);
+        User member = validateAndGetUser(userId);
+        if (member.effectiveAuthorities().stream().noneMatch(a -> a.getAuthority().equals("RENEW"))) {
+            throw new AccountException(HttpStatus.FORBIDDEN, "Your account does not have permission to request renewals.");
+        }
         Loan loan = loanRepository.findById(loanId)
                 .orElseThrow(() -> new AccountException(HttpStatus.NOT_FOUND, "Loan record not found."));
 
@@ -446,8 +452,10 @@ public class MemberLoanServiceImpl implements MemberLoanService {
     @Override
     @Transactional
     public void confirmReturn(Long librarianId, Long loanId, String conditionNote) {
-        User librarian = userRepository.findById(librarianId)
-                .orElseThrow(() -> new AccountException(HttpStatus.UNAUTHORIZED, "Librarian account not found."));
+        User librarian = validateAndGetUser(librarianId);
+        if (librarian.effectiveAuthorities().stream().noneMatch(a -> a.getAuthority().equals("CIRCULATION"))) {
+            throw new AccountException(HttpStatus.FORBIDDEN, "Circulation permission is required.");
+        }
 
         Loan loan = loanRepository.findById(loanId)
                 .orElseThrow(() -> new AccountException(HttpStatus.NOT_FOUND, "Loan record not found."));

@@ -78,7 +78,7 @@ class OAuthCallbackTests {
     void googleCallbackCreatesAccountAndPersistsUsableSession() throws Exception {
         Authorization start = startAuthorization(null);
         mockClaims(start, "new-google", "google@example.com");
-        MvcResult result = callback(start).andExpect(redirectedUrl("/")).andReturn();
+        MvcResult result = callback(start).andExpect(redirectedUrl("/account/profile")).andReturn();
         MockHttpSession session = (MockHttpSession) result.getRequest().getSession(false);
         var profile = mvc.perform(get("/account/profile").session(session)).andExpect(status().isOk())
                 .andExpect(view().name("account/profile")).andReturn();
@@ -112,7 +112,7 @@ class OAuthCallbackTests {
         mvc.perform(post("/logout").session(linkedSession).with(csrf())).andExpect(redirectedUrl("/login?logout=true"));
         Authorization again = startAuthorization(null);
         mockClaims(again, "linked-google", "different@example.com");
-        MvcResult loggedIn = callback(again).andExpect(redirectedUrl("/")).andReturn();
+        MvcResult loggedIn = callback(again).andExpect(redirectedUrl("/account/profile")).andReturn();
         var againProfile = mvc.perform(get("/account/profile").session((MockHttpSession) loggedIn.getRequest().getSession(false)))
                 .andExpect(status().isOk()).andReturn();
         assertThat(((ProfileResponse) againProfile.getModelAndView().getModel().get("profile")).id())
@@ -182,7 +182,7 @@ class OAuthCallbackTests {
     private MockHttpSession loginLocal() throws Exception {
         return (MockHttpSession) mvc.perform(post("/login").with(csrf())
                 .param("email", "local@example.com").param("password", INITIAL_PASSWORD))
-                .andExpect(redirectedUrl("/")).andReturn().getRequest().getSession(false);
+                .andExpect(redirectedUrl("/account/profile")).andReturn().getRequest().getSession(false);
     }
 
     private Authorization startAuthorization(MockHttpSession existing) throws Exception {

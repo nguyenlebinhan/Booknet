@@ -30,7 +30,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Slf4j
 @Controller
 @RequestMapping("/admin/books")
-@PreAuthorize("hasAnyRole('LIBRARIAN', 'ADMIN')")
+@PreAuthorize("hasAuthority('CATALOG_EDIT')")
 @RequiredArgsConstructor
 public class AdminBookController {
 
@@ -190,6 +190,7 @@ public class AdminBookController {
     }
 
     @PostMapping("/{id}/delete")
+    @PreAuthorize("hasAuthority('BOOK_RETIRE')")
     public String processHardDelete(@PathVariable Long id,
                                     @Valid @ModelAttribute("deleteForm") BookDeleteConfirmationForm form,
                                     BindingResult bindingResult,
@@ -235,6 +236,7 @@ public class AdminBookController {
     }
 
     @PostMapping("/{id}/discontinue")
+    @PreAuthorize("hasAuthority('BOOK_RETIRE')")
     public String discontinueBook(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             bookLifecycleService.discontinue(id);

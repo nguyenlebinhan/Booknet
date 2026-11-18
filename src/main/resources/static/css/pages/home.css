@@ -855,3 +855,11 @@
     border-top-left-radius: 40px;
   }
 }
+
+/* A real book without a cover image: title and author on a plain cover. */
+.home-book-cover.is-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, var(--bn-sage), var(--bn-sage-muted));
+}

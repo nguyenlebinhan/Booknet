@@ -69,6 +69,12 @@ public final class CatalogSpecifications {
             if (filter.getPublishYear() != null) {
                 predicates.add(cb.equal(root.get("publishYear"), filter.getPublishYear()));
             }
+            if (filter.getYearFrom() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("publishYear"), filter.getYearFrom().shortValue()));
+            }
+            if (filter.getYearTo() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("publishYear"), filter.getYearTo().shortValue()));
+            }
 
             List<String> availability = filter.getAvailability() == null
                     ? List.of()

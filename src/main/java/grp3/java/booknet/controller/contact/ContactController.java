@@ -27,7 +27,8 @@ public class ContactController {
 
     @ModelAttribute("activePage")
     String activePage() {
-        return "pages/contact";
+        // Matches the navbar's highlight check; this is not a view name.
+        return "contact";
     }
 
     @GetMapping

@@ -214,12 +214,21 @@ class ReservationFlowTests {
                 .andExpect(content().string(containsString("Reserve book")))
                 .andExpect(content().string(not(containsString(" th:"))));
 
+        mvc.perform(get("/catalog/" + book.getId()).with(user(new CustomUserDetails(memberA))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Reserve book")))
+                .andExpect(content().string(not(containsString(" th:"))));
+
         mvc.perform(post("/member/reservations")
                         .with(user(new CustomUserDetails(memberA)))
                         .with(csrf())
                         .param("bookId", book.getId().toString()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/member/reservations"));
+
+        mvc.perform(get("/catalog/" + book.getId()).with(user(new CustomUserDetails(memberA))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("In your queue")));
 
         mvc.perform(post("/member/reservations")
                         .with(user(new CustomUserDetails(memberC)))

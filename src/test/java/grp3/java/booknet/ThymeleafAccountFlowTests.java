@@ -368,7 +368,7 @@ class ThymeleafAccountFlowTests {
         mvc.perform(post("/contact").param("fullName", "Reader")).andExpect(status().isForbidden());
         mvc.perform(post("/contact").with(csrf()).param("fullName", " ").param("email", "invalid")
                         .param("subject", "Other\r\nBcc: attacker@example.com").param("message", " "))
-                .andExpect(view().name("pages/contact")).andExpect(model().attribute("activePage", "pages/contact"))
+                .andExpect(view().name("pages/contact")).andExpect(model().attribute("activePage", "contact"))
                 .andExpect(model().attributeHasFieldErrors("contactForm", "fullName", "email", "subject", "message"))
                 .andExpect(content().string(containsString("Please enter your message.")));
         mvc.perform(post("/contact").with(csrf()).param("fullName", "X".repeat(121))

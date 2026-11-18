@@ -108,11 +108,11 @@ class BookDetailsTests {
         loans.save(Loan.builder().copy(out).member(member).dueDate(due).status(LoanStatus.BORROWING).build());
         String html = page(member, "/catalog/" + book.getId());
         assertThat(html).contains("All copies are out", "On loan", "The earliest is due back on", DATE.format(due),
-                "Reserve · coming soon").doesNotContain("Borrow this book");
+                "Reserve book").doesNotContain("Borrow this book");
 
         Book none = published("Sapiens");
         assertThat(page(member, "/catalog/" + none.getId())).contains("Not available to borrow", "Not in circulation")
-                .doesNotContain("Borrow this book", "Reserve · coming soon");
+                .doesNotContain("Borrow this book", "Reserve book");
     }
 
     @Test

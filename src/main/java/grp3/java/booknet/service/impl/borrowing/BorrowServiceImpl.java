@@ -5,9 +5,12 @@ import grp3.java.booknet.dto.borrowing.BorrowRequestForm;
 import grp3.java.booknet.entity.book.Author;
 import grp3.java.booknet.entity.book.Book;
 import grp3.java.booknet.entity.book.BookCopy;
+import grp3.java.booknet.entity.book_service.BorrowRequest;
+import grp3.java.booknet.entity.book_service.BorrowRequestItem;
 import grp3.java.booknet.entity.book_service.Reservation;
 import grp3.java.booknet.entity.user.User;
 import grp3.java.booknet.enums.book.CopyStatus;
+import grp3.java.booknet.enums.book_service.BorrowRequestStatus;
 import grp3.java.booknet.enums.book_service.FineStatus;
 import grp3.java.booknet.enums.book_service.LoanStatus;
 import grp3.java.booknet.enums.book_service.ReservationStatus;
@@ -16,6 +19,7 @@ import grp3.java.booknet.enums.user.UserStatus;
 import grp3.java.booknet.exception.account.AccountException;
 import grp3.java.booknet.repository.book.BookCopyRepository;
 import grp3.java.booknet.repository.book.BookRepository;
+import grp3.java.booknet.repository.book_service.BorrowRequestRepository;
 import grp3.java.booknet.repository.book_service.FineRepository;
 import grp3.java.booknet.repository.book_service.LoanRepository;
 import grp3.java.booknet.repository.book_service.ReservationRepository;
@@ -59,6 +63,7 @@ public class BorrowServiceImpl implements BorrowService {
     private final BookCopyRepository bookCopyRepository;
     private final LoanRepository loanRepository;
     private final ReservationRepository reservationRepository;
+    private final BorrowRequestRepository borrowRequestRepository;
     private final FineRepository fineRepository;
     private final MemberEligibilityService memberEligibility;
 
@@ -181,6 +186,13 @@ public class BorrowServiceImpl implements BorrowService {
         }
 
         List<Reservation> newReservations = new ArrayList<>();
+        BorrowRequest borrowRequest = BorrowRequest.builder()
+                .member(user)
+                .status(BorrowRequestStatus.PENDING)
+                .requestCode("BR-" + System.currentTimeMillis())
+                .notes("Borrow request submitted by member")
+                .build();
+
         for (Book book : books) {
             if (reservationRepository.existsByMember_IdAndBook_IdAndStatusIn(userId, book.getId(), ACTIVE_RESERVATION_STATUSES)) {
                 throw new AccountException(HttpStatus.CONFLICT, "You already have an active request for '" + book.getTitle() + "'.");
@@ -192,11 +204,17 @@ public class BorrowServiceImpl implements BorrowService {
                     .status(ReservationStatus.PENDING)
                     .build();
             newReservations.add(reservation);
+
+            BorrowRequestItem item = BorrowRequestItem.builder()
+                    .book(book)
+                    .build();
+            borrowRequest.addItem(item);
         }
 
+        borrowRequestRepository.save(borrowRequest);
         reservationRepository.saveAll(newReservations);
-        log.info("Member {} requested {} book(s) under reservation IDs: {}",
-                user.getId(), newReservations.size(),
+        log.info("Member {} requested {} book(s) under BorrowRequest {} and reservation IDs: {}",
+                user.getId(), newReservations.size(), borrowRequest.getRequestCode(),
                 newReservations.stream().map(Reservation::getId).toList());
     }
 

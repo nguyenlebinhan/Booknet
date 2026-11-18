@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add category | booknet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/book-management.css}">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+</head>
+<body>
+  <th:block th:replace="~{shared/navigation :: navigation}"></th:block>
+  <main class="book-management-page create-page">
+    <nav class="book-breadcrumb" aria-label="Breadcrumb">
+      <a th:href="@{/admin/categories}">Categories</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">Add category</span>
+    </nav>
+
+    <div class="page-heading">
+      <div>
+        <h1>Add category</h1>
+        <p>Create a category for books in the catalog.</p>
+      </div>
+      <a class="button button-secondary" th:href="@{/admin/categories}">Back to categories</a>
+    </div>
+
+    <form class="category-create-form" th:action="@{/admin/categories/create}"
+          th:object="${categoryForm}" method="post">
+      <section class="form-card">
+        <div class="card-heading">
+          <h2>Category information</h2>
+          <p>Fields marked * are required.</p>
+        </div>
+        <div class="form-field">
+          <label for="categoryName">Category name *</label>
+          <input id="categoryName" type="text" th:field="*{name}" maxlength="100" required>
+          <small class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></small>
+        </div>
+        <div class="form-field">
+          <label for="parentId">Parent category</label>
+          <select id="parentId" th:field="*{parentId}">
+            <option value="">None (top-level category)</option>
+            <option th:each="parent : ${parentCategories}" th:value="${parent.id}" th:text="${parent.name}">Literature</option>
+          </select>
+          <small class="field-error" th:if="${#fields.hasErrors('parentId')}" th:errors="*{parentId}"></small>
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <button class="button button-primary" type="submit">Create category</button>
+        <a class="button button-secondary" th:href="@{/admin/categories}">Cancel</a>
+      </div>
+    </form>
+  </main>
+</body>
+</html>

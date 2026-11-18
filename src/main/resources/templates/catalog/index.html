@@ -97,13 +97,24 @@
             </label>
           </fieldset>
 
-          <div class="filter-group filter-year">
-            <label for="publishYear">Publication year</label>
-            <select id="publishYear" th:field="*{publishYear}">
-              <option value="">All years</option>
-              <option th:each="year : ${publishYears}" th:value="${year}" th:text="${year}">2024</option>
-            </select>
-          </div>
+          <fieldset class="filter-group filter-year">
+            <legend>Publication year</legend>
+            <input type="hidden" th:field="*{publishYear}">
+            <div class="filter-year-range">
+              <label for="yearFrom"><span>From</span>
+                <select id="yearFrom" th:field="*{yearFrom}">
+                  <option value="">Any</option>
+                  <option th:each="year : ${publishYears}" th:value="${year}" th:text="${year}">2020</option>
+                </select>
+              </label>
+              <label for="yearTo"><span>To</span>
+                <select id="yearTo" th:field="*{yearTo}">
+                  <option value="">Any</option>
+                  <option th:each="year : ${publishYears}" th:value="${year}" th:text="${year}">2024</option>
+                </select>
+              </label>
+            </div>
+          </fieldset>
 
           <div class="filter-actions">
             <button type="submit" class="apply-filters">Apply filters</button>
@@ -122,6 +133,7 @@
             <label class="sort-control" for="catalogSort">
               <span>Sort by:</span>
               <select id="catalogSort" th:field="*{sort}">
+                <option value="popular">Most popular</option>
                 <option value="recent">Recently added</option>
                 <option value="title-asc">Title A–Z</option>
                 <option value="title-desc">Title Z–A</option>
@@ -144,7 +156,7 @@
               </div>
               <div class="book-information">
                 <p class="book-category" th:text="${book.categories.isEmpty() ? 'BOOKNET COLLECTION' : book.categories.get(0)}">LITERATURE</p>
-                <h2 th:text="${book.title}">Book title</h2>
+                <h2><a class="book-title-link" th:href="@{/catalog/{id}(id=${book.id})}" th:text="${book.title}">Book title</a></h2>
                 <p class="book-author" th:text="${#strings.listJoin(book.authors, ', ')}">Author</p>
                 <span class="book-status publication-draft" th:if="${staffCatalog and book.publicationStatus.name() == 'DRAFT'}">Draft</span>
                 <span class="book-status publication-discontinued" th:if="${staffCatalog and book.publicationStatus.name() == 'DISCONTINUED'}">Discontinued</span>
@@ -175,27 +187,27 @@
 
           <nav class="catalog-pagination" th:if="${booksPage.totalPages > 1}" aria-label="Catalog pages">
             <a class="page-arrow" th:if="${booksPage.hasPrevious()}"
-               th:href="@{/catalog(page=${booksPage.number - 1},keyword=${filter.keyword},categoryIds=${filter.categoryIds},availability=${filter.availability},languages=${filter.languages},publishYear=${filter.publishYear},sort=${filter.sort})}"
+               th:href="@{/catalog(page=${booksPage.number - 1},keyword=${filter.keyword},categoryIds=${filter.categoryIds},availability=${filter.availability},languages=${filter.languages},publishYear=${filter.publishYear},yearFrom=${filter.yearFrom},yearTo=${filter.yearTo},sort=${filter.sort})}"
                aria-label="Previous page">‹</a>
             <span class="page-arrow disabled" th:unless="${booksPage.hasPrevious()}" aria-hidden="true">‹</span>
 
             <a class="page-number" th:if="${!visiblePages.isEmpty() and visiblePages.get(0) > 0}"
-               th:href="@{/catalog(page=0,keyword=${filter.keyword},categoryIds=${filter.categoryIds},availability=${filter.availability},languages=${filter.languages},publishYear=${filter.publishYear},sort=${filter.sort})}">1</a>
+               th:href="@{/catalog(page=0,keyword=${filter.keyword},categoryIds=${filter.categoryIds},availability=${filter.availability},languages=${filter.languages},publishYear=${filter.publishYear},yearFrom=${filter.yearFrom},yearTo=${filter.yearTo},sort=${filter.sort})}">1</a>
             <span class="page-ellipsis" th:if="${!visiblePages.isEmpty() and visiblePages.get(0) > 1}">…</span>
 
             <a class="page-number" th:each="pageNumber : ${visiblePages}"
                th:classappend="${pageNumber == booksPage.number} ? ' is-current' : ''"
                th:attr="aria-current=${pageNumber == booksPage.number ? 'page' : null}"
-               th:href="@{/catalog(page=${pageNumber},keyword=${filter.keyword},categoryIds=${filter.categoryIds},availability=${filter.availability},languages=${filter.languages},publishYear=${filter.publishYear},sort=${filter.sort})}"
+               th:href="@{/catalog(page=${pageNumber},keyword=${filter.keyword},categoryIds=${filter.categoryIds},availability=${filter.availability},languages=${filter.languages},publishYear=${filter.publishYear},yearFrom=${filter.yearFrom},yearTo=${filter.yearTo},sort=${filter.sort})}"
                th:text="${pageNumber + 1}">1</a>
 
             <span class="page-ellipsis" th:if="${!visiblePages.isEmpty() and visiblePages.get(visiblePages.size() - 1) < booksPage.totalPages - 2}">…</span>
             <a class="page-number" th:if="${!visiblePages.isEmpty() and visiblePages.get(visiblePages.size() - 1) < booksPage.totalPages - 1}"
-               th:href="@{/catalog(page=${booksPage.totalPages - 1},keyword=${filter.keyword},categoryIds=${filter.categoryIds},availability=${filter.availability},languages=${filter.languages},publishYear=${filter.publishYear},sort=${filter.sort})}"
+               th:href="@{/catalog(page=${booksPage.totalPages - 1},keyword=${filter.keyword},categoryIds=${filter.categoryIds},availability=${filter.availability},languages=${filter.languages},publishYear=${filter.publishYear},yearFrom=${filter.yearFrom},yearTo=${filter.yearTo},sort=${filter.sort})}"
                th:text="${booksPage.totalPages}">22</a>
 
             <a class="page-arrow" th:if="${booksPage.hasNext()}"
-               th:href="@{/catalog(page=${booksPage.number + 1},keyword=${filter.keyword},categoryIds=${filter.categoryIds},availability=${filter.availability},languages=${filter.languages},publishYear=${filter.publishYear},sort=${filter.sort})}"
+               th:href="@{/catalog(page=${booksPage.number + 1},keyword=${filter.keyword},categoryIds=${filter.categoryIds},availability=${filter.availability},languages=${filter.languages},publishYear=${filter.publishYear},yearFrom=${filter.yearFrom},yearTo=${filter.yearTo},sort=${filter.sort})}"
                aria-label="Next page">›</a>
             <span class="page-arrow disabled" th:unless="${booksPage.hasNext()}" aria-hidden="true">›</span>
           </nav>

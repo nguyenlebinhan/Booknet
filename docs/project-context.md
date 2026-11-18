@@ -32,6 +32,11 @@ Phần này thay thế các mô tả cũ bên dưới về Contact chưa gửi m
   Sắp xếp theo độ phổ biến chưa có vì hệ thống chưa lưu hoặc tổng hợp lượt xem/mượn cho mục đích đó.
 - Ô tìm kiếm và các liên kết Explore trên Home mở trang catalog. Các sách trưng bày khác trên Home
   vẫn là nội dung mẫu, không đại diện cho kết quả tìm kiếm hay tồn kho thật.
+- Category được dùng làm genre trong catalog; quản lý danh sách và tạo category ở `/admin/categories`.
+  Liên kết genre mở `/catalog` với genre tương ứng được chọn; chọn category cha cũng tìm sách thuộc
+  mọi category con và cháu.
+  Danh sách category hiển thị theo cấp cha-con, có phân trang; form sách tìm và tải category theo từng trang.
+  Chọn category cha cũng chọn các category con; có thể bỏ chọn riêng từng category con.
 - Librarian/admin có liên kết thêm và sửa sách trên catalog; quyền được kiểm tra riêng cho `/admin/books/**`.
 
 ## Quản lý sách cho librarian — 16/11/2026
@@ -41,9 +46,22 @@ Phần này thay thế các mô tả cũ bên dưới về Contact chưa gửi m
 - ID nội bộ của sách tự tăng trong database và không nhập trên form; `bookCode` là mã catalog riêng.
 - Trang sửa hiển thị tồn kho bản sao, cho phép thêm/sửa bản sao qua các luồng hiện có,
   và có xác nhận xóa theo mã sách. Nếu có lịch sử tham chiếu không thể xóa, có thể ngừng phát hành sách.
+- Author được lưu độc lập trong bảng `authors`, quản lý qua `/admin/authors`;
+  form tạo Author hỗ trợ ảnh JPEG/PNG tối đa 5 MB. Danh sách mặc định lọc chữ A,
+  chỉ tải Author theo chữ cái đang chọn và phân trang 20 kết quả; có thể tìm kiếm/sắp xếp
+  trong chữ cái đó. Ảnh dùng chung vùng lưu cover tại `uploads/covers`.
+  Chọn Author mở trang sách của tác giả đó, có tìm kiếm, sắp xếp và phân trang.
+  Thêm/sửa sách chỉ liên kết các Author đã có, bộ chọn tìm kiếm và phân trang.
+  Publisher được nhập tự do và vẫn là tùy chọn.
+- Category/genre được quản lý tại `/admin/categories`; category có thể có category cha.
+  Sau khi tạo category, người dùng được chuyển về danh sách category.
+- Cover upload JPEG/PNG tối đa 5 MB được lưu ngoài static tại `uploads/covers` mặc định;
+  có thể cấu hình `app.storage.covers-location` hoặc `BOOKNET_COVER_STORAGE_PATH`.
+  Database tiếp tục lưu reference trong `cover_url`; URL bìa cũ được giữ nguyên.
+  Storage có interface để thay implementation local bằng S3 về sau; chưa có AWS integration.
 - Quyền quản lý sách dành cho `ROLE_LIBRARIAN` và `ROLE_ADMIN`; các trang `/admin/**` khác vẫn theo
   quy tắc admin hiện có. Các test MVC kiểm tra quyền librarian/admin và render template nguồn.
-- Ảnh bìa hiện dùng URL vì entity lưu `coverUrl`; chưa có upload ảnh. Không hiển thị checkbox đặt trước
+- Không hiển thị checkbox đặt trước
   khi hết bản sao vì mô hình hiện tại không có thuộc tính tương ứng.
 
 ## Local seed accounts — 16/11/2026
@@ -166,6 +184,8 @@ src/main/resources/
     account/                   # Hồ sơ và cài đặt tài khoản
     admin/
       books/                   # Tạo/sửa sách
+      categories/               # Danh sách và thêm category
+      authors/                  # Danh sách và thêm author
       fragments/               # Sidebar dashboard
       dashboard.html
     auth/                       # Đăng nhập, đăng ký, khôi phục mật khẩu

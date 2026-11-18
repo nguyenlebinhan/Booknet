@@ -89,14 +89,22 @@ public class CatalogController {
     }
 
     private static void normalizeFilter(CatalogFilter filter) {
-        if (filter.getSort() == null || !List.of("recent", "title-asc", "title-desc", "year-desc").contains(filter.getSort())) {
-            filter.setSort("recent");
+        // "Most popular" is the default, as in the Figma design.
+        if (filter.getSort() == null || !List.of("popular", "recent", "title-asc", "title-desc", "year-desc").contains(filter.getSort())) {
+            filter.setSort("popular");
+        }
+        if (filter.getYearFrom() != null && filter.getYearTo() != null && filter.getYearFrom() > filter.getYearTo()) {
+            Integer from = filter.getYearTo();
+            filter.setYearTo(filter.getYearFrom());
+            filter.setYearFrom(from);
         }
         filter.setKeyword(filter.getKeyword() == null ? "" : filter.getKeyword().trim());
     }
 
     private static Sort sortFor(String sort) {
         return switch (sort) {
+            // Ranked by loan count in the catalog service.
+            case "popular" -> Sort.unsorted();
             case "title-asc" -> Sort.by(Sort.Order.asc("title"), Sort.Order.asc("id"));
             case "title-desc" -> Sort.by(Sort.Order.desc("title"), Sort.Order.desc("id"));
             case "year-desc" -> Sort.by(Sort.Order.desc("publishYear"), Sort.Order.desc("id"));

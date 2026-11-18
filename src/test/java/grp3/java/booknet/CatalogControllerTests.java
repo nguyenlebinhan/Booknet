@@ -90,6 +90,47 @@ class CatalogControllerTests {
     }
 
     @Test
+    void selectingParentCategoryIncludesBooksInAllDescendants() throws Exception {
+        Category parent = saveCategory("Catalog parent fiction", null);
+        Category child = saveCategory("Catalog child fantasy", parent);
+        Category grandchild = saveCategory("Catalog grandchild dark fantasy", child);
+        Category unrelated = saveCategory("Catalog unrelated history", null);
+        savePublishedBook("Catalog parent book", parent, "9780000091001");
+        savePublishedBook("Catalog child book", child, "9780000091002");
+        savePublishedBook("Catalog grandchild book", grandchild, "9780000091003");
+        savePublishedBook("Catalog unrelated book", unrelated, "9780000091004");
+
+        mockMvc.perform(get("/catalog").param("categoryIds", parent.getId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Catalog parent book")))
+                .andExpect(content().string(containsString("Catalog child book")))
+                .andExpect(content().string(containsString("Catalog grandchild book")))
+                .andExpect(content().string(not(containsString("Catalog unrelated book"))))
+                .andExpect(model().attribute("filter",
+                        org.hamcrest.Matchers.hasProperty("categoryIds",
+                                org.hamcrest.Matchers.contains(parent.getId()))));
+    }
+
+    @Test
+    void selectingSubcategoryKeepsItsGenreSelectedAndShowsRelatedBooks() throws Exception {
+        Category parent = saveCategory("Catalog selected parent", null);
+        Category child = saveCategory("Catalog selected subcategory", parent);
+        savePublishedBook("Catalog selected subcategory book", child, "9780000091011");
+        savePublishedBook("Catalog parent-only book", parent, "9780000091012");
+
+        mockMvc.perform(get("/catalog").param("categoryIds", child.getId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Catalog selected subcategory book")))
+                .andExpect(content().string(not(containsString("Catalog parent-only book"))))
+                .andExpect(content().string(containsString(
+                        "value=\"" + child.getId() + "\" id=\"categoryIds")))
+                .andExpect(content().string(containsString("name=\"categoryIds\" checked=\"checked\"")))
+                .andExpect(model().attribute("filter",
+                        org.hamcrest.Matchers.hasProperty("categoryIds",
+                                org.hamcrest.Matchers.contains(child.getId()))));
+    }
+
+    @Test
     void publicCatalogShowsEmptyStateWhenFiltersMatchNoBooks() throws Exception {
         mockMvc.perform(get("/catalog").param("keyword", "no-catalog-match-expected"))
                 .andExpect(status().isOk())
@@ -195,5 +236,22 @@ class CatalogControllerTests {
                 .andExpect(content().string(containsString("<span>7</span>–<span>7</span>")))
                 .andExpect(content().string(containsString("aria-label=\"Previous page\"")))
                 .andExpect(content().string(containsString("Catalog pagination book 7")));
+    }
+
+    private Category saveCategory(String name, Category parent) {
+        Category category = new Category();
+        category.setName(name);
+        category.setParent(parent);
+        return categoryRepository.save(category);
+    }
+
+    private void savePublishedBook(String title, Category category, String isbn) {
+        bookRepository.save(Book.builder()
+                .title(title)
+                .isbn(isbn)
+                .publishYear((short) 2020)
+                .publicationStatus(PublicationStatus.PUBLISHED)
+                .categories(Set.of(category))
+                .build());
     }
 }

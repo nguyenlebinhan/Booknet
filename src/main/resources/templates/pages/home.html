@@ -21,7 +21,9 @@
 
   <main>
 
-    <!--/* Stats, genres, books, events and opening hours are sample content from the design. See docs/auth-pages-backend-handoff.md. */-->
+    <!--/* Stats, genres, the shelf, quick searches and opening hours come from HomeService (UC05).
+         With no published books yet, the sample content from the design is shown instead. Events stay sample content:
+         no module stores events yet. */-->
     <section class="home-intro">
       <div class="home-hero">
         <div class="home-hero-copy">
@@ -35,15 +37,16 @@
             <button type="submit">Find books</button>
           </form>
 
-          <p class="home-popular">Popular:   <a th:href="@{/catalog(keyword='Nguyễn Nhật Ánh')}">Nguyễn Nhật Ánh</a>   ·   <a th:href="@{/catalog}">Literature</a>   ·   <a th:href="@{/catalog}">Life skills</a></p>
+          <p class="home-popular" th:unless="${#lists.isEmpty(home.popularSearches)}">Popular:   <th:block th:each="link, stat : ${home.popularSearches}"><a th:if="${link.keyword != null}" th:href="@{/catalog(keyword=${link.keyword})}" th:text="${link.label}">Author</a><a th:if="${link.categoryId != null}" th:href="@{/catalog(categoryIds=${link.categoryId})}" th:text="${link.label}">Genre</a><th:block th:unless="${stat.last}">   ·   </th:block></th:block></p>
+          <p class="home-popular" th:if="${#lists.isEmpty(home.popularSearches)}">Popular:   <a th:href="@{/catalog(keyword='Nguyễn Nhật Ánh')}">Nguyễn Nhật Ánh</a>   ·   <a th:href="@{/catalog}">Literature</a>   ·   <a th:href="@{/catalog}">Life skills</a></p>
         </div>
 
         <div class="home-corner">
           <img class="home-corner-photo" th:src="@{/images/home/library-corner.jpg}" alt="A reading room lined with bookshelves">
-          <a href="#" class="home-visit">
+          <a th:href="@{/contact}" class="home-visit">
             <img th:src="@{/images/home/sun.svg}" width="28" height="28" alt="">
             <span class="home-visit-text">
-              <span class="home-visit-title">booknet welcomes you until 20:00 today</span>
+              <span class="home-visit-title" th:text="${home.opening.headline}">booknet welcomes you until 20:00 today</span>
               <span class="home-visit-place">28 Nguyễn Du, Hà Nội · A quiet corner in the city</span>
             </span>
             <img th:src="@{/images/home/arrow-up-right.svg}" width="20" height="20" alt="">
@@ -53,11 +56,11 @@
 
       <div class="home-stats">
         <div class="home-stat">
-          <span class="home-stat-value">12.000+</span>
+          <span class="home-stat-value" th:text="${home.hasBooks() ? home.titlesText() : '12.000+'}">12.000+</span>
           <span class="home-stat-label">carefully selected titles</span>
         </div>
         <div class="home-stat">
-          <span class="home-stat-value">3.200+</span>
+          <span class="home-stat-value" th:text="${home.hasBooks() ? home.membersText() : '3.200+'}">3.200+</span>
           <span class="home-stat-label">fellow readers</span>
         </div>
         <div class="home-stat">
@@ -103,29 +106,38 @@
         <a th:href="@{/catalog}" class="home-link">All genres  ↗</a>
       </div>
 
-      <div class="home-genres">
-        <a href="#" class="home-genre">
+      <div class="home-genres" th:unless="${#lists.isEmpty(home.genres)}">
+        <a th:each="genre : ${home.genres}" th:href="@{/catalog(categoryIds=${genre.id})}" class="home-genre">
+          <img th:src="@{/images/home/{icon}.svg(icon=${genre.icon})}" width="26" height="26" alt="">
+          <span class="home-genre-text">
+            <span class="home-genre-name" th:text="${genre.name}">Literature</span>
+            <span class="home-genre-count" th:text="${genre.titlesText()}">4.260 titles</span>
+          </span>
+        </a>
+      </div>
+      <div class="home-genres" th:if="${#lists.isEmpty(home.genres)}">
+        <a th:href="@{/catalog}" class="home-genre">
           <img th:src="@{/images/home/book-open.svg}" width="26" height="26" alt="">
           <span class="home-genre-text">
             <span class="home-genre-name">Literature</span>
             <span class="home-genre-count">4.260 titles</span>
           </span>
         </a>
-        <a href="#" class="home-genre">
+        <a th:href="@{/catalog}" class="home-genre">
           <img th:src="@{/images/home/sprout.svg}" width="26" height="26" alt="">
           <span class="home-genre-text">
             <span class="home-genre-name">Life skills</span>
             <span class="home-genre-count">1.840 titles</span>
           </span>
         </a>
-        <a href="#" class="home-genre">
+        <a th:href="@{/catalog}" class="home-genre">
           <img th:src="@{/images/home/globe.svg}" width="26" height="26" alt="">
           <span class="home-genre-text">
             <span class="home-genre-name">History &amp; science</span>
             <span class="home-genre-count">2.150 titles</span>
           </span>
         </a>
-        <a href="#" class="home-genre">
+        <a th:href="@{/catalog}" class="home-genre">
           <img th:src="@{/images/home/sparkles.svg}" width="26" height="26" alt="">
           <span class="home-genre-text">
             <span class="home-genre-name">Children's books</span>
@@ -142,8 +154,29 @@
         </a>
       </div>
 
-      <div class="home-books">
-        <a href="#" class="home-book">
+      <div class="home-books" th:if="${home.hasBooks()}">
+        <a th:each="book : ${home.shelf}" th:href="@{/catalog/{id}(id=${book.id})}" class="home-book">
+          <div class="home-book-stand">
+            <div class="home-book-cover" th:classappend="${book.coverUrl == null or #strings.isEmpty(book.coverUrl)} ? 'is-placeholder'">
+              <img th:if="${book.coverUrl != null and !#strings.isEmpty(book.coverUrl)}" th:src="${book.coverUrl}" alt="">
+              <div class="home-cover-text" th:unless="${book.coverUrl != null and !#strings.isEmpty(book.coverUrl)}">
+                <span class="home-cover-author" th:text="${#strings.toUpperCase(#strings.listJoin(book.authors, ', '))}">AUTHOR</span>
+                <span class="home-cover-title" th:text="${book.title}">Title</span>
+              </div>
+            </div>
+          </div>
+          <div class="home-book-info">
+            <span class="home-book-category" th:text="${book.categories.isEmpty() ? 'BOOKNET COLLECTION' : #strings.toUpperCase(book.categories.get(0))}">LITERATURE</span>
+            <span class="home-book-title" th:text="${book.title}">Title</span>
+            <span class="home-book-author" th:text="${book.authors.isEmpty() ? 'Unknown author' : #strings.listJoin(book.authors, ', ')}">Author</span>
+            <span class="home-book-status" th:if="${book.availableCopies > 0}" th:text="${'Available · ' + book.availableCopies + '/' + book.totalCopies + ' copies'}">Available</span>
+            <span class="home-book-status on-loan" th:if="${book.availableCopies == 0 and book.canReserve}">On loan</span>
+            <span class="home-book-status on-loan" th:if="${book.availableCopies == 0 and !book.canReserve}">Not in circulation</span>
+          </div>
+        </a>
+      </div>
+      <div class="home-books" th:unless="${home.hasBooks()}">
+        <a th:href="@{/catalog}" class="home-book">
           <div class="home-book-stand">
             <div class="home-book-cover">
               <img th:src="@{/images/home/cover-hoa-vang.jpg}" alt="">
@@ -160,7 +193,7 @@
             <span class="home-book-status">Available · 3/8 copies</span>
           </div>
         </a>
-        <a href="#" class="home-book">
+        <a th:href="@{/catalog}" class="home-book">
           <div class="home-book-stand">
             <div class="home-book-cover">
               <img th:src="@{/images/home/cover-nha-gia-kim.jpg}" alt="">
@@ -177,7 +210,7 @@
             <span class="home-book-status on-loan">On loan</span>
           </div>
         </a>
-        <a href="#" class="home-book">
+        <a th:href="@{/catalog}" class="home-book">
           <div class="home-book-stand">
             <div class="home-book-cover">
               <img th:src="@{/images/home/cover-de-men.jpg}" alt="">
@@ -194,7 +227,7 @@
             <span class="home-book-status">Available · 4/10 copies</span>
           </div>
         </a>
-        <a href="#" class="home-book">
+        <a th:href="@{/catalog}" class="home-book">
           <div class="home-book-stand">
             <div class="home-book-cover">
               <img th:src="@{/images/home/cover-cay-cam.jpg}" alt="">

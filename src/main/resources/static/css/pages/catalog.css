@@ -538,6 +538,32 @@
   text-decoration: none;
 }
 
+.book-reserve-action {
+  margin-top: 6px;
+}
+
+.book-reserve-form {
+  display: inline;
+}
+
+.book-reserve-btn {
+  padding: 5px 11px;
+  border: 1px solid var(--bn-forest);
+  border-radius: 6px;
+  background: var(--bn-surface);
+  color: var(--bn-forest);
+  font-family: var(--bn-font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.book-reserve-btn:hover {
+  background: var(--bn-forest);
+  color: #fff;
+}
+
 .catalog-empty {
   padding: 62px 20px;
   border: 1px dashed var(--bn-line);
@@ -768,3 +794,17 @@
     margin-left: 27px;
   }
 }
+
+/* Card title opens Book details; the whole card is clickable through the title's overlay. */
+.catalog-book { position: relative; }
+.book-title-link { color: inherit; text-decoration: none; }
+.book-title-link::after { content: ""; position: absolute; inset: 0; }
+.book-title-link:hover { color: var(--bn-forest); }
+.book-title-link:focus-visible { outline: none; }
+.catalog-book:has(.book-title-link:focus-visible) { outline: 2px solid var(--bn-forest); outline-offset: 4px; border-radius: 8px; }
+.book-manage-link { position: relative; z-index: 1; }
+
+/* Publication year range: two selects side by side. */
+.filter-year-range { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.filter-year-range label { display: grid; gap: 6px; min-width: 0; color: var(--bn-muted); font-size: 12px; }
+.filter-year-range select { width: 100%; min-width: 0; }

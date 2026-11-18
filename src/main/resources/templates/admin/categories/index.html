@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Categories | booknet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/book-management.css}">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+</head>
+<body>
+  <th:block th:replace="~{shared/navigation :: navigation}"></th:block>
+  <main class="book-management-page">
+    <nav class="book-breadcrumb" aria-label="Breadcrumb">
+      <a th:href="@{/catalog}">Book catalog</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">Categories</span>
+    </nav>
+
+    <div class="page-heading">
+      <div>
+        <h1>Categories</h1>
+        <p>Organize catalog books by category and parent category.</p>
+      </div>
+      <a class="button button-primary" th:href="@{/admin/categories/create}">Add category</a>
+    </div>
+
+    <div class="notice notice-success" role="status" th:if="${successMessage}" th:text="${successMessage}"></div>
+    <section class="form-card category-list-card" aria-label="Book categories">
+      <div class="category-tree" th:if="${!categoryTree.isEmpty()}">
+        <div class="category-tree-entry"
+             th:each="category : ${categoryTree}"
+             th:classappend="${category.depth == 0} ? ' category-tree-entry-root'"
+             th:attr="data-depth=${category.depth}"
+             th:style="|padding-left: ${20 + category.depth * 24}px|">
+          <strong th:text="${category.name}">Literature</strong>
+        </div>
+      </div>
+      <p class="category-empty" th:if="${categoryTree.isEmpty()}">No categories have been created yet.</p>
+      <div class="category-list-footer" th:if="${categoriesPage.totalElements > 0}">
+        <span th:text="${'Showing ' + (categoriesPage.number * categoriesPage.size + 1) + '-' + (categoriesPage.number * categoriesPage.size + categoriesPage.numberOfElements) + ' of ' + categoriesPage.totalElements + ' categories'}">Showing 1-20 of 20 categories</span>
+        <nav class="category-list-pagination" th:if="${categoriesPage.totalPages > 1}" aria-label="Category pages">
+          <a th:if="${categoriesPage.hasPrevious()}" th:href="@{/admin/categories(page=${categoriesPage.number - 1})}">Previous</a>
+          <span th:text="${'Page ' + (categoriesPage.number + 1) + ' of ' + categoriesPage.totalPages}" aria-current="page">Page 1 of 2</span>
+          <a th:if="${categoriesPage.hasNext()}" th:href="@{/admin/categories(page=${categoriesPage.number + 1})}">Next</a>
+        </nav>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

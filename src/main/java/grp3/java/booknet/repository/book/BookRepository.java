@@ -3,6 +3,8 @@ package grp3.java.booknet.repository.book;
 import grp3.java.booknet.entity.book.Book;
 import grp3.java.booknet.enums.book.PublicationStatus;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
@@ -31,6 +33,24 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
     boolean existsByBookCodeAndIdNot(String bookCode, Long id);
 
     boolean existsByIsbnAndIdNot(String isbn, Long id);
+
+    @Query(value = """
+            select distinct b from Book b join b.authors author
+            where author.id = :authorId and b.deleted = false
+              and (:query = '' or lower(b.title) like lower(concat('%', :query, '%'))
+                   or lower(b.isbn) like lower(concat('%', :query, '%'))
+                   or lower(b.bookCode) like lower(concat('%', :query, '%')))
+            """,
+            countQuery = """
+            select count(distinct b.id) from Book b join b.authors author
+            where author.id = :authorId and b.deleted = false
+              and (:query = '' or lower(b.title) like lower(concat('%', :query, '%'))
+                   or lower(b.isbn) like lower(concat('%', :query, '%'))
+                   or lower(b.bookCode) like lower(concat('%', :query, '%')))
+            """)
+    Page<Book> searchByAuthor(@Param("authorId") Integer authorId,
+                              @Param("query") String query,
+                              Pageable pageable);
 
     long countByDeletedFalseAndPublicationStatus(PublicationStatus publicationStatus);
 

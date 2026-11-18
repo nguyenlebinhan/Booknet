@@ -31,7 +31,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -76,8 +76,8 @@ class AdminBookControllerFeature3Tests {
                 .title("Spring in Action")
                 .bookCode("BK-SIA-01")
                 .isbn("978-1617294945")
-                .authorIds(List.of(1L))
-                .categoryIds(List.of(1L))
+                .authorIds(List.of(1))
+                .categoryIds(List.of(1))
                 .publishYear((short) 2018)
                 .pageCount(520)
                 .build();
@@ -91,9 +91,10 @@ class AdminBookControllerFeature3Tests {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Copies &amp; shelf locations")))
                 .andExpect(model().attributeExists("bookForm"))
                 .andExpect(model().attribute("bookId", 1L))
-                .andExpect(model().attributeExists("categories"))
-                .andExpect(model().attributeExists("authors"))
-                .andExpect(model().attributeExists("publishers"));
+                .andExpect(model().attributeExists("selectedCategories"))
+                .andExpect(model().attributeExists("selectedAuthors"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Category *")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Authors *")));
     }
 
     @Test
@@ -104,8 +105,8 @@ class AdminBookControllerFeature3Tests {
                 .title("Spring in Action")
                 .bookCode("BK-SIA-01")
                 .isbn("978-1617294945")
-                .authorIds(List.of(1L))
-                .categoryIds(List.of(1L))
+                .authorIds(List.of(1))
+                .categoryIds(List.of(1))
                 .publishYear((short) 2018)
                 .pageCount(520)
                 .build());
@@ -131,7 +132,7 @@ class AdminBookControllerFeature3Tests {
     @DisplayName("Admin can successfully submit valid book update and be redirected")
     @WithMockUser(username = "admin@booknet.vn", authorities = {"ROLE_ADMIN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void adminCanSubmitValidBookUpdate() throws Exception {
-        mockMvc.perform(post("/admin/books/1/edit")
+        mockMvc.perform(multipart("/admin/books/1/edit")
                         .with(csrf())
                         .param("title", "Spring in Action 5th Edition")
                         .param("bookCode", "BK-SIA-05")
@@ -150,7 +151,7 @@ class AdminBookControllerFeature3Tests {
     @DisplayName("Librarian can save and publish an edited book")
     @WithMockUser(username = "librarian@booknet.vn", authorities = {"ROLE_LIBRARIAN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void librarianCanPublishEditedBook() throws Exception {
-        mockMvc.perform(post("/admin/books/1/publish")
+        mockMvc.perform(multipart("/admin/books/1/publish")
                         .with(csrf())
                         .param("title", "Spring in Action")
                         .param("bookCode", "BK-SIA-01")
@@ -171,7 +172,7 @@ class AdminBookControllerFeature3Tests {
     @DisplayName("Validation failure on edit preserves form view with errors")
     @WithMockUser(username = "admin@booknet.vn", authorities = {"ROLE_ADMIN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void editValidationFailurePreservesView() throws Exception {
-        mockMvc.perform(post("/admin/books/1/edit")
+        mockMvc.perform(multipart("/admin/books/1/edit")
                         .with(csrf())
                         .param("title", "") // blank title
                         .param("bookCode", "Invalid Space Code")
@@ -189,7 +190,7 @@ class AdminBookControllerFeature3Tests {
         doThrow(new IllegalArgumentException("Book code 'BK-CONFLICT' is already in use by another book"))
                 .when(bookService).updateBook(eq(1L), any(BookEditForm.class));
 
-        mockMvc.perform(post("/admin/books/1/edit")
+        mockMvc.perform(multipart("/admin/books/1/edit")
                         .with(csrf())
                         .param("title", "Spring in Action")
                         .param("bookCode", "BK-CONFLICT")

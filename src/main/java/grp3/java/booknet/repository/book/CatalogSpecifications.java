@@ -15,6 +15,7 @@ import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -28,6 +29,13 @@ public final class CatalogSpecifications {
     }
 
     public static Specification<Book> withFilter(CatalogFilter filter, boolean includeUnpublished) {
+        return withFilter(filter, includeUnpublished,
+                filter == null ? List.of() : filter.getCategoryIds());
+    }
+
+    public static Specification<Book> withFilter(CatalogFilter filter,
+                                                 boolean includeUnpublished,
+                                                 Collection<Integer> categoryIds) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.isFalse(root.get("deleted")));
@@ -51,9 +59,9 @@ public final class CatalogSpecifications {
                 query.distinct(true);
             }
 
-            if (filter.getCategoryIds() != null && !filter.getCategoryIds().isEmpty()) {
+            if (categoryIds != null && !categoryIds.isEmpty()) {
                 Join<Book, Category> categoryJoin = root.join("categories", JoinType.INNER);
-                predicates.add(categoryJoin.get("id").in(filter.getCategoryIds()));
+                predicates.add(categoryJoin.get("id").in(categoryIds));
                 query.distinct(true);
             }
 

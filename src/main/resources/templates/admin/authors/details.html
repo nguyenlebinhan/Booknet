@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${author.name + ' | Authors | booknet'}">Author books | booknet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/book-management.css}">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+</head>
+<body>
+  <th:block th:replace="~{shared/navigation :: navigation}"></th:block>
+  <main class="book-management-page author-directory-page author-books-page">
+    <nav class="book-breadcrumb" aria-label="Breadcrumb">
+      <a th:href="@{/catalog}">Book catalog</a>
+      <span aria-hidden="true">/</span>
+      <a th:href="@{/admin/authors}">Authors</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page" th:text="${author.name}">Author name</span>
+    </nav>
+
+    <header class="author-profile-hero">
+      <button class="author-profile-avatar author-photo-trigger"
+              th:if="${author.url != null and !#strings.isEmpty(author.url)}"
+              th:classappend="| author-avatar-tone-${author.id % 4}|"
+              type="button"
+              th:attr="data-author-photo-src=${author.url},
+                       data-author-photo-alt=${'Portrait of ' + author.name},
+                       aria-label=${'View full-size photo of ' + author.name}">
+        <img th:if="${author.url != null and !#strings.isEmpty(author.url)}"
+             th:src="${author.url}" alt="">
+      </button>
+      <div class="author-profile-avatar"
+           th:unless="${author.url != null and !#strings.isEmpty(author.url)}"
+           aria-hidden="true"
+           th:classappend="| author-avatar-tone-${author.id % 4}|">
+        <span
+              th:text="${#strings.isEmpty(author.name) ? '?' : #strings.toUpperCase(#strings.substring(author.name, 0, 1))}">A</span>
+      </div>
+      <div class="author-profile-copy">
+        <p class="author-directory-kicker">AUTHOR PROFILE</p>
+        <h1 th:text="${author.name}">Author name</h1>
+        <p th:if="${author.bio != null and !#strings.isEmpty(author.bio)}" th:text="${author.bio}">Biography</p>
+        <p class="author-directory-no-bio" th:if="${author.bio == null or #strings.isEmpty(author.bio)}">
+          No biography has been added for this author.
+        </p>
+      </div>
+      <a class="button button-secondary author-profile-back" th:href="@{/admin/authors}">Back to authors</a>
+    </header>
+
+    <section class="author-books-directory" aria-labelledby="authorBooksHeading">
+      <div class="author-books-heading">
+        <div>
+          <p class="author-directory-kicker">IN THE BOOKNET CATALOG</p>
+          <h2 id="authorBooksHeading">Books by <span th:text="${author.name}">Author name</span></h2>
+        </div>
+        <span class="author-books-count"
+              th:text="${booksPage.totalElements + (booksPage.totalElements == 1 ? ' book' : ' books')}">0 books</span>
+      </div>
+
+      <form class="author-directory-toolbar author-books-toolbar" th:action="@{/admin/authors/{id}(id=${author.id})}" method="get">
+        <div class="author-search-control">
+          <label for="bookQuery">Search books</label>
+          <div class="author-search-input">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+            <input id="bookQuery" type="search" name="query" maxlength="150" th:value="${query}"
+                   placeholder="Search by title, ISBN or book code">
+          </div>
+        </div>
+        <div class="author-sort-control">
+          <label for="bookSort">Sort by</label>
+          <select id="bookSort" name="sort">
+            <option value="title-asc" th:selected="${sort == 'title-asc'}">Title A–Z</option>
+            <option value="title-desc" th:selected="${sort == 'title-desc'}">Title Z–A</option>
+            <option value="year-desc" th:selected="${sort == 'year-desc'}">Newest publication</option>
+            <option value="recent" th:selected="${sort == 'recent'}">Recently added</option>
+          </select>
+        </div>
+        <button class="button button-secondary author-search-button" type="submit">Search</button>
+      </form>
+
+      <div class="author-books-grid" th:if="${!booksPage.isEmpty()}">
+        <article class="author-book-card" th:each="book : ${booksPage.content}">
+          <a class="author-book-cover" th:href="@{/catalog/{id}(id=${book.id})}"
+             th:aria-label="${'View ' + book.title}">
+            <img th:if="${book.coverUrl != null and !#strings.isEmpty(book.coverUrl)}"
+                 th:src="${book.coverUrl}" th:alt="${'Cover of ' + book.title}">
+            <span class="author-book-cover-placeholder"
+                  th:unless="${book.coverUrl != null and !#strings.isEmpty(book.coverUrl)}">
+              <span class="author-book-cover-mark">BOOKNET</span>
+              <strong th:text="${book.title}">Book title</strong>
+            </span>
+          </a>
+          <div class="author-book-info">
+            <div class="author-book-meta">
+              <span th:if="${book.publishYear != null}" th:text="${book.publishYear}">2024</span>
+              <span th:if="${book.isbn != null}" th:text="${'ISBN ' + book.isbn}">ISBN</span>
+            </div>
+            <h3><a th:href="@{/catalog/{id}(id=${book.id})}" th:text="${book.title}">Book title</a></h3>
+            <span class="author-book-status"
+                  th:classappend="${' status-' + #strings.toLowerCase(book.publicationStatus.name())}"
+                  th:text="${book.publicationStatus.name() == 'PUBLISHED' ? 'Published' : (book.publicationStatus.name() == 'DRAFT' ? 'Draft' : 'Discontinued')}">Published</span>
+          </div>
+        </article>
+      </div>
+
+      <div class="author-directory-empty" th:if="${booksPage.isEmpty()}">
+        <span class="author-empty-mark" aria-hidden="true">B</span>
+        <h2 th:text="${query.isEmpty() ? 'No books linked to this author yet' : 'No books match your search'}">
+          No books linked to this author yet
+        </h2>
+        <p th:if="${query.isEmpty()}">Books associated with this author will appear here.</p>
+        <p th:unless="${query.isEmpty()}">Try a different title, ISBN or book code.</p>
+        <a class="button button-secondary" th:if="${!query.isEmpty()}"
+           th:href="@{/admin/authors/{id}(id=${author.id})}">Clear search</a>
+      </div>
+
+      <div class="author-directory-footer" th:if="${booksPage.totalElements > 0}">
+        <span th:text="${'Showing ' + (booksPage.number * booksPage.size + 1) + '-' + (booksPage.number * booksPage.size + booksPage.numberOfElements) + ' of ' + booksPage.totalElements + ' books'}">Showing 1-12 of 12 books</span>
+        <nav class="author-directory-pagination" th:if="${booksPage.totalPages > 1}" aria-label="Book pages">
+          <a th:if="${booksPage.hasPrevious()}"
+             th:href="@{/admin/authors/{id}(id=${author.id},page=${booksPage.number - 1},query=${query},sort=${sort})}">Previous</a>
+          <span th:text="${'Page ' + (booksPage.number + 1) + ' of ' + booksPage.totalPages}" aria-current="page">Page 1 of 2</span>
+          <a th:if="${booksPage.hasNext()}"
+             th:href="@{/admin/authors/{id}(id=${author.id},page=${booksPage.number + 1},query=${query},sort=${sort})}">Next</a>
+        </nav>
+      </div>
+    </section>
+  </main>
+  <th:block th:replace="~{admin/authors/fragments/photo-dialog :: authorPhotoDialog}"></th:block>
+  <script th:src="@{/js/author-photo-lightbox.js}" defer></script>
+</body>
+</html>

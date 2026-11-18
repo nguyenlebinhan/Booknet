@@ -25,4 +25,7 @@ public class Author extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     private String bio;
+
+    @Column(name = "image_url")
+    private String url;
 }

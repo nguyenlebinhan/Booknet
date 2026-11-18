@@ -151,6 +151,15 @@
                 <span class="book-status" th:if="${book.publicationStatus.name() == 'PUBLISHED' and book.availableCopies > 0}"
                       th:text="${'Available · ' + book.availableCopies + '/' + book.totalCopies + ' copies'}">Available</span>
                 <span class="book-status on-loan" th:if="${book.publicationStatus.name() == 'PUBLISHED' and book.availableCopies == 0 and book.canReserve}">On loan · Reserve</span>
+                <div class="book-reserve-action" th:if="${book.publicationStatus.name() == 'PUBLISHED' and book.availableCopies == 0 and book.canReserve}" sec:authorize="hasAuthority('RESERVE')">
+                  <a class="book-manage-link" th:if="${reservedBookIds != null and reservedBookIds.contains(book.id)}"
+                     th:href="@{/member/reservations}">In your queue →</a>
+                  <form th:unless="${reservedBookIds != null and reservedBookIds.contains(book.id)}"
+                        th:action="@{/member/reservations}" method="post" class="book-reserve-form">
+                    <input type="hidden" name="bookId" th:value="${book.id}">
+                    <button type="submit" class="book-reserve-btn">Reserve book</button>
+                  </form>
+                </div>
                 <span class="book-status unavailable" th:if="${book.publicationStatus.name() == 'PUBLISHED' and book.availableCopies == 0 and !book.canReserve}">Not in circulation</span>
                 <a class="book-manage-link" sec:authorize="hasAnyRole('LIBRARIAN', 'ADMIN')"
                    th:href="@{/admin/books/{id}/edit(id=${book.id})}">Edit book</a>

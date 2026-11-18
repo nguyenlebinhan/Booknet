@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reservation management • booknet Librarian</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Serif:wght@400;500;600&amp;display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}" href="/css/base/tokens.css">
+  <link rel="stylesheet" th:href="@{/css/admin/dashboard.css}" href="/css/admin/dashboard.css">
+  <link rel="stylesheet" th:href="@{/css/librarian/circulation.css}" href="/css/librarian/circulation.css">
+  <style>
+    .rsm-search-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .rsm-search-input {
+      flex: 1 1 280px;
+      max-width: 440px;
+      height: 40px;
+      padding: 0 14px;
+      border: 1px solid var(--bn-line);
+      border-radius: 8px;
+      background: var(--bn-surface);
+      font-size: 14px;
+      color: var(--bn-ink);
+    }
+    .rsm-queue-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+      gap: 20px;
+    }
+    .rsm-queue-card {
+      background: var(--bn-surface);
+      border: 1px solid var(--bn-line);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .rsm-queue-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding-bottom: 14px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--bn-line);
+    }
+    .rsm-queue-head h3 {
+      margin: 0 0 4px;
+      font-family: var(--bn-font-serif);
+      font-size: 18px;
+      color: var(--bn-ink);
+    }
+    .rsm-queue-sub {
+      font-size: 12px;
+      color: var(--bn-muted);
+    }
+    .rsm-queue-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .rsm-queue-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: var(--bn-paper);
+      border: 1px solid var(--bn-line);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body class="admin-page">
+
+<div class="admin-shell">
+  <aside th:replace="~{admin/fragments/dashboard :: sidebar}"></aside>
+
+  <div class="admin-workspace">
+    <header th:replace="~{member/fragments :: topbar(section='Reservation management')}"></header>
+
+    <main class="admin-main">
+      <section class="bn-page-header">
+        <div>
+          <p class="bn-kicker">CIRCULATION &amp; QUEUES</p>
+          <h1 class="bn-page-title">Reservation management</h1>
+          <p class="bn-page-subtitle">Monitor book waiting queues, assign returned or newly cataloged copies to holds, fulfill pickups into loans, and release expired 2-day holds.</p>
+        </div>
+        <div class="bn-header-actions">
+          <form th:action="@{${basePath + '/expire-holds'}}" method="post">
+            <button type="submit" class="bn-btn bn-btn-secondary">Process expired holds</button>
+          </form>
+        </div>
+      </section>
+
+      <div th:if="${successMessage}" class="bn-alert bn-alert-success">
+        <span th:text="${successMessage}">Success</span>
+      </div>
+      <div th:if="${errorMessage}" class="bn-alert bn-alert-danger">
+        <span th:text="${errorMessage}">Error</span>
+      </div>
+
+      <section class="bn-stats-grid" aria-label="Reservation queue summary">
+        <article class="bn-stat-card">
+          <span class="bn-stat-label">Waiting queue</span>
+          <strong class="bn-stat-value" th:text="${view.pendingCount}">0</strong>
+          <span class="bn-stat-desc">Pending reservations awaiting copies</span>
+        </article>
+        <article class="bn-stat-card">
+          <span class="bn-stat-label">Ready for pickup</span>
+          <strong class="bn-stat-value" th:text="${view.readyCount}">0</strong>
+          <span class="bn-stat-desc">Copies currently held at desk (2-day hold)</span>
+        </article>
+        <article class="bn-stat-card" th:classappend="${view.overdueHoldCount > 0 ? ' is-warning' : ''}">
+          <span class="bn-stat-label">Past hold window</span>
+          <strong class="bn-stat-value" th:text="${view.overdueHoldCount}">0</strong>
+          <span class="bn-stat-desc">Overdue holds queued for auto-release</span>
+        </article>
+        <article class="bn-stat-card">
+          <span class="bn-stat-label">Closed history</span>
+          <strong class="bn-stat-value" th:text="${view.closedCount}">0</strong>
+          <span class="bn-stat-desc">Fulfilled, canceled &amp; expired records</span>
+        </article>
+      </section>
+
+      <form class="rsm-search-bar" th:action="@{${basePath}}" method="get">
+        <input type="hidden" name="tab" th:value="${view.currentTab}">
+        <input type="text" name="keyword" th:value="${view.keyword}" class="rsm-search-input"
+               placeholder="Search reservation code, book title, member name, email, or copy barcode...">
+        <button type="submit" class="bn-btn bn-btn-primary">Search</button>
+        <a th:if="${view.keyword != null and !#strings.isEmpty(view.keyword)}"
+           th:href="@{${basePath}(tab=${view.currentTab})}" class="bn-btn bn-btn-secondary">Clear</a>
+      </form>
+
+      <nav class="bn-tabs-wrap" aria-label="Reservation management views">
+        <div class="bn-tabs">
+          <a th:href="@{${basePath}(tab='pending', keyword=${view.keyword})}" class="bn-tab-item"
+             th:classappend="${view.currentTab == 'pending'} ? 'is-active' : ''">
+            <span>Pending queue</span>
+            <span class="bn-tab-badge" th:text="${view.pendingCount}">0</span>
+          </a>
+          <a th:href="@{${basePath}(tab='ready', keyword=${view.keyword})}" class="bn-tab-item"
+             th:classappend="${view.currentTab == 'ready'} ? 'is-active' : ''">
+            <span>Ready for pickup</span>
+            <span class="bn-tab-badge" th:text="${view.readyCount}">0</span>
+          </a>
+          <a th:href="@{${basePath}(tab='queues', keyword=${view.keyword})}" class="bn-tab-item"
+             th:classappend="${view.currentTab == 'queues'} ? 'is-active' : ''">
+            <span>Queues by book</span>
+          </a>
+          <a th:href="@{${basePath}(tab='history', keyword=${view.keyword})}" class="bn-tab-item"
+             th:classappend="${view.currentTab == 'history'} ? 'is-active' : ''">
+            <span>History</span>
+            <span class="bn-tab-badge" th:text="${view.closedCount}">0</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- Queues grouped by book -->
+      <section th:if="${view.currentTab == 'queues'}">
+        <div class="rsm-queue-grid" th:if="${!view.bookQueues.isEmpty()}">
+          <article class="rsm-queue-card" th:each="grp : ${view.bookQueues}">
+            <div class="rsm-queue-head">
+              <div>
+                <h3 th:text="${grp.bookTitle}">Book Title</h3>
+                <div class="rsm-queue-sub"
+                     th:text="${(grp.bookCode ?: 'NO-CODE') + ' · ' + grp.availableCopiesCount + '/' + grp.totalCopiesCount + ' available'}">Code</div>
+              </div>
+              <div style="display: flex; gap: 6px;">
+                <span class="bn-badge bn-badge-success" th:text="${grp.readyCount + ' ready'}">0 ready</span>
+                <span class="bn-badge bn-badge-warning" th:text="${grp.pendingCount + ' waiting'}">1 waiting</span>
+              </div>
+            </div>
+            <div class="rsm-queue-list">
+              <div class="rsm-queue-item" th:each="entry : ${grp.queueEntries}">
+                <div>
+                  <strong th:text="${entry.memberName}">Reader</strong>
+                  <div style="font-size: 11px; color: var(--bn-muted);"
+                       th:text="${entry.reservationCode + ' · ' + entry.memberEmail}">RS · email</div>
+                </div>
+                <div>
+                  <span class="bn-badge bn-badge-success" th:if="${entry.status.name() == 'READY'}"
+                        th:text="${'READY · ' + (entry.assignedCopyBarcode ?: '')}">READY</span>
+                  <span class="bn-badge bn-badge-warning" th:if="${entry.status.name() == 'PENDING'}"
+                        th:text="${'#' + entry.queuePosition + ' IN QUEUE'}">#1</span>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+        <div class="bn-panel" th:if="${view.bookQueues.isEmpty()}" style="padding: 36px; text-align: center; color: var(--bn-muted);">
+          No active waiting queues match your filter.
+        </div>
+      </section>
+
+      <!-- Flat Table View for Pending / Ready / History -->
+      <section th:unless="${view.currentTab == 'queues'}" class="bn-panel">
+        <div class="bn-panel-header">
+          <h2 class="bn-panel-title" th:text="${view.currentTab == 'ready' ? 'Ready for pickup' : (view.currentTab == 'history' ? 'Closed reservations history' : 'Pending reservations queue (FIFO)')}">Reservations</h2>
+          <span style="font-size: 13px; color: var(--bn-muted);">Oldest reservation in each book's queue receives the next available copy first.</span>
+        </div>
+
+        <div class="bn-table-wrap">
+          <table class="bn-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Book</th>
+                <th>Member</th>
+                <th th:if="${view.currentTab == 'pending'}">Queue Rank</th>
+                <th th:if="${view.currentTab == 'ready'}">Held Copy</th>
+                <th>Deadline / Closed</th>
+                <th>Status</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="row : ${view.rows}">
+                <td style="font-weight: 600;" th:text="${row.reservationCode}">RS-2026-0001</td>
+                <td>
+                  <strong th:text="${row.bookTitle}">Book title</strong>
+                  <div style="font-size: 11px; color: var(--bn-muted);"
+                       th:text="${(row.bookCode ?: 'BOOK-' + row.bookId) + ' · ' + row.availableCopiesCount + ' available'}">Code</div>
+                </td>
+                <td>
+                  <strong th:text="${row.memberName}">Reader Name</strong>
+                  <div style="font-size: 11px; color: var(--bn-muted);"
+                       th:text="${row.memberEmail + ' · ' + (row.memberCode ?: 'No card')}">email</div>
+                </td>
+                <td th:if="${view.currentTab == 'pending'}">
+                  <span class="bn-badge bn-badge-warning"
+                        th:text="${'#' + row.queuePosition + ' of ' + row.totalInQueue}">#1 of 1</span>
+                </td>
+                <td th:if="${view.currentTab == 'ready'}">
+                  <strong th:text="${row.assignedCopyBarcode ?: '-'}">BC-01</strong>
+                  <div style="font-size: 11px; color: var(--bn-muted);" th:text="${row.assignedCopyShelf}">Shelf</div>
+                </td>
+                <td>
+                  <span th:if="${row.status.name() == 'READY'}"
+                        th:text="${row.pickupUntil != null ? #temporals.format(row.pickupUntil, 'dd/MM/yyyy HH:mm') : '-'}">dd/MM/yyyy</span>
+                  <span th:if="${row.status.name() == 'PENDING'}"
+                        th:text="${row.reservedAt != null ? #temporals.format(row.reservedAt, 'dd/MM/yyyy HH:mm') : '-'}">dd/MM/yyyy</span>
+                  <span th:if="${row.status.name() != 'READY' and row.status.name() != 'PENDING'}"
+                        th:text="${row.closedAt != null ? #temporals.format(row.closedAt, 'dd/MM/yyyy HH:mm') : '-'}">dd/MM/yyyy</span>
+                </td>
+                <td>
+                  <span class="bn-badge bn-badge-success" th:if="${row.status.name() == 'READY' and !row.pickupExpired}">READY FOR PICKUP</span>
+                  <span class="bn-badge bn-badge-danger" th:if="${row.status.name() == 'READY' and row.pickupExpired}">HOLD EXPIRED</span>
+                  <span class="bn-badge bn-badge-warning" th:if="${row.status.name() == 'PENDING'}">PENDING</span>
+                  <span class="bn-badge bn-badge-neutral" th:if="${row.status.name() == 'FULFILLED'}">FULFILLED</span>
+                  <span class="bn-badge bn-badge-danger" th:if="${row.status.name() == 'CANCELLED'}">CANCELED</span>
+                  <span class="bn-badge bn-badge-danger" th:if="${row.status.name() == 'EXPIRED'}">EXPIRED</span>
+                </td>
+                <td style="text-align: right;">
+                  <div style="display: inline-flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;">
+                    <form th:if="${row.status.name() == 'PENDING' and row.availableCopiesCount > 0}"
+                          th:action="@{${basePath + '/' + row.reservationId + '/assign-copy'}}" method="post">
+                      <button type="submit" class="bn-btn bn-btn-primary bn-btn-sm">Hold available copy</button>
+                    </form>
+                    <form th:if="${row.status.name() == 'READY' and !row.pickupExpired}"
+                          th:action="@{${basePath + '/' + row.reservationId + '/fulfill'}}" method="post">
+                      <button type="submit" class="bn-btn bn-btn-primary bn-btn-sm">Hand over / Fulfill loan</button>
+                    </form>
+                    <form th:if="${row.status.name() == 'PENDING' or row.status.name() == 'READY'}"
+                          th:action="@{${basePath + '/' + row.reservationId + '/cancel'}}" method="post">
+                      <input type="hidden" name="tab" th:value="${view.currentTab}">
+                      <button type="submit" class="bn-btn bn-btn-danger bn-btn-sm">Cancel</button>
+                    </form>
+                    <span th:if="${row.status.name() != 'PENDING' and row.status.name() != 'READY'}"
+                          style="font-size: 12px; color: var(--bn-muted);"
+                          th:text="${row.notes ?: 'Archived'}">Archived</span>
+                  </div>
+                </td>
+              </tr>
+              <tr th:if="${view.rows.isEmpty()}">
+                <td colspan="7" style="text-align: center; padding: 36px; color: var(--bn-muted);">
+                  No reservations found in this view.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

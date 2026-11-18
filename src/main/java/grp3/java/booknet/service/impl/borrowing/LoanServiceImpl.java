@@ -12,6 +12,7 @@ import grp3.java.booknet.repository.book.BookCopyRepository;
 import grp3.java.booknet.repository.book_service.*;
 import grp3.java.booknet.repository.user.UserRepository;
 import grp3.java.booknet.service.borrowing.LoanService;
+import grp3.java.booknet.service.reservation.ReservationQueueService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -50,6 +51,7 @@ public class LoanServiceImpl implements LoanService {
     private final BookCopyRepository bookCopyRepository;
     private final FineRepository fineRepository;
     private final ReservationRepository reservationRepository;
+    private final ReservationQueueService reservationQueueService;
     private final UserRepository userRepository;
     private final grp3.java.booknet.service.member.MemberEligibilityService memberEligibility;
     private final java.time.Clock clock;
@@ -406,26 +408,13 @@ public class LoanServiceImpl implements LoanService {
         BookCopy copy = loanItem.getCopy();
         if (finalCondition == ReturnCondition.LOST) {
             copy.setStatus(CopyStatus.LOST);
+            bookCopyRepository.save(copy);
         } else if (finalCondition == ReturnCondition.DAMAGED) {
             copy.setStatus(CopyStatus.DAMAGED);
+            bookCopyRepository.save(copy);
         } else {
-            Long bookId = copy.getBook().getId();
-            Optional<Reservation> resvOpt = reservationRepository.findAll().stream()
-                    .filter(r -> r.getBook().getId().equals(bookId) && r.getStatus() == ReservationStatus.PENDING)
-                    .min(Comparator.comparing(Reservation::getReservedAt));
-            if (resvOpt.isPresent()) {
-                Reservation resv = resvOpt.get();
-                resv.setStatus(ReservationStatus.READY);
-                resv.setAssignedCopy(copy);
-                resv.setReadyAt(receiveTime);
-                resv.setPickupUntil(receiveTime.plusDays(2));
-                reservationRepository.save(resv);
-                copy.setStatus(CopyStatus.RESERVED);
-            } else {
-                copy.setStatus(CopyStatus.AVAILABLE);
-            }
+            reservationQueueService.assignCopyToNextPendingReservation(copy, receiveTime);
         }
-        bookCopyRepository.save(copy);
 
         if (overdueFine.compareTo(BigDecimal.ZERO) > 0) {
             Fine fine = Fine.builder()
@@ -509,9 +498,10 @@ public class LoanServiceImpl implements LoanService {
         }
 
         Long bookId = item.getCopy().getBook().getId();
-        boolean hasWaitingReservation = reservationRepository.findAll().stream()
-                .anyMatch(r -> r.getBook().getId().equals(bookId) && r.getStatus() == ReservationStatus.PENDING);
-        if (hasWaitingReservation) {
+        Long borrowerId = item.getLoan() != null && item.getLoan().getMember() != null
+                ? item.getLoan().getMember().getId()
+                : null;
+        if (reservationQueueService.hasWaitingQueueForRenewal(bookId, borrowerId)) {
             throw new LoanException("Cannot renew book: another reader is currently waiting in reservation queue.");
         }
 

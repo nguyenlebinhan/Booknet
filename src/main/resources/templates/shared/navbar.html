@@ -20,9 +20,8 @@
         <li><a th:href="@{/catalog}" href="/catalog" class="bn-nav-link" th:classappend="${activePage == 'catalog'} ? ' is-active' : ''">Explore books</a></li>
         <li><a th:href="@{/about}" href="/about" class="bn-nav-link" th:classappend="${activePage == 'about'} ? ' is-active' : ''">About the library</a></li>
         <li><a th:href="@{/contact}" href="/contact" class="bn-nav-link" th:classappend="${activePage == 'contact'} ? ' is-active' : ''">Contact</a></li>
-        <li><a th:href="@{/assistant}" href="/assistant" class="bn-nav-link" th:classappend="${activePage == 'assistant'} ? ' is-active' : ''">AI assistant</a></li>
-        <li sec:authorize="hasRole('MEMBER')"><a href="#" class="bn-nav-link">My books</a></li>
-        <li sec:authorize="hasRole('MEMBER')"><a href="#" class="bn-nav-link">Reservations</a></li>
+        <li sec:authorize="hasAnyRole('MEMBER', 'USER', 'ADMIN')"><a th:href="@{/member/my-books}" href="/member/my-books" class="bn-nav-link" th:classappend="${activePage == 'my-books'} ? ' is-active' : ''">My books</a></li>
+        <li sec:authorize="hasAnyRole('MEMBER', 'USER', 'ADMIN')"><a href="#" class="bn-nav-link">Reservations</a></li>
       </ul>
     </nav>
 

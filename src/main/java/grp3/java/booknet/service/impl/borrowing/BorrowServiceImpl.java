@@ -21,6 +21,7 @@ import grp3.java.booknet.repository.book_service.LoanRepository;
 import grp3.java.booknet.repository.book_service.ReservationRepository;
 import grp3.java.booknet.repository.user.UserRepository;
 import grp3.java.booknet.service.borrowing.BorrowService;
+import grp3.java.booknet.service.member.MemberEligibilityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -43,6 +44,8 @@ public class BorrowServiceImpl implements BorrowService {
 
     private static final Set<LoanStatus> ACTIVE_LOAN_STATUSES = Set.of(
             LoanStatus.BORROWING,
+            LoanStatus.RENEW_PENDING,
+            LoanStatus.RETURN_PENDING,
             LoanStatus.OVERDUE
     );
 
@@ -57,6 +60,7 @@ public class BorrowServiceImpl implements BorrowService {
     private final LoanRepository loanRepository;
     private final ReservationRepository reservationRepository;
     private final FineRepository fineRepository;
+    private final MemberEligibilityService memberEligibility;
 
     @Override
     @Transactional(readOnly = true)
@@ -210,7 +214,7 @@ public class BorrowServiceImpl implements BorrowService {
             throw new AccountException(HttpStatus.FORBIDDEN, "Access denied: Only registered members can borrow books.");
         }
 
-        if (!user.isEnabled() || !user.isEmailVerified() || user.getStatus() != UserStatus.ACTIVE) {
+        if (user.effectiveAuthorities().stream().noneMatch(a->a.getAuthority().equals("LOAN_REQUEST")) || !memberEligibility.isEligible(user.getId())) {
             throw new AccountException(HttpStatus.FORBIDDEN, "Your membership card is unverified, inactive or suspended.");
         }
 

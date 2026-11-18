@@ -2,6 +2,7 @@ package grp3.java.booknet.controller.account;
 
 import grp3.java.booknet.dto.user.response.UserRegisterDto;
 import grp3.java.booknet.service.account.UserService;
+import grp3.java.booknet.security.navigation.LoginDestination;
 import grp3.java.booknet.exception.account.AccountException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +37,7 @@ public class AuthController {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
-            return isAdministrator(auth) ? "redirect:/admin/dashboard" : "redirect:/";
+            return "redirect:" + LoginDestination.forAuthentication(auth);
         }
 
         if (error != null) {
@@ -62,18 +63,13 @@ public class AuthController {
     public String showRegisterPage(Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
-            return isAdministrator(auth) ? "redirect:/admin/dashboard" : "redirect:/";
+            return "redirect:" + LoginDestination.forAuthentication(auth);
         }
 
         if (!model.containsAttribute("user")) {
             model.addAttribute("user", new UserRegisterDto());
         }
         return "auth/register";
-    }
-
-    private static boolean isAdministrator(Authentication authentication) {
-        return authentication.getAuthorities().stream()
-                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 
     @PostMapping("/register")

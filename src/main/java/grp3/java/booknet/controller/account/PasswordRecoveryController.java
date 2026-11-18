@@ -93,6 +93,7 @@ public class PasswordRecoveryController {
     }
 
     private boolean populateResetToken(String token, Model model) {
+        model.addAttribute("invitation",accounts.isInvitation(token));
         try {
             accounts.validateResetToken(token);
             model.addAttribute("tokenValid", true);

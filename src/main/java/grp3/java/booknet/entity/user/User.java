@@ -80,6 +80,26 @@ public class User extends BaseEntity {
 
     private String address;
 
+    @jakarta.persistence.OneToOne(mappedBy = "user", cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true, fetch = jakarta.persistence.FetchType.LAZY)
+    private MemberCard memberCard;
+
+    @jakarta.persistence.ManyToOne(fetch=jakarta.persistence.FetchType.EAGER)
+    @jakarta.persistence.JoinColumn(name="assigned_role_id")
+    private RoleDefinition assignedRole;
+
+    public java.util.List<org.springframework.security.core.GrantedAuthority> effectiveAuthorities() {
+        if (assignedRole == null) return role.authorities();
+        var result=new java.util.ArrayList<org.springframework.security.core.GrantedAuthority>();
+        result.add(new org.springframework.security.core.authority.SimpleGrantedAuthority(assignedRole.getSystemRole()==null ? "ROLE_CUSTOM" : assignedRole.getSystemRole().authorityName()));
+        assignedRole.getCapabilities().stream().sorted().forEach(p -> result.add(new org.springframework.security.core.authority.SimpleGrantedAuthority(p.name())));
+        return java.util.List.copyOf(result);
+    }
+    public String roleLabel(){return assignedRole!=null ? assignedRole.getName() : switch(role){
+        case ROLE_USER -> "Member";
+        case ROLE_LIBRARIAN -> "Librarian";
+        case ROLE_ADMIN -> "Administrator";
+        case ROLE_GUEST -> "Guest";
+    };}
     public boolean hasPassword() {
         return password != null && !password.isBlank();
     }

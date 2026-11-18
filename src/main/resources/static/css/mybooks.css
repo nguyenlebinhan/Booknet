@@ -1,0 +1,629 @@
+/* ==========================================================================
+   My Books & Loan History Screen (Matching Figma Design System)
+   ========================================================================== */
+
+.mybooks-main {
+  padding: 40px 24px 80px;
+  background-color: var(--bn-paper);
+  min-height: calc(100vh - 80px);
+}
+
+.mybooks-container {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+/* Breadcrumb */
+.mybooks-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.btn-nav-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bn-surface);
+  border: 1px solid var(--bn-line);
+  color: var(--bn-ink);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.btn-nav-back:hover {
+  background: var(--bn-shelf);
+  border-color: var(--bn-muted);
+}
+
+.mybooks-breadcrumb-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--bn-muted);
+}
+
+.mybooks-breadcrumb a {
+  color: var(--bn-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.mybooks-breadcrumb a:hover {
+  color: var(--bn-forest);
+}
+
+.mybooks-breadcrumb .sep {
+  opacity: 0.6;
+}
+
+.mybooks-breadcrumb .current {
+  color: var(--bn-ink);
+  font-weight: 500;
+}
+
+/* Header */
+.mybooks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 32px;
+  gap: 20px;
+}
+
+.mybooks-kicker {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bn-ochre);
+  margin-bottom: 8px;
+}
+
+.mybooks-title {
+  font-family: var(--bn-font-serif);
+  font-size: 38px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--bn-ink);
+  margin-bottom: 8px;
+}
+
+.mybooks-meta {
+  font-size: 14px;
+  color: var(--bn-muted);
+}
+
+.btn-find-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--bn-surface);
+  color: var(--bn-ink);
+  border: 1px solid var(--bn-line);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-find-more:hover {
+  border-color: var(--bn-forest);
+  color: var(--bn-forest);
+}
+
+/* Stats Row */
+.mybooks-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-box {
+  background: var(--bn-surface);
+  border: 1px solid var(--bn-line);
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.stat-num {
+  font-family: var(--bn-font-serif);
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--bn-ink);
+  line-height: 1;
+}
+
+.stat-num.ochre {
+  color: var(--bn-ochre);
+}
+
+.stat-num.danger {
+  color: var(--bn-danger);
+}
+
+.stat-sub {
+  font-size: 13px;
+  color: var(--bn-muted);
+  line-height: 1.3;
+}
+
+/* Alert Banner (Overdue Notice) */
+.mybooks-alert-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fdf1ef;
+  border: 1px solid #f8c8c2;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 28px;
+}
+
+.mybooks-alert-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--bn-danger);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.mybooks-alert-content h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bn-danger);
+  margin-bottom: 4px;
+}
+
+.mybooks-alert-content p {
+  font-size: 13px;
+  color: var(--bn-ink);
+  line-height: 1.4;
+}
+
+/* Navigation Tabs */
+.mybooks-tabs {
+  display: flex;
+  gap: 32px;
+  border-bottom: 1px solid var(--bn-line);
+  margin-bottom: 24px;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 4px 16px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--bn-muted);
+  cursor: pointer;
+  position: relative;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.tab-btn:hover {
+  color: var(--bn-ink);
+}
+
+.tab-btn.is-active {
+  color: var(--bn-ink);
+  font-weight: 600;
+}
+
+.tab-btn.is-active::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--bn-ink);
+}
+
+/* Loans Table Card */
+.loans-table-card {
+  background: var(--bn-surface);
+  border: 1px solid var(--bn-line);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+
+.loans-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.loans-table th {
+  background: #fbf9f4;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bn-muted);
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--bn-line);
+}
+
+.loans-table td {
+  padding: 24px;
+  border-bottom: 1px solid var(--bn-shelf);
+  vertical-align: middle;
+}
+
+.loans-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Book column */
+.loan-book-cell {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+
+.loan-book-cover {
+  width: 54px;
+  height: 76px;
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: var(--bn-shelf);
+  flex-shrink: 0;
+}
+
+.loan-book-title {
+  font-family: var(--bn-font-serif);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--bn-ink);
+  margin-bottom: 4px;
+}
+
+.loan-book-author {
+  font-size: 13px;
+  color: var(--bn-muted);
+  margin-bottom: 4px;
+}
+
+.loan-book-code {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* Date cells */
+.loan-date-text {
+  font-size: 14px;
+  color: var(--bn-ink);
+}
+
+.loan-due-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.due-badge {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.due-badge.normal {
+  background: var(--bn-sage);
+  color: var(--bn-forest);
+}
+
+.due-badge.due-soon {
+  background: #fdf4e7;
+  color: #b45309;
+}
+
+.due-badge.overdue {
+  background: #fde8e7;
+  color: var(--bn-danger);
+}
+
+/* Actions Column */
+.loan-actions-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.loan-actions-btns {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-action-return {
+  background: var(--bn-forest);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-action-return:hover {
+  background: var(--bn-forest-hover);
+}
+
+.btn-action-renew {
+  background: var(--bn-surface);
+  color: var(--bn-ink);
+  border: 1px solid var(--bn-line);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-action-renew:hover:not(:disabled) {
+  border-color: var(--bn-forest);
+  color: var(--bn-forest);
+}
+
+.btn-action-renew:disabled,
+.btn-action-disabled {
+  background: var(--bn-shelf);
+  color: var(--bn-muted);
+  border: 1px solid var(--bn-line);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: not-allowed;
+}
+
+.loan-action-hint {
+  font-size: 12px;
+  color: var(--bn-muted);
+}
+
+/* Bottom Grid (Renewal & Recent History Cards) */
+.mybooks-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.bottom-card {
+  background: var(--bn-surface);
+  border: 1px solid var(--bn-line);
+  border-radius: 16px;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.bottom-card-title {
+  font-family: var(--bn-font-serif);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--bn-ink);
+  margin-bottom: 12px;
+}
+
+.bottom-card-desc {
+  font-size: 14px;
+  color: var(--bn-muted);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.bottom-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.btn-bottom-confirm {
+  background: transparent;
+  color: var(--bn-ink);
+  border: 1px solid var(--bn-line);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-bottom-confirm:hover {
+  background: var(--bn-sage);
+  border-color: var(--bn-forest);
+  color: var(--bn-forest);
+}
+
+.bottom-card-sub {
+  font-size: 12px;
+  color: var(--bn-muted);
+}
+
+/* Recent History List */
+.recent-history-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--bn-shelf);
+}
+
+.recent-history-row:last-child {
+  border-bottom: none;
+}
+
+.recent-history-left {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.recent-check-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--bn-forest);
+  flex-shrink: 0;
+}
+
+.recent-history-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bn-ink);
+  margin-bottom: 2px;
+}
+
+.recent-history-date {
+  font-size: 12px;
+  color: var(--bn-muted);
+}
+
+.recent-history-badge {
+  font-size: 12px;
+  color: var(--bn-forest);
+  background: var(--bn-sage);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.link-view-all {
+  display: inline-block;
+  margin-top: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bn-ink);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.link-view-all:hover {
+  color: var(--bn-forest);
+}
+
+/* Modal Receipt */
+.receipt-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.receipt-modal {
+  background: var(--bn-surface);
+  border-radius: 16px;
+  max-width: 520px;
+  width: 100%;
+  padding: 32px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.receipt-header {
+  border-bottom: 1px dashed var(--bn-line);
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.receipt-kicker {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bn-ochre);
+  font-weight: 600;
+}
+
+.receipt-title {
+  font-family: var(--bn-font-serif);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--bn-ink);
+  margin: 6px 0;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+.receipt-row-label {
+  color: var(--bn-muted);
+}
+
+.receipt-row-val {
+  font-weight: 500;
+  color: var(--bn-ink);
+}
+
+.receipt-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn-receipt-close {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid var(--bn-line);
+  background: transparent;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  color: var(--bn-ink);
+}
+
+.btn-receipt-print {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: var(--bn-forest);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .mybooks-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .mybooks-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -55,6 +55,16 @@ public class Loan extends BaseEntity {
     @Column(name = "returned_at")
     private LocalDateTime returnedAt;
 
+    @Column(name = "return_requested_at")
+    private LocalDateTime returnRequestedAt;
+
+    @Column(name = "renew_requested_at")
+    private LocalDateTime renewRequestedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "received_by")
+    private User receivedBy;
+
     @Column(name = "renew_count", nullable = false)
     @Builder.Default
     private int renewCount = 0;

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loans &amp; Returns Desk | booknet Librarian</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Serif:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/dashboard.css}">
+  <link rel="stylesheet" th:href="@{/css/librarian/circulation.css}">
+</head>
+<body class="admin-page">
+
+<div class="admin-shell">
+  <!-- Sidebar -->
+  <aside th:replace="~{admin/fragments/dashboard :: sidebar}"></aside>
+
+  <div class="admin-workspace">
+    <!-- Topbar -->
+    <header th:replace="~{member/fragments :: topbar(section='Circulation')}"></header>
+
+    <main class="admin-main">
+      
+      <!-- Page Header -->
+      <section class="bn-page-header">
+        <div>
+          <p class="bn-kicker">CIRCULATION DESK</p>
+          <h1 class="bn-page-title">Loans &amp; Returns Desk</h1>
+          <p class="bn-page-subtitle">Process online borrow requests, track active loans, execute counter extensions, and manage returns.</p>
+        </div>
+        <div class="bn-header-actions">
+          <a th:href="@{/staff/loans/receive-return}" class="bn-btn bn-btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="12" y1="18" x2="12" y2="12"></line>
+              <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+            Record loan / return
+          </a>
+        </div>
+      </section>
+
+      <!-- Alert messages -->
+      <div th:if="${successMessage}" class="bn-alert bn-alert-success">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        <span th:text="${successMessage}">Operation completed successfully.</span>
+      </div>
+
+      <div th:if="${errorMessage}" class="bn-alert bn-alert-danger">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span th:text="${errorMessage}">An error occurred.</span>
+      </div>
+
+      <!-- UC31: Circulation Desk Summary KPI Cards -->
+      <section class="bn-stats-grid" aria-label="Circulation summary">
+        <article class="bn-stat-card">
+          <span class="bn-stat-label">Pending tasks</span>
+          <strong class="bn-stat-value" th:text="${summary != null ? summary.totalPendingTasks : 0}">0</strong>
+          <span class="bn-stat-desc">Approval, handover &amp; return queues</span>
+        </article>
+
+        <article class="bn-stat-card">
+          <span class="bn-stat-label">Awaiting Handover</span>
+          <strong class="bn-stat-value" th:text="${summary != null ? summary.awaitingHandoverCount : 0}">0</strong>
+          <span class="bn-stat-desc">Approved, ready for patron pickup</span>
+        </article>
+
+        <article class="bn-stat-card">
+          <span class="bn-stat-label">Pending returns</span>
+          <strong class="bn-stat-value" th:text="${summary != null ? summary.pendingReturnsCount : 0}">0</strong>
+          <span class="bn-stat-desc">Books waiting for check-in at desk</span>
+        </article>
+
+        <article class="bn-stat-card" th:classappend="${summary != null and summary.overdueCount > 0 ? 'is-danger' : ''}">
+          <span class="bn-stat-label">Overdue loans</span>
+          <strong class="bn-stat-value" th:text="${summary != null ? summary.overdueCount : 0}">0</strong>
+          <span class="bn-stat-desc">Past due date, accumulating daily fines</span>
+        </article>
+      </section>
+
+      <!-- Tabs Navigation -->
+      <nav class="bn-tabs-wrap" aria-label="Desk Tabs">
+        <div class="bn-tabs">
+          <a th:href="@{/staff/loans(tab='pending_approval')}" 
+             class="bn-tab-item" 
+             th:classappend="${currentTab == 'pending_approval' or currentTab == null} ? 'is-active' : ''">
+            <span>Pending approval</span>
+            <span class="bn-tab-badge" th:text="${summary != null ? summary.pendingApprovalCount : 0}">0</span>
+          </a>
+
+          <a th:href="@{/staff/loans(tab='awaiting_handover')}" 
+             class="bn-tab-item" 
+             th:classappend="${currentTab == 'awaiting_handover'} ? 'is-active' : ''">
+            <span>Awaiting handover</span>
+            <span class="bn-tab-badge" th:text="${summary != null ? summary.awaitingHandoverCount : 0}">0</span>
+          </a>
+
+          <a th:href="@{/staff/loans(tab='active_loans')}" 
+             class="bn-tab-item" 
+             th:classappend="${currentTab == 'active_loans'} ? 'is-active' : ''">
+            <span>Active borrowings</span>
+            <span class="bn-tab-badge" th:text="${summary != null ? summary.activeBorrowingsCount : 0}">0</span>
+          </a>
+
+          <a th:href="@{/staff/loans(tab='pending_returns')}" 
+             class="bn-tab-item" 
+             th:classappend="${currentTab == 'pending_returns'} ? 'is-active' : ''">
+            <span>Pending returns</span>
+            <span class="bn-tab-badge" th:text="${summary != null ? summary.pendingReturnsCount : 0}">0</span>
+          </a>
+
+          <a th:href="@{/staff/loans(tab='history')}" 
+             class="bn-tab-item" 
+             th:classappend="${currentTab == 'history'} ? 'is-active' : ''">
+            <span>History</span>
+          </a>
+        </div>
+      </nav>
+
+      <!-- 1. TAB: PENDING APPROVAL (UC23, UC24) -->
+      <section th:if="${currentTab == 'pending_approval' or currentTab == null}" class="bn-panel">
+        <div class="bn-panel-header">
+          <h2 class="bn-panel-title">Pending Borrow Requests (UC23 &amp; UC24)</h2>
+          <span style="font-size: 13px; color: var(--bn-muted);">Review member requests before preparing books for desk pickup.</span>
+        </div>
+        <div class="bn-table-wrap">
+          <table class="bn-table">
+            <thead>
+              <tr>
+                <th>Request Code</th>
+                <th>Member / Card</th>
+                <th>Requested Books</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th style="text-align: right;">Desk Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="req : ${pendingRequests}">
+                <td style="font-weight: 600;" th:text="${req.requestCode}">BR-001</td>
+                <td>
+                  <div>
+                    <strong th:text="${req.memberName}">Nguyễn Văn A</strong>
+                    <div style="font-size: 11px; color: var(--bn-muted);" th:text="${req.memberEmail + ' · ' + (req.memberCode ?: 'No Card')}">user@example.com</div>
+                  </div>
+                </td>
+                <td>
+                  <ul style="padding-left: 18px; margin: 0; font-size: 12px;">
+                    <li th:each="title : ${req.bookTitles}" th:text="${title}">Clean Code</li>
+                  </ul>
+                </td>
+                <td th:text="${#temporals.format(req.requestDate, 'dd/MM/yyyy HH:mm')}">16/11/2026</td>
+                <td><span class="bn-badge bn-badge-warning" th:text="${req.status}">PENDING</span></td>
+                <td style="text-align: right;">
+                  <div style="display: inline-flex; gap: 8px;">
+                    <!-- UC23: Approve -->
+                    <form th:action="@{/staff/loans/requests/{id}/approve(id=${req.requestId})}" method="post">
+                      <button type="submit" class="bn-btn bn-btn-primary bn-btn-sm" title="Approve and mark ready for handover">Approve</button>
+                    </form>
+                    <!-- UC24: Reject -->
+                    <button type="button" class="bn-btn bn-btn-danger bn-btn-sm" 
+                            th:onclick="'document.getElementById(\'reject-form-' + ${req.requestId} + '\').style.display = \'inline-flex\'; this.style.display = \'none\';'">Reject</button>
+                    <form th:id="'reject-form-' + ${req.requestId}" th:action="@{/staff/loans/requests/{id}/reject(id=${req.requestId})}" method="post" style="display: none; gap: 4px;">
+                      <input type="text" name="reason" placeholder="Reason for rejection..." required style="padding: 4px 8px; font-size: 12px; border-radius: 4px; border: 1px solid var(--bn-line);">
+                      <button type="submit" class="bn-btn bn-btn-danger bn-btn-sm">Confirm</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              <tr th:if="${#lists.isEmpty(pendingRequests)}">
+                <td colspan="6" style="text-align: center; padding: 40px 20px; color: var(--bn-muted);">
+                  No pending borrow requests right now.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 2. TAB: AWAITING HANDOVER (UC25) -->
+      <section th:if="${currentTab == 'awaiting_handover'}" class="bn-panel">
+        <div class="bn-panel-header">
+          <h2 class="bn-panel-title">Approved Requests - Awaiting Desk Handover (UC25)</h2>
+          <span style="font-size: 13px; color: var(--bn-muted);">Patrons can present their card at the desk to complete check-out.</span>
+        </div>
+        <div class="bn-table-wrap">
+          <table class="bn-table">
+            <thead>
+              <tr>
+                <th>Request Code</th>
+                <th>Member / Card</th>
+                <th>Approved Books</th>
+                <th>Approved At</th>
+                <th style="text-align: right;">Handover Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="req : ${awaitingHandover}">
+                <td style="font-weight: 600;" th:text="${req.requestCode}">BR-002</td>
+                <td>
+                  <strong th:text="${req.memberName}">Lê Thị B</strong>
+                  <div style="font-size: 11px; color: var(--bn-muted);" th:text="${req.memberEmail + ' · ' + (req.memberCode ?: 'Card')}">member@booknet.local</div>
+                </td>
+                <td>
+                  <ul style="padding-left: 18px; margin: 0; font-size: 12px;">
+                    <li th:each="title : ${req.bookTitles}" th:text="${title}">Design Patterns</li>
+                  </ul>
+                </td>
+                <td th:text="${#temporals.format(req.requestDate, 'dd/MM/yyyy HH:mm')}">16/11/2026</td>
+                <td style="text-align: right;">
+                  <a th:href="@{/staff/loans/receive-return(keyword=${req.memberEmail},requestId=${req.requestId})}" class="bn-btn bn-btn-primary bn-btn-sm">
+                    Hand Over Books (Check-out) →
+                  </a>
+                </td>
+              </tr>
+              <tr th:if="${#lists.isEmpty(awaitingHandover)}">
+                <td colspan="5" style="text-align: center; padding: 40px 20px; color: var(--bn-muted);">
+                  No approved requests awaiting handover.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 3. TAB: ACTIVE BORROWINGS (UC28) -->
+      <section th:if="${currentTab == 'active_loans'}" class="bn-panel">
+        <div class="bn-panel-header">
+          <h2 class="bn-panel-title">Active Borrowings &amp; Desk Extension (UC28)</h2>
+          <span style="font-size: 13px; color: var(--bn-muted);">Extend eligible loans by 7 days or initiate return.</span>
+        </div>
+        <div class="bn-table-wrap">
+          <table class="bn-table">
+            <thead>
+              <tr>
+                <th>Loan Code</th>
+                <th>Member</th>
+                <th>Book &amp; Barcode</th>
+                <th>Due Date</th>
+                <th>Renewals</th>
+                <th>Status</th>
+                <th style="text-align: right;">Desk Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="item : ${activeLoans}">
+                <td style="font-weight: 600;" th:text="${item.loanCode}">LN-202611-01</td>
+                <td>
+                  <strong th:text="${item.memberName}">Trần C</strong>
+                  <div style="font-size: 11px; color: var(--bn-muted);" th:text="${item.memberEmail}">tran.c@example.com</div>
+                </td>
+                <td>
+                  <strong th:text="${item.bookTitle}">Effective Java</strong>
+                  <div style="font-size: 11px; color: var(--bn-muted);" th:text="'Barcode: ' + ${item.copyBarcode}">BC-001</div>
+                </td>
+                <td>
+                  <span th:text="${#temporals.format(item.dueDate, 'dd/MM/yyyy')}">30/11/2026</span>
+                  <span th:if="${item.overdue}" class="bn-badge bn-badge-danger" style="margin-left: 6px;" th:text="${item.daysOverdue + 'd late'}">Late</span>
+                </td>
+                <td th:text="${item.renewCount + ' / 1'}">0 / 1</td>
+                <td>
+                  <span class="bn-badge" th:classappend="${item.overdue ? 'bn-badge-danger' : 'bn-badge-success'}" th:text="${item.status}">BORROWING</span>
+                </td>
+                <td style="text-align: right;">
+                  <div style="display: inline-flex; gap: 8px;">
+                    <!-- UC28: Extend 7 days -->
+                    <form th:if="${!item.overdue and item.renewCount < 1}" th:action="@{/staff/loans/renew/{id}(id=${item.loanItemId})}" method="post">
+                      <button type="submit" class="bn-btn bn-btn-secondary bn-btn-sm" title="Extend loan by 7 days">Extend (+7d)</button>
+                    </form>
+                    <a th:href="@{/staff/loans/receive-return(barcode=${item.copyBarcode})}" class="bn-btn bn-btn-primary bn-btn-sm">Return</a>
+                  </div>
+                </td>
+              </tr>
+              <tr th:if="${#lists.isEmpty(activeLoans)}">
+                <td colspan="7" style="text-align: center; padding: 40px 20px; color: var(--bn-muted);">
+                  No active loans recorded.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 4. TAB: PENDING RETURNS (UC26) -->
+      <section th:if="${currentTab == 'pending_returns'}" class="bn-panel">
+        <div class="bn-panel-header">
+          <h2 class="bn-panel-title">Pending Return Requests (UC26)</h2>
+          <span style="font-size: 13px; color: var(--bn-muted);">Patrons requested return via website. Inspect physical copy to complete check-in.</span>
+        </div>
+        <div class="bn-table-wrap">
+          <table class="bn-table">
+            <thead>
+              <tr>
+                <th>Loan Code</th>
+                <th>Member</th>
+                <th>Book &amp; Barcode</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th style="text-align: right;">Desk Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="item : ${pendingReturns}">
+                <td style="font-weight: 600;" th:text="${item.loanCode}">LN-202611-03</td>
+                <td>
+                  <strong th:text="${item.memberName}">Hoàng D</strong>
+                  <div style="font-size: 11px; color: var(--bn-muted);" th:text="${item.memberEmail}">user@example.com</div>
+                </td>
+                <td>
+                  <strong th:text="${item.bookTitle}">Refactoring</strong>
+                  <div style="font-size: 11px; color: var(--bn-muted);" th:text="'Barcode: ' + ${item.copyBarcode}">BC-002</div>
+                </td>
+                <td th:text="${#temporals.format(item.dueDate, 'dd/MM/yyyy')}">25/11/2026</td>
+                <td><span class="bn-badge bn-badge-warning" th:text="${item.status}">RETURN_REQUESTED</span></td>
+                <td style="text-align: right;">
+                  <a th:href="@{/staff/loans/receive-return(barcode=${item.copyBarcode})}" class="bn-btn bn-btn-primary bn-btn-sm">
+                    Receive at Desk (Check-in) →
+                  </a>
+                </td>
+              </tr>
+              <tr th:if="${#lists.isEmpty(pendingReturns)}">
+                <td colspan="6" style="text-align: center; padding: 40px 20px; color: var(--bn-muted);">
+                  No pending return requests.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 5. TAB: HISTORY -->
+      <section th:if="${currentTab == 'history'}" class="bn-panel">
+        <div class="bn-panel-header">
+          <h2 class="bn-panel-title">Circulation History</h2>
+          <span style="font-size: 13px; color: var(--bn-muted);">Archived returned, damaged, and lost book items.</span>
+        </div>
+        <div class="bn-table-wrap">
+          <table class="bn-table">
+            <thead>
+              <tr>
+                <th>Loan Code</th>
+                <th>Member</th>
+                <th>Book Title</th>
+                <th>Returned Date</th>
+                <th>Condition</th>
+                <th>Fine Paid</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="item : ${loanHistory}">
+                <td style="font-weight: 600;" th:text="${item.loanCode}">LN-202611-09</td>
+                <td th:text="${item.memberName}">Nguyễn Văn A</td>
+                <td th:text="${item.bookTitle}">Clean Architecture</td>
+                <td th:text="${item.returnedAt != null ? #temporals.format(item.returnedAt, 'dd/MM/yyyy HH:mm') : '—'}">—</td>
+                <td>
+                  <span class="bn-badge" 
+                        th:classappend="${item.returnCondition == 'GOOD' ? 'bn-badge-success' : 'bn-badge-danger'}" 
+                        th:text="${item.returnCondition ?: 'GOOD'}">GOOD</span>
+                </td>
+                <td th:text="${item.fineAmount != null ? item.fineAmount + ' VNĐ' : '0 VNĐ'}">0 VNĐ</td>
+                <td><span class="bn-badge bn-badge-neutral" th:text="${item.status}">RETURNED</span></td>
+              </tr>
+              <tr th:if="${#lists.isEmpty(loanHistory)}">
+                <td colspan="7" style="text-align: center; padding: 40px 20px; color: var(--bn-muted);">
+                  No circulation history yet.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

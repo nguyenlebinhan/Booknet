@@ -37,7 +37,7 @@ class AdminBookControllerFeature2Tests {
 
     @Test
     @DisplayName("Admin can display Add Book form")
-    @WithMockUser(username = "admin@booknet.vn", roles = {"ADMIN"})
+    @WithMockUser(username = "admin@booknet.vn", authorities = {"ROLE_ADMIN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void adminCanDisplayAddBookForm() throws Exception {
         mockMvc.perform(get("/admin/books/create"))
                 .andExpect(status().isOk())
@@ -57,7 +57,7 @@ class AdminBookControllerFeature2Tests {
 
     @Test
     @DisplayName("Librarian can display the add book form")
-    @WithMockUser(username = "librarian@booknet.vn", roles = {"LIBRARIAN"})
+    @WithMockUser(username = "librarian@booknet.vn", authorities = {"ROLE_LIBRARIAN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void librarianCanDisplayAddBookForm() throws Exception {
         mockMvc.perform(get("/admin/books/create"))
                 .andExpect(status().isOk())
@@ -71,7 +71,7 @@ class AdminBookControllerFeature2Tests {
 
     @Test
     @DisplayName("Admin can submit valid book creation form and be redirected with flash message")
-    @WithMockUser(username = "admin@booknet.vn", roles = {"ADMIN"})
+    @WithMockUser(username = "admin@booknet.vn", authorities = {"ROLE_ADMIN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void adminCanSubmitValidBookForm() throws Exception {
         when(bookService.createBook(any(BookCreateForm.class))).thenReturn(100L);
 
@@ -92,7 +92,7 @@ class AdminBookControllerFeature2Tests {
 
     @Test
     @DisplayName("Validation fails when required fields are missing and returns form view with errors")
-    @WithMockUser(username = "admin@booknet.vn", roles = {"ADMIN"})
+    @WithMockUser(username = "admin@booknet.vn", authorities = {"ROLE_ADMIN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void validationErrorsPreserveFormView() throws Exception {
         mockMvc.perform(post("/admin/books/create")
                         .with(csrf())
@@ -107,7 +107,7 @@ class AdminBookControllerFeature2Tests {
 
     @Test
     @DisplayName("Business duplicate error is captured and displayed in globalError attribute")
-    @WithMockUser(username = "admin@booknet.vn", roles = {"ADMIN"})
+    @WithMockUser(username = "admin@booknet.vn", authorities = {"ROLE_ADMIN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void duplicateCodeCapturedAsGlobalError() throws Exception {
         when(bookService.createBook(any(BookCreateForm.class)))
                 .thenThrow(new IllegalArgumentException("Book code 'BK-ARCH-01' is already in use"));

@@ -4,6 +4,7 @@
 <th:block th:fragment="navigation">
   <th:block sec:authorize="hasAnyRole('ADMIN', 'LIBRARIAN')">
     <aside th:replace="~{admin/fragments/dashboard :: sidebar}"></aside>
+    <header th:replace="~{member/fragments :: topbar}"></header>
   </th:block>
   <th:block sec:authorize="!hasAnyRole('ADMIN', 'LIBRARIAN')">
     <header th:replace="~{shared/navbar :: navbar}"></header>

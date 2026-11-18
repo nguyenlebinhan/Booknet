@@ -24,7 +24,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Slf4j
 @Controller
 @RequestMapping("/admin/books/{bookId}/copies")
-@PreAuthorize("hasAnyRole('LIBRARIAN', 'ADMIN')")
+@PreAuthorize("hasAuthority('COPY_MANAGE')")
 @RequiredArgsConstructor
 public class AdminBookCopyController {
 

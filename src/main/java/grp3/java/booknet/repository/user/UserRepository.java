@@ -14,7 +14,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<User> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from User u where u.role = grp3.java.booknet.enums.user.UserRole.ROLE_ADMIN order by u.id")
+    java.util.List<User> lockAdministrators();
 
     long countByRole(UserRole role);
 
@@ -23,7 +27,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
         where (:admin = true or u.role = grp3.java.booknet.enums.user.UserRole.ROLE_USER)
           and (lower(u.fullName) like lower(concat('%', :keyword, '%'))
             or lower(u.email) like lower(concat('%', :keyword, '%'))
-            or lower(u.memberCode) like lower(concat('%', :keyword, '%')))
+            or lower(u.memberCode) like lower(concat('%', :keyword, '%'))
+            or lower(u.phone) like lower(concat('%', :keyword, '%')))
         """)
     Page<User> searchDirectory(@Param("admin") boolean admin, @Param("keyword") String keyword, Pageable pageable);
 
@@ -42,4 +47,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     Optional<User> findByMemberCode(String memberCode);
+
+    @Query("select u.id from User u where u.memberCode = :memberCode")
+    Optional<Long> findIdByMemberCode(@Param("memberCode") String memberCode);
 }

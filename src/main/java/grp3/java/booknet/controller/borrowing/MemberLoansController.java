@@ -46,7 +46,7 @@ public class MemberLoansController {
             }
         }
 
-        return "my-books";
+        return "borrowing/my-books";
     }
 
     @PostMapping("/loans/{id}/return")
@@ -112,7 +112,7 @@ public class MemberLoansController {
             model.addAttribute("detail", detail);
             model.addAttribute("isLibrarian", isLibrarian);
             model.addAttribute("activePage", "my-books");
-            return "return-detail";
+            return "borrowing/return-detail";
         } catch (AccountException e) {
             log.warn("Cannot load return detail for loan {}: {}", loanId, e.getMessage());
             return "redirect:/member/my-books";

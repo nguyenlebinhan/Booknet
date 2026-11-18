@@ -5,6 +5,7 @@ import grp3.java.booknet.entity.book.Book;
 import grp3.java.booknet.entity.book.BookCopy;
 import grp3.java.booknet.entity.book_service.Reservation;
 import grp3.java.booknet.entity.user.User;
+import grp3.java.booknet.entity.user.MemberCard;
 import grp3.java.booknet.enums.book.CopyStatus;
 import grp3.java.booknet.enums.book_service.ReservationStatus;
 import grp3.java.booknet.enums.user.AuthProvider;
@@ -15,6 +16,8 @@ import grp3.java.booknet.repository.book.BookCopyRepository;
 import grp3.java.booknet.repository.book.BookRepository;
 import grp3.java.booknet.repository.book_service.ReservationRepository;
 import grp3.java.booknet.repository.user.UserRepository;
+import grp3.java.booknet.repository.user.MemberCardRepository;
+import grp3.java.booknet.service.member.MemberEligibilityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,6 +51,12 @@ class BorrowFlowTests {
     private UserRepository userRepository;
 
     @Autowired
+    private MemberCardRepository memberCardRepository;
+
+    @Autowired
+    private MemberEligibilityService memberEligibility;
+
+    @Autowired
     private BookRepository bookRepository;
 
     @Autowired
@@ -62,7 +71,7 @@ class BorrowFlowTests {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    private static final String TEST_PASSWORD = TestPasswords.valid();
+    private static final String TEST_PASSWORD = "Aa1BorrowFlowTestPassword";
 
     private User member;
     private Book sampleBook;
@@ -70,6 +79,7 @@ class BorrowFlowTests {
     @BeforeEach
     void setUp() {
         reservationRepository.deleteAll();
+        memberCardRepository.deleteAll();
         bookCopyRepository.deleteAll();
         bookRepository.deleteAll();
         authorRepository.deleteAll();
@@ -87,6 +97,12 @@ class BorrowFlowTests {
                 .emailVerified(true)
                 .status(UserStatus.ACTIVE)
                 .build());
+        MemberCard card = new MemberCard();
+        card.setUser(member);
+        card.setCardNumber("BN-TEST-" + member.getId());
+        card.setIssuedOn(java.time.LocalDate.now().minusDays(1));
+        card.setExpiresOn(java.time.LocalDate.now().plusYears(1));
+        memberCardRepository.saveAndFlush(card);
 
         Author author = authorRepository.saveAndFlush(Author.builder()
                 .name("Nguyễn Nhật Ánh")
@@ -104,6 +120,17 @@ class BorrowFlowTests {
                 .shelfLocation("Circulation desk · Floor 1")
                 .status(CopyStatus.AVAILABLE)
                 .build());
+    }
+
+    @Test
+    @DisplayName("Member eligibility requires verified active account and unexpired active library card")
+    void memberEligibilityChecksAccountAndCardStatus() {
+        assertThat(memberEligibility.isEligible(member.getId())).isTrue();
+        assertThat(memberEligibility.isEligibleByMemberCode("TV-02481")).isTrue();
+        var card = memberCardRepository.findByUserId(member.getId()).orElseThrow();
+        card.setExpiresOn(java.time.LocalDate.now().minusDays(1));
+        memberCardRepository.saveAndFlush(card);
+        assertThat(memberEligibility.isEligible(member.getId())).isFalse();
     }
 
     @Test
@@ -175,7 +202,7 @@ class BorrowFlowTests {
                         .param("email", "minhanh@booknet.test")
                         .param("password", TEST_PASSWORD))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/"))
+                .andExpect(redirectedUrl("/account/profile"))
                 .andReturn().getRequest().getSession();
     }
 }

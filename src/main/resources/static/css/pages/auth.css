@@ -237,28 +237,6 @@ body.auth-page {
   color: var(--bn-danger);
 }
 
-.auth-tabs {
-  display: flex;
-  gap: 32px;
-  border-bottom: 1px solid var(--bn-line);
-}
-
-.auth-tab {
-  padding: 8px 0 14px;
-  background: none;
-  border: 0;
-  border-bottom: 3px solid transparent;
-  color: var(--bn-muted);
-  cursor: pointer;
-  font: 400 14px var(--bn-font-sans);
-}
-
-.auth-tab.active {
-  border-bottom-color: var(--bn-forest);
-  color: var(--bn-forest);
-  font-weight: 600;
-}
-
 /* Fields */
 .auth-form {
   display: flex;

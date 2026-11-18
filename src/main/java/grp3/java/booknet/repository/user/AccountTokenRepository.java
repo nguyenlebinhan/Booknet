@@ -26,4 +26,7 @@ public interface AccountTokenRepository extends JpaRepository<AccountToken, Long
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<AccountToken> findFirstByUser_IdAndPurposeOrderByIssuedAtDesc(Long userId, AccountTokenPurpose purpose);
+
+    @org.springframework.data.jpa.repository.Query("select t.purpose from AccountToken t where t.tokenHash = :hash")
+    java.util.Optional<grp3.java.booknet.enums.user.AccountTokenPurpose> findPurposeByHash(@org.springframework.data.repository.query.Param("hash") String hash);
 }

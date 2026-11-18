@@ -187,7 +187,7 @@ class AccountFlowTests {
         MockHttpSession previous = login(user.getEmail(), INITIAL_PASSWORD);
         var remembered = mvc.perform(post("/login").with(csrf()).param("email", user.getEmail())
                 .param("password", INITIAL_PASSWORD).param("remember-me", "on"))
-                .andExpect(redirectedUrl("/")).andReturn().getResponse().getCookie("remember-me");
+                .andExpect(redirectedUrl("/account/profile")).andReturn().getResponse().getCookie("remember-me");
         CustomOAuth2User googlePrincipal = new CustomOAuth2User(google("google-sub", "google@example.com", true), user);
         requestEmail("/forgot-password", user.getEmail());
         String token = deliveredToken();
@@ -426,7 +426,7 @@ class AccountFlowTests {
     void linkRequiresPasswordLoginRatherThanRememberMe() throws Exception {
         User user = localUser("reader@example.com", true);
         var remembered = new RememberMeAuthenticationToken("test-key", new CustomUserDetails(user),
-                List.of(new SimpleGrantedAuthority("ROLE_MEMBER")));
+                user.effectiveAuthorities());
         mvc.perform(post("/account/link/google").with(authentication(remembered)).with(csrf()))
                 .andExpect(redirectedUrl("/")).andExpect(flash().attributeExists("googleLinkError"));
         beginLink(user);
@@ -447,7 +447,7 @@ class AccountFlowTests {
         var principal = service.loadUser(new OidcUserRequest(clients.findByRegistrationId("google"), accessToken, idToken));
         assertThat(principal).isInstanceOf(CustomOidcUser.class);
         assertThat(principal.getIdToken()).isSameAs(idToken);
-        assertThat(principal.getAuthorities()).extracting("authority").containsExactly("ROLE_MEMBER");
+        assertThat(principal.getAuthorities()).extracting("authority").containsExactlyInAnyOrder("ROLE_MEMBER","PROFILE_UPDATE","LOAN_REQUEST","RESERVE","RENEW");
         assertThat(users.findByEmail("oidc@example.com")).isPresent();
         localUser("local@example.com", true);
         var localToken = new OidcIdToken("local-id-token", now, now.plusSeconds(300),
@@ -464,7 +464,7 @@ class AccountFlowTests {
 
     private MockHttpSession login(String email, String password) throws Exception {
         return (MockHttpSession) mvc.perform(post("/login").with(csrf()).param("email", email).param("password", password))
-                .andExpect(redirectedUrl("/")).andReturn().getRequest().getSession(false);
+                .andExpect(redirectedUrl("/account/profile")).andReturn().getRequest().getSession(false);
     }
 
     private String requestEmail(String path, String email) throws Exception {

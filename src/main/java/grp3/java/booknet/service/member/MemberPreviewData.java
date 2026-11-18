@@ -23,7 +23,7 @@ final class MemberPreviewData {
     private static Person person(long id, String name, String email, String phone, String status,
                                  String issued, String expires, long loans, long overdue, String fine) {
         return new Person(id, name, email, phone, "Hà Nội, Việt Nam", "Member", "ACTIVE", true,
-                null, "TV-0" + id, status, issued, expires, loans, overdue, fine);
+                null, "TV-0" + id, status, issued, expires, loans, overdue, fine, 0);
     }
 
     static List<Loan> loans(Long id) {

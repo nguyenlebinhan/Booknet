@@ -28,10 +28,12 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h3.5a3 3 0 0 1 3 3V20a3 3 0 0 0-3-3H5z"/><path d="M19 4.5h-3.5a3 3 0 0 0-3 3V20a3 3 0 0 1 3-3H19z"/></svg>
         <span>Book catalog</span>
       </a>
-      <span class="admin-nav-disabled" aria-disabled="true" title="Staff loan tools are not available yet">
+      <a class="admin-nav-link" th:href="@{/staff/loans}"
+         th:classappend="${activePage == 'loans'} ? ' is-current'"
+         th:attr="aria-current=${activePage == 'loans' ? 'page' : null}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h13l-4-4M20 7l-4 4M17 17H4l4 4M4 17l4-4"/></svg>
         <span>Loans &amp; returns</span>
-      </span>
+      </a>
       <a class="admin-nav-link" sec:authorize="hasRole('LIBRARIAN')" th:href="@{/staff/members}"
          th:classappend="${activePage == 'members'} ? ' is-current'"
          th:attr="aria-current=${activePage == 'members' ? 'page' : null}">
@@ -46,7 +48,7 @@
       </a>
       <span class="admin-nav-disabled" aria-disabled="true" title="Reservation management is not available yet">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h12v17l-6-4-6 4z"/></svg>
-        <span>Reservations</span>
+        <span>Reservation management</span>
       </span>
       <span class="admin-nav-disabled" aria-disabled="true" title="Reports are not available yet">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h17M8 15l4-4 3 2 5-7"/></svg>
@@ -54,7 +56,7 @@
       </span>
     </section>
 
-    <section class="admin-nav-group" aria-labelledby="administration-nav">
+    <section class="admin-nav-group" aria-labelledby="administration-nav" sec:authorize="hasRole('ADMIN')">
       <h2 id="administration-nav">ADMINISTRATION</h2>
       <a class="admin-nav-link" sec:authorize="hasRole('ADMIN')" th:href="@{/admin/users}"
          th:classappend="${activePage == 'users'} ? ' is-current'"
@@ -80,7 +82,7 @@
       </span>
     </section>
 
-    <section class="admin-nav-group" aria-labelledby="system-nav">
+    <section class="admin-nav-group" aria-labelledby="system-nav" sec:authorize="hasRole('ADMIN')">
       <h2 id="system-nav">SYSTEM</h2>
       <span class="admin-nav-disabled" aria-disabled="true" title="Library settings are not available yet">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/></svg>
@@ -93,7 +95,7 @@
     <strong th:text="${adminName != null ? adminName : 'Staff account'}">Staff account</strong>
     <span sec:authorize="hasRole('ADMIN')">Administrator</span>
     <span sec:authorize="hasRole('LIBRARIAN')">Librarian</span>
-    <div><a th:href="@{/contact}">Help center</a><form th:action="@{/logout}" method="post"><button type="submit">Sign out</button></form></div>
+    <div><a th:href="@{/account/profile}">My profile</a><a th:href="@{/contact}">Help center</a><form th:action="@{/logout}" method="post"><button type="submit">Sign out</button></form></div>
   </div>
 </aside>
 </body>

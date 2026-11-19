@@ -130,7 +130,7 @@
       <!-- 1. TAB: PENDING APPROVAL (UC23, UC24) -->
       <section th:if="${currentTab == 'pending_approval' or currentTab == null}" class="bn-panel">
         <div class="bn-panel-header">
-          <h2 class="bn-panel-title">Pending Borrow Requests (UC23 &amp; UC24)</h2>
+          <h2 class="bn-panel-title">Pending Borrow Requests</h2>
           <span style="font-size: 13px; color: var(--bn-muted);">Review member requests before preparing books for desk pickup.</span>
         </div>
         <div class="bn-table-wrap">
@@ -190,7 +190,7 @@
       <!-- 2. TAB: AWAITING HANDOVER (UC25) -->
       <section th:if="${currentTab == 'awaiting_handover'}" class="bn-panel">
         <div class="bn-panel-header">
-          <h2 class="bn-panel-title">Approved Requests - Awaiting Desk Handover (UC25)</h2>
+          <h2 class="bn-panel-title">Approved Requests - Awaiting Desk Handover</h2>
           <span style="font-size: 13px; color: var(--bn-muted);">Patrons can present their card at the desk to complete check-out.</span>
         </div>
         <div class="bn-table-wrap">
@@ -236,7 +236,7 @@
       <!-- 3. TAB: ACTIVE BORROWINGS (UC28) -->
       <section th:if="${currentTab == 'active_loans'}" class="bn-panel">
         <div class="bn-panel-header">
-          <h2 class="bn-panel-title">Active Borrowings &amp; Desk Extension (UC28)</h2>
+          <h2 class="bn-panel-title">Active Borrowings &amp; Desk Extension </h2>
           <span style="font-size: 13px; color: var(--bn-muted);">Extend eligible loans by 7 days or initiate return.</span>
         </div>
         <div class="bn-table-wrap">
@@ -294,7 +294,7 @@
       <!-- 4. TAB: PENDING RETURNS (UC26) -->
       <section th:if="${currentTab == 'pending_returns'}" class="bn-panel">
         <div class="bn-panel-header">
-          <h2 class="bn-panel-title">Pending Return Requests (UC26)</h2>
+          <h2 class="bn-panel-title">Pending Return Requests </h2>
           <span style="font-size: 13px; color: var(--bn-muted);">Patrons requested return via website. Inspect physical copy to complete check-in.</span>
         </div>
         <div class="bn-table-wrap">

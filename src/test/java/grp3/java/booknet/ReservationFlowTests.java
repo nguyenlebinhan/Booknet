@@ -32,7 +32,7 @@ import grp3.java.booknet.repository.notification.NotificationPreferenceRepositor
 import grp3.java.booknet.repository.notification.NotificationRepository;
 import grp3.java.booknet.repository.user.UserRepository;
 import grp3.java.booknet.security.dto.CustomUserDetails;
-import grp3.java.booknet.service.MemberLoanService;
+import grp3.java.booknet.service.borrowing.MemberLoanService;
 import grp3.java.booknet.service.borrowing.LoanService;
 import grp3.java.booknet.service.reservation.ReservationQueueService;
 import grp3.java.booknet.service.reservation.ReservationService;

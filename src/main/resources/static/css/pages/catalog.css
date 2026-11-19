@@ -538,6 +538,32 @@
   text-decoration: none;
 }
 
+.book-reserve-action {
+  margin-top: 6px;
+}
+
+.book-reserve-form {
+  display: inline;
+}
+
+.book-reserve-btn {
+  padding: 5px 11px;
+  border: 1px solid var(--bn-forest);
+  border-radius: 6px;
+  background: var(--bn-surface);
+  color: var(--bn-forest);
+  font-family: var(--bn-font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.book-reserve-btn:hover {
+  background: var(--bn-forest);
+  color: #fff;
+}
+
 .catalog-empty {
   padding: 62px 20px;
   border: 1px dashed var(--bn-line);

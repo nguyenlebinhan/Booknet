@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Author directory | booknet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/book-management.css}">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+</head>
+<body>
+  <th:block th:replace="~{shared/navigation :: navigation}"></th:block>
+  <main class="book-management-page author-directory-page">
+    <nav class="book-breadcrumb" aria-label="Breadcrumb">
+      <a th:href="@{/catalog}">Book catalog</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">Authors</span>
+    </nav>
+
+    <header class="author-directory-hero">
+      <div class="author-directory-copy">
+        <p class="author-directory-kicker">BOOKNET LIBRARY / PEOPLE</p>
+        <h1>Authors</h1>
+        <p>Discover the writers behind the books in our collection.</p>
+      </div>
+      <div class="author-directory-total">
+        <strong th:text="${authorsPage.totalElements}">0</strong>
+        <span th:text="${'authors starting with ' + selectedLetter}">authors starting with A</span>
+      </div>
+      <a class="button button-primary author-add-button" th:href="@{/admin/authors/create}">
+        <span aria-hidden="true">+</span>
+        <span>Add author</span>
+      </a>
+    </header>
+
+    <div class="notice notice-success" role="status" th:if="${successMessage}" th:text="${successMessage}"></div>
+    <section class="author-directory" aria-label="Author directory">
+      <form class="author-directory-toolbar author-list-toolbar" th:action="@{/admin/authors}" method="get">
+        <input type="hidden" name="letter" th:value="${selectedLetter}">
+        <div class="author-search-control">
+          <label for="authorQuery">Search authors</label>
+          <div class="author-search-input">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+            <input id="authorQuery" type="search" name="query" maxlength="150" th:value="${query}"
+                   placeholder="Search by author name">
+          </div>
+        </div>
+        <button class="button button-secondary author-search-button" type="submit">Search</button>
+      </form>
+
+      <nav class="author-letter-nav" aria-label="Browse authors by initial">
+        <span>Browse by initial</span>
+        <a th:each="letter : ${letters}"
+           th:href="@{/admin/authors(letter=${letter},query=${query})}"
+           th:text="${letter}"
+           th:classappend="${letter == selectedLetter} ? ' is-selected'"
+           th:attr="aria-label=${'Show authors beginning with ' + letter},
+                    aria-current=${letter == selectedLetter ? 'page' : null}">A</a>
+      </nav>
+
+      <div class="author-directory-results" th:if="${!authorsPage.isEmpty()}">
+        <section class="author-letter-group">
+          <header class="author-letter-heading">
+            <h2 th:text="${selectedLetter}">A</h2>
+            <span th:text="${authorsPage.totalElements + (authorsPage.totalElements == 1 ? ' author' : ' authors')}">8 authors</span>
+          </header>
+          <div class="author-card-grid">
+            <article class="author-directory-card" th:each="author : ${authorsPage.content}">
+              <button class="author-directory-avatar author-photo-trigger"
+                      th:if="${author.url != null and !#strings.isEmpty(author.url)}"
+                      th:classappend="| author-avatar-tone-${author.id % 4}|"
+                      type="button"
+                      th:attr="data-author-photo-src=${author.url},
+                               data-author-photo-alt=${'Portrait of ' + author.name},
+                               aria-label=${'View full-size photo of ' + author.name}">
+                <img th:src="${author.url}" alt="">
+              </button>
+              <div class="author-directory-avatar"
+                   th:unless="${author.url != null and !#strings.isEmpty(author.url)}"
+                   aria-hidden="true"
+                   th:classappend="| author-avatar-tone-${author.id % 4}|">
+                <span th:text="${#strings.isEmpty(author.name) ? '?' : #strings.toUpperCase(#strings.substring(author.name, 0, 1))}">A</span>
+              </div>
+              <h3><a th:href="@{/admin/authors/{id}(id=${author.id})}"
+                     th:text="${author.name}">Author name</a></h3>
+              <p th:if="${author.bio != null and !#strings.isEmpty(author.bio)}"
+                 th:text="${author.bio}">Author biography</p>
+              <p class="author-directory-no-bio"
+                 th:if="${author.bio == null or #strings.isEmpty(author.bio)}">Biography not provided</p>
+            </article>
+          </div>
+        </section>
+      </div>
+      <div class="author-directory-empty" th:if="${authorsPage.isEmpty()}">
+        <span class="author-empty-mark" aria-hidden="true" th:text="${selectedLetter}">A</span>
+        <h2 th:text="${query.isEmpty() ? 'No authors beginning with ' + selectedLetter : 'No authors match your search'}">
+          No authors found
+        </h2>
+        <p>Choose another initial or adjust your search.</p>
+        <a class="button button-secondary" th:if="${!query.isEmpty()}"
+           th:href="@{/admin/authors(letter=${selectedLetter})}">Clear search</a>
+      </div>
+
+      <div class="author-directory-footer" th:if="${authorsPage.totalElements > 0}">
+        <span th:text="${'Showing ' + (authorsPage.number * authorsPage.size + 1) + '-' + (authorsPage.number * authorsPage.size + authorsPage.numberOfElements) + ' of ' + authorsPage.totalElements + ' authors'}">Showing 1-20 of 20 authors</span>
+        <nav class="author-directory-pagination" th:if="${authorsPage.totalPages > 1}" aria-label="Author pages">
+          <a th:if="${authorsPage.hasPrevious()}"
+             th:href="@{/admin/authors(page=${authorsPage.number - 1},query=${query},letter=${selectedLetter})}">Previous</a>
+          <span th:text="${'Page ' + (authorsPage.number + 1) + ' of ' + authorsPage.totalPages}" aria-current="page">Page 1 of 2</span>
+          <a th:if="${authorsPage.hasNext()}"
+             th:href="@{/admin/authors(page=${authorsPage.number + 1},query=${query},letter=${selectedLetter})}">Next</a>
+        </nav>
+      </div>
+    </section>
+  </main>
+  <th:block th:replace="~{admin/authors/fragments/photo-dialog :: authorPhotoDialog}"></th:block>
+  <script th:src="@{/js/author-photo-lightbox.js}" defer></script>
+</body>
+</html>

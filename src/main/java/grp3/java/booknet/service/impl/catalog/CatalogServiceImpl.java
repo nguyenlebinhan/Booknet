@@ -22,8 +22,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,7 +42,8 @@ public class CatalogServiceImpl implements CatalogService {
     @Override
     @Transactional(readOnly = true)
     public Page<CatalogBookView> search(CatalogFilter filter, Pageable pageable, boolean includeUnpublished) {
-        Specification<Book> specification = CatalogSpecifications.withFilter(filter, includeUnpublished);
+        Specification<Book> specification = CatalogSpecifications.withFilter(
+                filter, includeUnpublished, categoryIdsWithDescendants(filter));
         Page<Book> books = filter != null && POPULAR.equals(filter.getSort())
                 ? mostBorrowedFirst(specification, pageable)
                 : bookRepository.findAll(specification, pageable);
@@ -58,6 +61,23 @@ public class CatalogServiceImpl implements CatalogService {
             long available = availableCopies.getOrDefault(book.getId(), 0L);
             return toView(book, total, available, reservableCopies.getOrDefault(book.getId(), 0L) > 0);
         });
+    }
+
+    private List<Integer> categoryIdsWithDescendants(CatalogFilter filter) {
+        if (filter == null || filter.getCategoryIds() == null || filter.getCategoryIds().isEmpty()) {
+            return List.of();
+        }
+
+        Set<Integer> includedIds = new LinkedHashSet<>(filter.getCategoryIds());
+        Set<Integer> parentIds = new LinkedHashSet<>(includedIds);
+        while (!parentIds.isEmpty()) {
+            Set<Integer> nextParentIds = categoryRepository.findAllByParent_IdInOrderByNameAsc(parentIds).stream()
+                    .map(Category::getId)
+                    .filter(includedIds::add)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            parentIds = nextParentIds;
+        }
+        return List.copyOf(includedIds);
     }
 
     @Override

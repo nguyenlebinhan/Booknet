@@ -74,6 +74,7 @@ public class SecurityConfig {
                     "/home",
                     "/catalog", "/catalog/*",
                     "/assistant",
+                    "/covers/**",
                     "/about",
                     "/contact",
                     "/login",
@@ -86,9 +87,13 @@ public class SecurityConfig {
                     "/oauth2/**"
                 ).permitAll()
                 .requestMatchers("/staff/loans", "/staff/loans/**", "/librarian/loans", "/librarian/loans/**", "/admin/loans", "/admin/loans/**").hasAuthority("CIRCULATION")
+                .requestMatchers("/staff/reservations", "/staff/reservations/**", "/librarian/reservations", "/librarian/reservations/**", "/admin/reservations", "/admin/reservations/**").hasAuthority("CIRCULATION")
+                .requestMatchers("/staff/notifications/email", "/staff/notifications/email/**", "/librarian/notifications/email", "/librarian/notifications/email/**", "/admin/notifications/email", "/admin/notifications/email/**").hasAuthority("SERVICE_EMAIL")
                 .requestMatchers("/member/loans/*/return-detail").hasAnyAuthority("ROLE_MEMBER", "MEMBER_READ", "CIRCULATION")
                 .requestMatchers("/member/loans/*/return/confirm").hasAuthority("CIRCULATION")
                 .requestMatchers("/admin/books", "/admin/books/**").hasAnyAuthority("CATALOG_EDIT", "COPY_MANAGE", "BOOK_RETIRE")
+                .requestMatchers("/admin/categories", "/admin/categories/**").hasAnyRole("LIBRARIAN", "ADMIN")
+                .requestMatchers("/api/staff/authors/options").hasAnyAuthority("CATALOG_EDIT", "MEMBER_READ")
                 .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/staff/**").hasAuthority("MEMBER_READ")
                 .requestMatchers("/api/staff/**").hasAuthority("MEMBER_READ")

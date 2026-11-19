@@ -35,7 +35,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /** UC05 public portal: the home page shows real catalog figures. */
 @SpringBootTest
@@ -86,6 +86,25 @@ class HomePageTests {
         String assets = java.nio.file.Path.of("src/main/resources/static").toAbsolutePath().toUri().toString();
         java.nio.file.Files.writeString(output.resolve(name + ".html"), html.replace("href=\"/css/", "href=\"" + assets + "css/")
                 .replace("src=\"/images/", "src=\"" + assets + "images/").replace("src=\"/js/", "src=\"" + assets + "js/"));
+    }
+
+    @Test
+    void homeSubcategoryLinkOpensCatalogWithThatGenreSelected() throws Exception {
+        Category parent = categories.save(Category.builder().name("Home test parent").build());
+        Category child = categories.save(Category.builder().name("Home test subcategory").parent(parent).build());
+        Author author = authors.save(Author.builder().name("Home subcategory author").build());
+        Book childBook = published("Home subcategory book", Set.of(child), author);
+
+        String home = mvc.perform(get("/")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(home).contains("href=\"/catalog?categoryIds=" + child.getId() + "\"");
+
+        mvc.perform(get("/catalog").param("categoryIds", child.getId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(childBook.getTitle())))
+                .andExpect(model().attribute("filter",
+                        org.hamcrest.Matchers.hasProperty("categoryIds",
+                                org.hamcrest.Matchers.contains(child.getId()))));
     }
 
     @Test

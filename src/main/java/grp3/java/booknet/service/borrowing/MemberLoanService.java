@@ -1,8 +1,8 @@
-package grp3.java.booknet.service;
+package grp3.java.booknet.service.borrowing;
 
-import grp3.java.booknet.dto.MemberLoansView;
-import grp3.java.booknet.dto.ReturnDetailView;
-import grp3.java.booknet.dto.ReturnReceiptDto;
+import grp3.java.booknet.dto.borrowing.MemberLoansView;
+import grp3.java.booknet.dto.borrowing.ReturnDetailView;
+import grp3.java.booknet.dto.borrowing.ReturnReceiptDto;
 
 public interface MemberLoanService {
 

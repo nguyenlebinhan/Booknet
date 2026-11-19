@@ -61,4 +61,22 @@ public class Reservation extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_copy_id")
     private BookCopy assignedCopy;
+
+    @Column(name = "fulfilled_at")
+    private LocalDateTime fulfilledAt;
+
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
+
+    @Column(name = "expired_at")
+    private LocalDateTime expiredAt;
+
+    @Column(name = "notes", length = 500)
+    private String notes;
+
+    public String displayCode() {
+        int year = reservedAt != null ? reservedAt.getYear() : LocalDateTime.now().getYear();
+        long num = id != null ? id : 0L;
+        return "RS-" + year + "-" + String.format("%04d", num);
+    }
 }

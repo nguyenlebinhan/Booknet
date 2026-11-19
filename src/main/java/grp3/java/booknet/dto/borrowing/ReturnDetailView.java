@@ -1,4 +1,4 @@
-package grp3.java.booknet.dto;
+package grp3.java.booknet.dto.borrowing;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

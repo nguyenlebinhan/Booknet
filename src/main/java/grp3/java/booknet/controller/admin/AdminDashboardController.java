@@ -16,8 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 @Controller
-@RequestMapping("/admin")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('LIBRARIAN', 'ADMIN')")
 @RequiredArgsConstructor
 public class AdminDashboardController {
 
@@ -26,7 +25,7 @@ public class AdminDashboardController {
 
     private final AdminDashboardService dashboardService;
 
-    @GetMapping("/dashboard")
+    @GetMapping({"/admin/dashboard", "/staff/dashboard"})
     public String dashboard(Authentication authentication, Model model) {
         model.addAttribute("dashboard", dashboardService.getSummary());
         model.addAttribute("adminName", displayName(authentication));

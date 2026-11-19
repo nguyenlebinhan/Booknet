@@ -6,7 +6,7 @@
     <span class="admin-brand-mark"><img th:src="@{/images/home/nav-book-open.svg}" width="26" height="26" alt=""></span>
     <span class="admin-brand-name">booknet<small>COMMUNITY LIBRARY</small></span>
   </a>
-  <a class="admin-brand" sec:authorize="hasRole('LIBRARIAN')" th:href="@{/catalog}" aria-label="booknet library catalog">
+  <a class="admin-brand" sec:authorize="!hasRole('ADMIN') and hasRole('LIBRARIAN')" th:href="@{/staff/dashboard}" aria-label="booknet staff dashboard">
     <span class="admin-brand-mark"><img th:src="@{/images/home/nav-book-open.svg}" width="26" height="26" alt=""></span>
     <span class="admin-brand-name">booknet<small>COMMUNITY LIBRARY</small></span>
   </a>
@@ -17,6 +17,12 @@
     <section class="admin-nav-group" aria-labelledby="workspace-nav">
       <h2 id="workspace-nav">WORKSPACE</h2>
       <a class="admin-nav-link" sec:authorize="hasRole('ADMIN')" th:href="@{/admin/dashboard}"
+         th:classappend="${activePage == 'dashboard'} ? ' is-current'"
+         th:attr="aria-current=${activePage == 'dashboard' ? 'page' : null}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="4" rx="1"/><rect x="14" y="10" width="7" height="11" rx="1"/><rect x="3" y="13" width="7" height="8" rx="1"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a class="admin-nav-link" sec:authorize="!hasRole('ADMIN') and hasRole('LIBRARIAN')" th:href="@{/staff/dashboard}"
          th:classappend="${activePage == 'dashboard'} ? ' is-current'"
          th:attr="aria-current=${activePage == 'dashboard' ? 'page' : null}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="4" rx="1"/><rect x="14" y="10" width="7" height="11" rx="1"/><rect x="3" y="13" width="7" height="8" rx="1"/></svg>
@@ -40,22 +46,16 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h10M4 19h6"/><circle cx="18" cy="12" r="2"/><circle cx="14" cy="19" r="2"/></svg>
         <span>Categories</span>
       </a>
-      <a class="admin-nav-link" sec:authorize="hasRole('ADMIN')" th:href="@{/admin/authors}"
+      <a class="admin-nav-link" th:href="@{/admin/authors}"
          th:classappend="${activePage == 'authors'} ? ' is-current'"
          th:attr="aria-current=${activePage == 'authors' ? 'page' : null}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1z"/><path d="M18 8v6M15 11h6"/></svg>
         <span>Authors</span>
       </a>
-      <a class="admin-nav-link" sec:authorize="hasRole('LIBRARIAN') and hasAuthority('MEMBER_READ')" th:href="@{/staff/members}"
+      <a class="admin-nav-link" sec:authorize="hasAuthority('MEMBER_READ')" th:href="@{/staff/members}"
          th:classappend="${activePage == 'members'} ? ' is-current'"
          th:attr="aria-current=${activePage == 'members' ? 'page' : null}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1zM16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5v1"/></svg>
-        <span>Members</span>
-      </a>
-      <a class="admin-nav-link" sec:authorize="hasRole('ADMIN')" th:href="@{/staff/members}"
-         th:classappend="${activePage == 'members'} ? ' is-current'"
-         th:attr="aria-current=${activePage == 'members' ? 'page' : null}">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1zM18 8v6M15 11h6"/></svg>
         <span>Members</span>
       </a>
       <a class="admin-nav-link" sec:authorize="hasAuthority('CIRCULATION')" th:href="@{/staff/reservations}"

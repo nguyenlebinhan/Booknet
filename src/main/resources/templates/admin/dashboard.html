@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,7 +32,7 @@
         </div>
         <div class="admin-heading-actions">
           <a class="admin-button secondary" th:href="@{/catalog}">View catalog</a>
-          <a class="admin-button primary" th:href="@{/admin/users}">Manage accounts</a>
+          <a class="admin-button primary" sec:authorize="hasRole('ADMIN')" th:href="@{/admin/users}">Manage accounts</a>
         </div>
       </section>
 
@@ -108,7 +108,7 @@
           <div class="admin-quick-links">
             <a th:href="@{/catalog}"><span><strong>Book catalog</strong><small>Browse published titles and staff-only drafts</small></span><b aria-hidden="true">↗</b></a>
             <a th:href="@{/staff/members}"><span><strong>Member directory</strong><small>Search members and review account details</small></span><b aria-hidden="true">↗</b></a>
-            <a th:href="@{/admin/users}"><span><strong>User accounts</strong><small>Review registered accounts and access</small></span><b aria-hidden="true">↗</b></a>
+            <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/users}"><span><strong>User accounts</strong><small>Review registered accounts and access</small></span><b aria-hidden="true">↗</b></a>
           </div>
         </article>
 

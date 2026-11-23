@@ -159,7 +159,7 @@ class MyBooksFlowTests {
         MockHttpSession session = loginMember();
         mockMvc.perform(get("/member/my-books").session(session))
                 .andExpect(status().isOk())
-                .andExpect(view().name("my-books"))
+                .andExpect(view().name("borrowing/my-books"))
                 .andExpect(model().attributeExists("view"))
                 .andExpect(content().string(containsString("The books keeping you company.")))
                 .andExpect(content().string(containsString("Dế Mèn phiêu lưu ký")))

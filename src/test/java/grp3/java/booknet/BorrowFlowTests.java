@@ -69,6 +69,9 @@ class BorrowFlowTests {
     private AuthorRepository authorRepository;
 
     @Autowired
+    private grp3.java.booknet.repository.book_service.BorrowRequestRepository borrowRequestRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     private static final String TEST_PASSWORD = "Aa1BorrowFlowTestPassword";
@@ -78,6 +81,7 @@ class BorrowFlowTests {
 
     @BeforeEach
     void setUp() {
+        borrowRequestRepository.deleteAll();
         reservationRepository.deleteAll();
         memberCardRepository.deleteAll();
         bookCopyRepository.deleteAll();

@@ -1,11 +1,11 @@
-package grp3.java.booknet.controller;
+package grp3.java.booknet.controller.borrowing;
 
-import grp3.java.booknet.dto.MemberLoansView;
-import grp3.java.booknet.dto.ReturnDetailView;
-import grp3.java.booknet.dto.ReturnReceiptDto;
+import grp3.java.booknet.dto.borrowing.MemberLoansView;
+import grp3.java.booknet.dto.borrowing.ReturnDetailView;
+import grp3.java.booknet.dto.borrowing.ReturnReceiptDto;
 import grp3.java.booknet.exception.account.AccountException;
 import grp3.java.booknet.security.principal.AccountPrincipal;
-import grp3.java.booknet.service.MemberLoanService;
+import grp3.java.booknet.service.borrowing.MemberLoanService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -46,7 +46,7 @@ public class MemberLoansController {
             }
         }
 
-        return "my-books";
+        return "borrowing/my-books";
     }
 
     @PostMapping("/loans/{id}/return")
@@ -112,7 +112,7 @@ public class MemberLoansController {
             model.addAttribute("detail", detail);
             model.addAttribute("isLibrarian", isLibrarian);
             model.addAttribute("activePage", "my-books");
-            return "return-detail";
+            return "borrowing/return-detail";
         } catch (AccountException e) {
             log.warn("Cannot load return detail for loan {}: {}", loanId, e.getMessage());
             return "redirect:/member/my-books";

@@ -103,11 +103,25 @@
           <th:block th:if="${book.allOnLoan()}">
             <p class="details-card-text">Every copy is on loan right now.
               <th:block th:if="${book.earliestReturnText() != null}">The earliest is due back on <strong th:text="${book.earliestReturnText()}">05/11/2026</strong>.</th:block></p>
-            <button class="details-secondary" type="button" disabled title="Reservations are not available yet">
+            <a class="details-secondary" sec:authorize="hasAuthority('RESERVE')"
+               th:if="${alreadyReserved}" th:href="@{/member/reservations}">
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M18.5 21 12 17l-6.5 4V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2Z"/></svg>
-              Reserve · coming soon
-            </button>
-            <p class="details-card-note">Reservations open soon. Until then, ask a librarian to hold the next returned copy.</p>
+              In your queue →
+            </a>
+            <form sec:authorize="hasAuthority('RESERVE')" th:unless="${alreadyReserved}"
+                  th:action="@{/member/reservations}" method="post" style="margin: 0;">
+              <input type="hidden" name="bookId" th:value="${book.id}">
+              <button class="details-secondary" type="submit" style="width: 100%;">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M18.5 21 12 17l-6.5 4V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2Z"/></svg>
+                Reserve book
+              </button>
+            </form>
+            <a class="details-secondary" sec:authorize="isAnonymous()" th:href="@{/login}">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M18.5 21 12 17l-6.5 4V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2Z"/></svg>
+              Sign in to reserve
+            </a>
+            <p class="details-card-note" sec:authorize="!hasAnyRole('LIBRARIAN', 'ADMIN')">Join the waiting queue. Held copies are kept at the Circulation Desk for 2 days.</p>
+            <p class="details-card-note" sec:authorize="hasAnyRole('LIBRARIAN', 'ADMIN')">Members reserve from this page; staff manage queues in Reservation management.</p>
           </th:block>
 
           <p class="details-card-text" th:if="${!book.onShelf() and !book.allOnLoan()}">There is no copy to lend right now. A librarian can tell you when one will be back.</p>

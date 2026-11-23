@@ -172,7 +172,7 @@ class Person2AcceptanceTests {
         Book allOut = book("P2 All out", novels, nhatAnh, 2019, "vi", "9786040000032");
         borrowedCopies(allOut, 1);
         assertThat(mvc.perform(as(member, get("/catalog/" + allOut.getId()))).andReturn().getResponse().getContentAsString())
-                .contains("All copies are out", "Reserve · coming soon").doesNotContain("Borrow this book");
+                .contains("All copies are out", "Reserve book").doesNotContain("Borrow this book");
     }
 
     // ------------------------------------------------------------------ 2.5 UC09

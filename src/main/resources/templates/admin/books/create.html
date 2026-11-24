@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,7 +23,8 @@
     </div>
     <div class="notice notice-error" role="alert" th:if="${globalError}" th:text="${globalError}"></div>
 
-    <form class="book-edit-grid create-form" th:action="@{/admin/books/create}" th:object="${bookForm}" method="post">
+    <form class="book-edit-grid create-form" th:action="@{/admin/books/create}" th:object="${bookForm}"
+          method="post" enctype="multipart/form-data">
       <div class="book-edit-main">
       <section class="form-card">
         <div class="card-heading"><h2>Basic information</h2><p>Fields marked * are required.</p></div>
@@ -38,22 +39,67 @@
         </div>
         <div class="form-row">
           <div class="form-field">
-            <label for="authorIds">Author *</label>
-            <select id="authorIds" th:field="*{authorIds}" multiple required><option th:each="author : ${authors}" th:value="${author.id}" th:text="${author.name}">Author</option></select>
+            <label id="authorPickerLabel">Authors *</label>
+            <div class="author-picker" data-author-picker
+                 th:attr="data-options-url=@{/api/staff/authors/options}"
+                 aria-labelledby="authorPickerLabel">
+              <div class="author-picker-selected" data-selected-author-list aria-live="polite">
+                <span class="author-picker-count" data-author-count>0 selected</span>
+                <span class="author-picker-chip" th:each="author : ${selectedAuthors}"
+                      th:attr="data-selected-id=${author.id}">
+                  <span data-selected-label th:text="${author.name}">Author</span>
+                  <button type="button" data-remove-author th:attr="aria-label=|Remove ${author.name}|">×</button>
+                  <input type="hidden" name="authorIds" th:value="${author.id}">
+                </span>
+              </div>
+              <label for="authorSearch">Search authors</label>
+              <input id="authorSearch" type="search" maxlength="100" autocomplete="off" data-author-search>
+              <div class="author-picker-results" data-author-results aria-live="polite"></div>
+              <div class="author-picker-pagination">
+                <button type="button" data-author-previous disabled>Previous</button>
+                <span data-author-page>Status</span>
+                <button type="button" data-author-next disabled>Next</button>
+              </div>
+              <p class="author-picker-status" data-author-status role="status" aria-live="polite"></p>
+            </div>
+            <a class="category-manage-link" sec:authorize="hasRole('ADMIN')"
+               th:href="@{/admin/authors/create}" target="_blank" rel="noopener">Create a new author</a>
             <small class="field-error" th:if="${#fields.hasErrors('authorIds')}" th:errors="*{authorIds}"></small>
           </div>
           <div class="form-field"><label for="translator">Translator</label><input id="translator" type="text" th:field="*{translator}" maxlength="150"></div>
         </div>
         <div class="form-row">
           <div class="form-field">
-            <label for="categoryIds">Genre *</label>
-            <select id="categoryIds" th:field="*{categoryIds}" multiple required><option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}">Genre</option></select>
+            <label id="categoryPickerLabel">Category *</label>
+            <div class="category-picker" data-category-picker
+                 th:attr="data-options-url=@{/admin/categories/options},data-descendants-url=@{/admin/categories}"
+                 aria-labelledby="categoryPickerLabel">
+              <div class="category-picker-selected" data-selected-category-list aria-live="polite">
+                <span class="category-picker-count" data-category-count>0 selected</span>
+                <span class="category-picker-chip" th:each="category : ${selectedCategories}"
+                      th:attr="data-selected-id=${category.id}">
+                  <span data-selected-label th:text="${category.label}">Fiction / Mystery</span>
+                  <button type="button" data-remove-category th:attr="aria-label=|Remove ${category.label}|">×</button>
+                  <input type="hidden" name="categoryIds" th:value="${category.id}" data-selected-input>
+                </span>
+              </div>
+              <label for="categorySearch">Search categories</label>
+              <input id="categorySearch" type="search" maxlength="100" autocomplete="off" data-category-search>
+              <div class="category-picker-results" data-category-results aria-live="polite"></div>
+              <div class="category-picker-pagination">
+                <button type="button" data-category-previous disabled>Previous</button>
+                <span data-category-page>Status</span>
+                <button type="button" data-category-next disabled>Next</button>
+              </div>
+              <p class="category-picker-status" data-category-status role="status" aria-live="polite"></p>
+            </div>
+            <a class="category-manage-link" th:href="@{/admin/categories}" target="_blank" rel="noopener">Manage categories / Add category</a>
             <small class="field-error" th:if="${#fields.hasErrors('categoryIds')}" th:errors="*{categoryIds}"></small>
           </div>
           <div class="form-field"><label for="language">Language *</label><select id="language" th:field="*{language}" required><option value="vi">Vietnamese</option><option value="en">English</option><option value="other">Other</option></select></div>
         </div>
         <div class="form-row form-row-three">
-          <div class="form-field"><label for="publisherId">Publisher</label><select id="publisherId" th:field="*{publisherId}"><option value="">Select publisher</option><option th:each="publisher : ${publishers}" th:value="${publisher.id}" th:text="${publisher.name}">Publisher</option></select></div>
+        <div class="form-field"><label for="publisherName">Publisher</label><input id="publisherName" type="text" th:field="*{publisherName}" maxlength="150" placeholder="Enter publisher name"><small class="field-error" th:if="${#fields.hasErrors('publisherName')}" th:errors="*{publisherName}"></small></div>
           <div class="form-field"><label for="publishYear">Publication year *</label><input id="publishYear" type="number" th:field="*{publishYear}" min="1000" max="2100" required><small class="field-error" th:if="${#fields.hasErrors('publishYear')}" th:errors="*{publishYear}"></small></div>
           <div class="form-field"><label for="pageCount">Page count</label><input id="pageCount" type="number" th:field="*{pageCount}" min="1" max="20000"><small class="field-error" th:if="${#fields.hasErrors('pageCount')}" th:errors="*{pageCount}"></small></div>
         </div>
@@ -75,11 +121,10 @@
             <span id="cover-placeholder">Cover preview</span>
           </div>
           <div class="form-field">
-            <label class="button button-secondary cover-change-button" for="coverUrl">Change cover</label>
-            <label class="cover-url-label" for="coverUrl">Cover image URL</label>
-            <input id="coverUrl" type="url" th:field="*{coverUrl}" maxlength="500" placeholder="https://...">
-            <small>Use a publicly accessible image URL.</small>
-            <small class="field-error" th:if="${#fields.hasErrors('coverUrl')}" th:errors="*{coverUrl}"></small>
+            <label for="coverImage">Choose cover image</label>
+            <input id="coverImage" type="file" th:field="*{coverImage}" accept="image/jpeg,image/png">
+            <small>Optional. Choose a JPEG or PNG image up to 5 MB.</small>
+            <small class="field-error" th:if="${#fields.hasErrors('coverImage')}" th:errors="*{coverImage}"></small>
           </div>
         </section>
         <section class="form-card publish-card">
@@ -98,23 +143,21 @@
       </div>
     </form>
   </main>
+  <script th:src="@{/js/category-picker.js}" defer></script>
+  <script th:src="@{/js/author-picker.js}" defer></script>
   <script>
     (() => {
-      const coverUrl = document.getElementById('coverUrl');
+      const coverInput = document.getElementById('coverImage');
       const coverImage = document.getElementById('cover-preview-image');
       const placeholder = document.getElementById('cover-placeholder');
-      if (!coverUrl || !coverImage || !placeholder) return;
+      if (!coverInput || !coverImage || !placeholder) return;
 
-      coverUrl.addEventListener('input', () => {
-        const value = coverUrl.value.trim();
-        if (value) {
-          coverImage.src = value;
-          coverImage.hidden = false;
-          placeholder.hidden = true;
-        } else {
-          coverImage.hidden = true;
-          placeholder.hidden = false;
-        }
+      coverInput.addEventListener('change', () => {
+        const file = coverInput.files && coverInput.files[0];
+        if (!file) return;
+        coverImage.src = URL.createObjectURL(file);
+        coverImage.hidden = false;
+        placeholder.hidden = true;
       });
     })();
   </script>

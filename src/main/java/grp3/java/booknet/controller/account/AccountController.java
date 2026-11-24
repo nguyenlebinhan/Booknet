@@ -25,6 +25,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequiredArgsConstructor
 public class AccountController {
     private final AccountServiceImpl accounts;
+    private final grp3.java.booknet.service.member.MemberCardService memberCards;
+
+    @ModelAttribute("membership")
+    public grp3.java.booknet.dto.member.MemberDirectoryView.Person membership(Authentication authentication) {
+        Long userId = AccountPrincipal.id(authentication);
+        memberCards.ensurePending(userId);
+        return memberCards.ownCard(userId);
+    }
 
     @InitBinder({"profileForm", "passwordForm"})
     void bindForms(WebDataBinder binder) {

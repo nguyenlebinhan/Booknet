@@ -3,10 +3,12 @@ package grp3.java.booknet.controller.book;
 import grp3.java.booknet.dto.book.request.BookCopyForm;
 import grp3.java.booknet.entity.book.Book;
 import grp3.java.booknet.entity.book.BookCopy;
+import grp3.java.booknet.entity.book_service.Reservation;
 import grp3.java.booknet.enums.book.CopyStatus;
 import grp3.java.booknet.repository.book.BookRepository;
 import grp3.java.booknet.service.book.BookCopyService;
 import grp3.java.booknet.service.book.BookInventoryService;
+import grp3.java.booknet.service.reservation.ReservationQueueService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,13 +26,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Slf4j
 @Controller
 @RequestMapping("/admin/books/{bookId}/copies")
-@PreAuthorize("hasAnyRole('LIBRARIAN', 'ADMIN')")
+@PreAuthorize("hasAuthority('COPY_MANAGE')")
 @RequiredArgsConstructor
 public class AdminBookCopyController {
 
     private final BookCopyService bookCopyService;
     private final BookInventoryService bookInventoryService;
     private final BookRepository bookRepository;
+    private final ReservationQueueService reservationQueueService;
 
     @GetMapping
     public String listCopies(@PathVariable Long bookId,
@@ -90,8 +93,16 @@ public class AdminBookCopyController {
         }
         try {
             BookCopy saved = bookCopyService.createCopy(bookId, form);
-            redirectAttributes.addFlashAttribute("successMessage",
-                    "Book copy created. Barcode: " + saved.getBarcode());
+            String message = "Book copy created. Barcode: " + saved.getBarcode();
+            if (saved.getStatus() == CopyStatus.AVAILABLE) {
+                java.util.Optional<Reservation> assigned = reservationQueueService
+                        .assignCopyToNextPendingReservation(saved, java.time.LocalDateTime.now());
+                if (assigned.isPresent()) {
+                    message = "Book copy created (" + saved.getBarcode()
+                            + ") and held for waiting reservation " + assigned.get().displayCode() + ".";
+                }
+            }
+            redirectAttributes.addFlashAttribute("successMessage", message);
             return "redirect:/admin/books/" + bookId + "/edit";
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
@@ -149,8 +160,16 @@ public class AdminBookCopyController {
                                RedirectAttributes redirectAttributes) {
         try {
             getCopyForBook(bookId, copyId);
-            bookInventoryService.changeCopyStatus(copyId, targetStatus);
-            redirectAttributes.addFlashAttribute("successMessage", "Book copy status updated.");
+            BookCopy updated = bookInventoryService.changeCopyStatus(copyId, targetStatus);
+            String message = "Book copy status updated.";
+            if (targetStatus == CopyStatus.AVAILABLE) {
+                java.util.Optional<Reservation> assigned = reservationQueueService
+                        .assignCopyToNextPendingReservation(updated, java.time.LocalDateTime.now());
+                if (assigned.isPresent()) {
+                    message = "Book copy marked available and held for waiting reservation " + assigned.get().displayCode() + ".";
+                }
+            }
+            redirectAttributes.addFlashAttribute("successMessage", message);
         } catch (IllegalArgumentException | IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
         }

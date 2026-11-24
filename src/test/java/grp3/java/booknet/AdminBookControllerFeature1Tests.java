@@ -25,7 +25,7 @@ class AdminBookControllerFeature1Tests {
 
     @Test
     @DisplayName("Admin books URL redirects to the public catalog")
-    @WithMockUser(username = "admin@booknet.vn", roles = {"ADMIN"})
+    @WithMockUser(username = "admin@booknet.vn", authorities = {"ROLE_ADMIN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void adminBooksUrlRedirectsToCatalog() throws Exception {
         mockMvc.perform(get("/admin/books"))
                 .andExpect(status().is3xxRedirection())

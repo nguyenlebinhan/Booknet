@@ -5,21 +5,23 @@ import grp3.java.booknet.dto.book.request.BookCopyForm;
 import grp3.java.booknet.dto.book.request.BookEditForm;
 import grp3.java.booknet.dto.book.request.BookDeleteConfirmationForm;
 import grp3.java.booknet.dto.book.response.BookDeletionCheckDto;
+import grp3.java.booknet.dto.author.AuthorOptionDto;
+import grp3.java.booknet.dto.catalog.CategoryOptionDto;
+import grp3.java.booknet.entity.book.Author;
 import grp3.java.booknet.entity.book.Book;
 import grp3.java.booknet.entity.book.BookCopy;
+import grp3.java.booknet.entity.book.Category;
 import grp3.java.booknet.enums.book.PublicationStatus;
-import grp3.java.booknet.repository.book.AuthorRepository;
 import grp3.java.booknet.repository.book.BookCopyRepository;
 import grp3.java.booknet.repository.book.BookRepository;
+import grp3.java.booknet.repository.book.AuthorRepository;
 import grp3.java.booknet.repository.book.CategoryRepository;
-import grp3.java.booknet.repository.book.PublisherRepository;
 import grp3.java.booknet.service.book.BookCopyService;
 import grp3.java.booknet.service.book.BookService;
 import grp3.java.booknet.service.book.BookLifecycleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -27,10 +29,15 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 @Slf4j
 @Controller
 @RequestMapping("/admin/books")
-@PreAuthorize("hasAnyRole('LIBRARIAN', 'ADMIN')")
+@PreAuthorize("hasAuthority('CATALOG_EDIT')")
 @RequiredArgsConstructor
 public class AdminBookController {
 
@@ -39,9 +46,8 @@ public class AdminBookController {
     private final BookLifecycleService bookLifecycleService;
     private final BookRepository bookRepository;
     private final BookCopyRepository bookCopyRepository;
-    private final CategoryRepository categoryRepository;
     private final AuthorRepository authorRepository;
-    private final PublisherRepository publisherRepository;
+    private final CategoryRepository categoryRepository;
 
     @ModelAttribute("activePage")
     public String activePage() {
@@ -190,6 +196,7 @@ public class AdminBookController {
     }
 
     @PostMapping("/{id}/delete")
+    @PreAuthorize("hasAuthority('BOOK_RETIRE')")
     public String processHardDelete(@PathVariable Long id,
                                     @Valid @ModelAttribute("deleteForm") BookDeleteConfirmationForm form,
                                     BindingResult bindingResult,
@@ -235,6 +242,7 @@ public class AdminBookController {
     }
 
     @PostMapping("/{id}/discontinue")
+    @PreAuthorize("hasAuthority('BOOK_RETIRE')")
     public String discontinueBook(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             bookLifecycleService.discontinue(id);
@@ -246,9 +254,41 @@ public class AdminBookController {
     }
 
     private void populateFormReferenceData(Model model) {
-        model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "name")));
-        model.addAttribute("authors", authorRepository.findAll(Sort.by(Sort.Direction.ASC, "name")));
-        model.addAttribute("publishers", publisherRepository.findAll(Sort.by(Sort.Direction.ASC, "name")));
+        Object form = model.asMap().get("bookForm");
+        List<Integer> selectedCategoryIds = List.of();
+        if (form instanceof BookCreateForm createForm) {
+            selectedCategoryIds = createForm.getCategoryIds();
+        } else if (form instanceof BookEditForm editForm) {
+            selectedCategoryIds = editForm.getCategoryIds();
+        }
+
+        List<Integer> categoryIds = selectedCategoryIds == null ? List.of() : selectedCategoryIds;
+        Map<Integer, CategoryOptionDto> categoriesById = categoryRepository.findAllById(categoryIds).stream()
+                .collect(Collectors.toMap(Category::getId, CategoryOptionDto::from));
+        List<CategoryOptionDto> selectedCategories = categoryIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .map(categoriesById::get)
+                .filter(Objects::nonNull)
+                .toList();
+        model.addAttribute("selectedCategories", selectedCategories);
+
+        List<Integer> selectedAuthorIds = List.of();
+        if (form instanceof BookCreateForm createForm) {
+            selectedAuthorIds = createForm.getAuthorIds();
+        } else if (form instanceof BookEditForm editForm) {
+            selectedAuthorIds = editForm.getAuthorIds();
+        }
+        List<Integer> authorIds = selectedAuthorIds == null ? List.of() : selectedAuthorIds;
+        Map<Integer, AuthorOptionDto> authorsById = authorRepository.findAllById(authorIds).stream()
+                .collect(Collectors.toMap(Author::getId, AuthorOptionDto::from));
+        List<AuthorOptionDto> selectedAuthors = authorIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .map(authorsById::get)
+                .filter(Objects::nonNull)
+                .toList();
+        model.addAttribute("selectedAuthors", selectedAuthors);
     }
 
     private void populateEditPageData(Long id, Model model) {

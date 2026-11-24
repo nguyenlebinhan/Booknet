@@ -10,7 +10,10 @@ public class CatalogFilter {
     private List<String> availability = new ArrayList<>();
     private List<String> languages = new ArrayList<>();
     private Integer publishYear;
-    private String sort = "recent";
+    /** Publication year range (UC07). Either end may be empty. */
+    private Integer yearFrom;
+    private Integer yearTo;
+    private String sort = "popular";
 
     public String getKeyword() {
         return keyword;
@@ -50,6 +53,22 @@ public class CatalogFilter {
 
     public void setPublishYear(Integer publishYear) {
         this.publishYear = publishYear;
+    }
+
+    public Integer getYearFrom() {
+        return yearFrom;
+    }
+
+    public void setYearFrom(Integer yearFrom) {
+        this.yearFrom = yearFrom;
+    }
+
+    public Integer getYearTo() {
+        return yearTo;
+    }
+
+    public void setYearTo(Integer yearTo) {
+        this.yearTo = yearTo;
     }
 
     public String getSort() {

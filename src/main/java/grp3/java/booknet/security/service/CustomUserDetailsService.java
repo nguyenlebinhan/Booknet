@@ -16,13 +16,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final grp3.java.booknet.repository.user.RoleDefinitionRepository roles;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(AccountServiceImpl.normalizeEmail(email))
                 .filter(User::hasPassword)
                 .orElseThrow(() -> new UsernameNotFoundException("No account was found for email: " + email));
+        if(user.getAssignedRole()==null)roles.findBySystemRole(user.getRole()).ifPresent(user::setAssignedRole);
         return new CustomUserDetails(user);
     }
 }

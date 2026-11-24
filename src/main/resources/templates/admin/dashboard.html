@@ -80,8 +80,9 @@
           <article class="admin-attention-card">
             <p class="admin-attention-value" th:text="${dashboard.pendingReservations}">0</p>
             <h3>Pending reservations</h3>
-            <p>Reservations are recorded, but staff review tools are not available yet.</p>
-            <span class="admin-notice">Review workflow not connected</span>
+            <p>Review reader queues, hold returned copies, and process pickup handovers.</p>
+            <a sec:authorize="hasAuthority('CIRCULATION')" th:href="@{/staff/reservations}">Review reservations <span aria-hidden="true">→</span></a>
+            <span class="admin-notice" sec:authorize="!hasAuthority('CIRCULATION')">Circulation access required</span>
           </article>
           <article class="admin-attention-card admin-role-card">
             <h3>Account distribution</h3>

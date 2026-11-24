@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Send email notifications • booknet Librarian</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Serif:wght@400;500;600&amp;display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}" href="/css/base/tokens.css">
+  <link rel="stylesheet" th:href="@{/css/admin/dashboard.css}" href="/css/admin/dashboard.css">
+  <link rel="stylesheet" th:href="@{/css/librarian/circulation.css}" href="/css/librarian/circulation.css">
+  <link rel="stylesheet" th:href="@{/css/librarian/email-notifications.css}" href="/css/librarian/email-notifications.css">
+</head>
+<body class="admin-page">
+
+<div class="admin-shell">
+  <aside th:replace="~{admin/fragments/dashboard :: sidebar}"></aside>
+
+  <div class="admin-workspace">
+    <header th:replace="~{member/fragments :: topbar(section='Send email notifications')}"></header>
+
+    <main class="admin-main">
+      <section class="bn-page-header">
+        <div>
+          <p class="bn-kicker">LIBRARY COMMUNICATIONS</p>
+          <h1 class="bn-page-title">Send email notifications</h1>
+          <p class="bn-page-subtitle">Choose a due-soon, overdue, or pickup-ready template, select a specific member or eligible group, customize copy safely, preview before sending, and inspect delivery logs.</p>
+        </div>
+        <div class="bn-header-actions">
+          <span class="bn-badge bn-badge-neutral" th:text="${'Reference date: ' + view.referenceDateLabel}">Date</span>
+        </div>
+      </section>
+
+      <div th:if="${successMessage}" class="bn-alert bn-alert-success">
+        <span th:text="${successMessage}">Sent</span>
+      </div>
+      <div th:if="${errorMessage}" class="bn-alert bn-alert-danger">
+        <span th:text="${errorMessage}">Failed</span>
+      </div>
+
+      <form th:action="@{${basePath}}" th:object="${sendForm}" method="post" id="email-composer-form">
+        <input type="hidden" th:field="*{idempotencyToken}">
+        <input type="hidden" th:field="*{reviewStep}">
+
+        <div class="emc-grid">
+          <div class="emc-steps">
+
+            <!-- 01 Choose notification template -->
+            <section class="emc-step-card">
+              <div class="emc-step-head">
+                <div class="emc-step-title-wrap">
+                  <span class="emc-step-num">01</span>
+                  <div>
+                    <h2>Choose notification template</h2>
+                    <p class="emc-step-sub">Select a template and load its stored wording into the message editor.</p>
+                  </div>
+                </div>
+                <button type="submit" name="action" value="switch-template" class="bn-btn bn-btn-secondary bn-btn-sm">
+                  Load selected template
+                </button>
+              </div>
+
+              <div class="emc-tpl-grid">
+                <label class="emc-tpl-option" th:each="tpl : ${view.templates}"
+                       th:classappend="${tpl.type == view.activeTemplateType} ? ' is-selected' : ''">
+                  <span class="emc-tpl-option-top">
+                    <input type="radio" th:field="*{templateType}" th:value="${tpl.type}">
+                    <span th:text="${tpl.name}">Overdue books</span>
+                  </span>
+                  <p th:text="${tpl.description}">Description</p>
+                </label>
+              </div>
+            </section>
+
+            <!-- 02 Choose recipients -->
+            <section class="emc-step-card">
+              <div class="emc-step-head">
+                <div class="emc-step-title-wrap">
+                  <span class="emc-step-num">02</span>
+                  <div>
+                    <h2>Choose recipients</h2>
+                    <p class="emc-step-sub">Send to one individual member or all members currently matching the chosen template.</p>
+                  </div>
+                </div>
+                <button type="submit" name="action" value="filter" class="bn-btn bn-btn-secondary bn-btn-sm">
+                  Refresh recipients &amp; preview
+                </button>
+              </div>
+
+              <div class="emc-mode-row">
+                <label class="emc-mode-pill" th:classappend="${view.recipientMode == 'SPECIFIC'} ? ' is-selected' : ''">
+                  <input type="radio" th:field="*{recipientMode}" value="SPECIFIC">
+                  <span>Specific member</span>
+                </label>
+                <label class="emc-mode-pill" th:classappend="${view.recipientMode == 'GROUP'} ? ' is-selected' : ''">
+                  <input type="radio" th:field="*{recipientMode}" value="GROUP">
+                  <span th:text="${'Eligible group (' + view.eligibleGroupRecipients.size() + ')'}">Eligible group</span>
+                </label>
+              </div>
+
+              <div class="emc-inline-controls" th:if="${view.recipientMode == 'SPECIFIC'}">
+                <input type="text" th:field="*{searchKeyword}" class="bn-form-input"
+                       placeholder="Filter members by name, email, card code, or book title...">
+                <select th:field="*{selectedMemberId}" class="bn-form-select">
+                  <option value="" th:if="${view.memberChoices.isEmpty()}">-- No active members matched --</option>
+                  <option th:each="m : ${view.memberChoices}"
+                          th:value="${m.userId}"
+                          th:text="${m.fullName + ' · ' + m.memberCode + ' (' + m.bookTitle + ')'}">Member</option>
+                </select>
+              </div>
+
+              <div class="emc-context-box" th:if="${view.recipientMode == 'SPECIFIC' and view.selectedRecipient != null}">
+                <div>
+                  <div class="emc-member-pill">
+                    <span class="emc-avatar" th:text="${view.selectedRecipient.initials}">MA</span>
+                    <div>
+                      <strong th:text="${view.selectedRecipient.fullName}">Minh Anh</strong>
+                      <div style="font-size: 12px; color: var(--bn-muted);"
+                           th:text="${view.selectedRecipient.email + ' · ' + view.selectedRecipient.memberCode}">email</div>
+                    </div>
+                  </div>
+                  <div style="margin-top: 10px; font-size: 13px;">
+                    <strong th:text="${view.selectedRecipient.bookTitle}">Book title</strong>
+                    <span style="color: var(--bn-muted);" th:text="${' · ' + view.selectedRecipient.daysOverdueText}">status</span>
+                  </div>
+                  <div style="margin-top: 4px; font-size: 12px; color: var(--bn-muted);"
+                       th:text="${view.selectedRecipient.contextNote}">Context</div>
+                  <div th:if="${!view.selectedRecipient.emailOptedIn}"
+                       style="margin-top: 8px; font-size: 12px; color: var(--bn-danger); font-weight: 600;">
+                    Warning: This member opted out of reminder emails in their Notification preferences.
+                  </div>
+                </div>
+                <span class="bn-badge"
+                      th:classappend="${view.selectedRecipient.statusTone == 'danger' ? 'bn-badge-danger' : (view.selectedRecipient.statusTone == 'warning' ? 'bn-badge-warning' : 'bn-badge-success')}"
+                      th:text="${view.selectedRecipient.statusBadge}">OVERDUE</span>
+              </div>
+
+              <div class="emc-context-box" th:if="${view.recipientMode == 'GROUP'}">
+                <div>
+                  <strong>Batch summary for eligible group</strong>
+                  <div style="margin-top: 6px; font-size: 13px; color: var(--bn-ink);">
+                    Ready to send: <strong th:text="${view.preview.validRecipientCount}">0</strong> individual email(s)
+                    <span th:if="${view.preview.skippedDuplicateCount > 0}"
+                          th:text="${' · ' + view.preview.skippedDuplicateCount + ' duplicate address(es) deduplicated'}"></span>
+                    <span th:if="${view.preview.optedOutCount > 0}"
+                          th:text="${' · ' + view.preview.optedOutCount + ' opted-out skipped'}"></span>
+                  </div>
+                  <div th:if="${!view.preview.resolvedRecipients.isEmpty()}"
+                       style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;">
+                    <span class="bn-badge bn-badge-neutral"
+                          th:each="rec : ${view.preview.resolvedRecipients}"
+                          th:text="${rec.fullName + ' <' + rec.email + '>'}">Recipient</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- 03 Compose message -->
+            <section class="emc-step-card">
+              <div class="emc-step-head">
+                <div class="emc-step-title-wrap">
+                  <span class="emc-step-num">03</span>
+                  <div>
+                    <h2>Compose message</h2>
+                    <p class="emc-step-sub">Edit the subject or body below and inspect substituted values on the right.</p>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button type="submit" name="action" value="reset-template" class="bn-btn bn-btn-secondary bn-btn-sm">
+                    Reset template
+                  </button>
+                  <button type="submit" name="action" value="save-template" class="bn-btn bn-btn-secondary bn-btn-sm">
+                    Save template
+                  </button>
+                </div>
+              </div>
+
+              <div class="emc-var-list" aria-label="Supported template variables">
+                <span class="emc-var-chip">{{memberName}}</span>
+                <span class="emc-var-chip">{{memberCode}}</span>
+                <span class="emc-var-chip">{{bookTitle}}</span>
+                <span class="emc-var-chip">{{dueDate}}</span>
+                <span class="emc-var-chip">{{daysOverdue}}</span>
+                <span class="emc-var-chip">{{pickupUntil}}</span>
+                <span class="emc-var-chip">{{reservationCode}}</span>
+                <span class="emc-var-chip">{{copyBarcode}}</span>
+              </div>
+
+              <div class="bn-alert bn-alert-danger" th:if="${!view.preview.valid}" style="margin-bottom: 14px;">
+                <div>
+                  <strong>Validation check:</strong>
+                  <span th:text="${#strings.listJoin(view.preview.validationErrors, ' ')}">Validation error</span>
+                </div>
+              </div>
+
+              <div class="bn-form-group">
+                <label class="bn-form-label" for="subjectTemplate">Email subject *</label>
+                <input type="text" id="subjectTemplate" th:field="*{subjectTemplate}" class="bn-form-input"
+                       placeholder="Enter email subject...">
+                <p class="emc-field-error" th:if="${#fields.hasErrors('subjectTemplate')}" th:errors="*{subjectTemplate}">Error</p>
+              </div>
+
+              <div class="bn-form-group" style="margin-bottom: 0;">
+                <label class="bn-form-label" for="bodyTemplate">Message *</label>
+                <textarea id="bodyTemplate" th:field="*{bodyTemplate}" rows="8" class="bn-form-textarea"
+                          placeholder="Enter email message body..."></textarea>
+                <p class="emc-field-error" th:if="${#fields.hasErrors('bodyTemplate')}" th:errors="*{bodyTemplate}">Error</p>
+              </div>
+            </section>
+
+            <!-- 04 Review before sending -->
+            <section class="emc-step-card">
+              <div class="emc-step-head" style="margin-bottom: 10px;">
+                <div class="emc-step-title-wrap">
+                  <span class="emc-step-num">04</span>
+                  <div>
+                    <h2>Review before sending</h2>
+                    <p class="emc-step-sub">Confirm recipient count and rendered preview before SMTP dispatch.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="emc-actions-bar">
+                <span style="font-size: 13px; color: var(--bn-muted);">
+                  Target: <strong th:text="${view.preview.validRecipientCount}">0</strong> recipient(s) · Template:
+                  <strong th:text="${view.activeTemplateType}">OVERDUE</strong>
+                </span>
+                <button type="submit" name="action" value="review" class="bn-btn bn-btn-primary"
+                        th:if="${!sendForm.reviewStep}" th:disabled="${!view.preview.valid}">
+                  Review &amp; confirm sending
+                </button>
+              </div>
+
+              <div class="emc-confirm-box" id="confirm-dispatch-box" th:if="${sendForm.reviewStep}">
+                <strong style="display: block; margin-bottom: 6px; color: var(--bn-forest);">
+                  Ready to dispatch <span th:text="${view.preview.validRecipientCount}">1</span> individual email(s)
+                </strong>
+                <p style="margin: 0 0 12px; font-size: 13px; color: var(--bn-ink);">
+                  Every recipient will receive a personalized email addressed exclusively to them. Confirm below to dispatch via library SMTP.
+                </p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                  <button type="submit" class="bn-btn bn-btn-primary">Confirm &amp; send emails</button>
+                  <button type="submit" name="action" value="edit" class="bn-btn bn-btn-secondary">Back to edit</button>
+                </div>
+              </div>
+            </section>
+
+          </div>
+
+          <!-- Right Preview Pane -->
+          <aside class="emc-preview-card" aria-label="Live email preview">
+            <div class="emc-preview-head">
+              <p class="bn-kicker" style="margin: 0;">LIVE RENDER</p>
+              <h2>Email preview</h2>
+            </div>
+            <div class="emc-envelope">
+              <div class="emc-envelope-row">
+                <span>From:</span>
+                <strong th:text="${view.preview.fromAddress}">no-reply@booknet.local</strong>
+              </div>
+              <div class="emc-envelope-row">
+                <span>To:</span>
+                <strong th:text="${view.recipientMode == 'GROUP' ? view.preview.validRecipientCount + ' recipient(s) (sample: ' + view.preview.sampleRecipientEmail + ')' : view.preview.sampleRecipientEmail}">reader@booknet.local</strong>
+              </div>
+              <div class="emc-envelope-row">
+                <span>Subject:</span>
+                <strong th:text="${view.preview.renderedSubject}">Subject</strong>
+              </div>
+            </div>
+            <div class="emc-preview-body" th:text="${view.preview.renderedBody}">Body preview</div>
+            <div class="emc-privacy-note">
+              Privacy protection: Batch dispatches iterate one recipient per message so member addresses are never exposed in To/CC headers.
+            </div>
+          </aside>
+        </div>
+      </form>
+
+      <!-- Recent Sending Log -->
+      <section class="bn-panel emc-log-section" aria-label="Recent sending log">
+        <div class="bn-panel-header">
+          <h2 class="bn-panel-title">Recent sending log</h2>
+          <span style="font-size: 13px; color: var(--bn-muted);">Audit trail of dispatched emails with retry support for failed SMTP attempts.</span>
+        </div>
+        <div class="bn-table-wrap">
+          <table class="bn-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Recipient</th>
+                <th>Template</th>
+                <th>Status / Details</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="log : ${view.recentLogs}">
+                <td style="white-space: nowrap;"
+                    th:text="${log.timestamp != null ? #temporals.format(log.timestamp, 'dd/MM/yyyy HH:mm') : '-'}">dd/MM/yyyy</td>
+                <td>
+                  <strong th:text="${log.recipientName}">Minh Anh</strong>
+                  <div style="font-size: 11px; color: var(--bn-muted);" th:text="${log.recipientEmail}">reader@booknet.local</div>
+                </td>
+                <td>
+                  <span th:text="${log.templateName}">Overdue books</span>
+                  <div style="font-size: 11px; color: var(--bn-muted); max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                       th:text="${log.subject}">Subject</div>
+                </td>
+                <td>
+                  <span class="bn-badge bn-badge-success" th:if="${log.status.name() == 'SENT'}">Sent</span>
+                  <span class="bn-badge bn-badge-danger" th:if="${log.status.name() == 'FAILED'}">Send failed</span>
+                  <div th:if="${log.errorMessage != null}" style="font-size: 11px; color: var(--bn-danger); margin-top: 4px;"
+                       th:text="${log.errorMessage}">SMTP Error</div>
+                  <div th:if="${log.retryCount > 0}" style="font-size: 11px; color: var(--bn-muted); margin-top: 2px;"
+                       th:text="${'Retries: ' + log.retryCount}">Retries</div>
+                </td>
+                <td style="text-align: right;">
+                  <form th:if="${log.status.name() == 'FAILED'}"
+                        th:action="@{${basePath + '/logs/' + log.id + '/retry'}}" method="post">
+                    <button type="submit" class="bn-btn bn-btn-secondary bn-btn-sm">Retry</button>
+                  </form>
+                  <span th:unless="${log.status.name() == 'FAILED'}"
+                        style="font-size: 12px; color: var(--bn-muted);"
+                        th:text="${log.sentByName ?: 'Staff'}">Staff</span>
+                </td>
+              </tr>
+              <tr th:if="${view.recentLogs.isEmpty()}">
+                <td colspan="5" style="text-align: center; padding: 32px; color: var(--bn-muted);">
+                  No email notifications have been sent yet.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

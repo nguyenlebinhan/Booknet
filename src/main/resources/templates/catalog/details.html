@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${book.title + ' | booknet'}">Book details | booknet</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}" href="/css/base/tokens.css">
+  <link rel="stylesheet" th:href="@{/css/layout/navbar.css}" href="/css/layout/navbar.css">
+  <link rel="stylesheet" th:href="@{/css/pages/book-details.css}" href="/css/pages/book-details.css">
+  <link rel="stylesheet" th:href="@{/css/layout/footer.css}" href="/css/layout/footer.css">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+</head>
+<body>
+  <th:block th:replace="~{shared/navigation :: navigation}"></th:block>
+
+  <main class="details-page" id="main-content">
+    <nav class="details-breadcrumb" aria-label="Breadcrumb">
+      <a th:href="@{/}">Home</a><span aria-hidden="true">/</span>
+      <a th:href="@{/catalog}">Book catalog</a><span aria-hidden="true">/</span>
+      <span aria-current="page">Book details</span>
+    </nav>
+
+    <header class="details-heading">
+      <div>
+        <p class="details-kicker" th:text="${book.kicker()}">VIETNAMESE LITERATURE</p>
+        <h1 th:text="${book.title}">Book title</h1>
+        <p class="details-byline">
+          <span th:text="${book.authorLine()}">Author</span>
+          <th:block th:if="${book.genre() != null}"><span aria-hidden="true">·</span><span th:text="${book.genre()}">Genre</span></th:block>
+          <th:block th:if="${book.bookCode != null}"><span aria-hidden="true">·</span><span th:text="${'Book ID ' + book.bookCode}">Book ID</span></th:block>
+        </p>
+      </div>
+      <div class="details-heading-actions">
+        <a class="details-button" sec:authorize="hasAnyRole('LIBRARIAN', 'ADMIN')" th:href="@{/admin/books/{id}/edit(id=${book.id})}">Edit book</a>
+        <button class="details-button" type="button" disabled title="Saved lists are not available yet">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 20s-7-4.4-9-8.6C1.6 8.3 3.6 5 7 5c2 0 3.3 1.1 5 3 1.7-1.9 3-3 5-3 3.4 0 5.4 3.3 4 6.4C19 15.6 12 20 12 20Z"/></svg>
+          Save to list
+        </button>
+      </div>
+    </header>
+
+    <p class="details-staff-note" th:unless="${book.published()}"
+       th:text="${book.copyBadge() + ' · Only staff can see this book. Readers cannot find it in the catalog.'}">Draft</p>
+
+    <div class="details-layout">
+      <figure class="details-cover-column">
+        <div class="details-cover-stage">
+          <img class="details-cover" th:if="${book.coverUrl != null}" th:src="${book.coverUrl}" th:alt="${'Cover of ' + book.title}">
+          <div class="details-cover-placeholder" th:unless="${book.coverUrl != null}" aria-hidden="true">
+            <span class="placeholder-author" th:text="${book.authorLine()}">Author</span>
+            <span class="placeholder-title" th:text="${book.title}">Title</span>
+            <span class="placeholder-mark">booknet</span>
+          </div>
+        </div>
+        <figcaption th:if="${book.editionLine() != null}">Edition in circulation at booknet Library<br><span th:text="${book.editionLine()}">Publisher · 2023</span></figcaption>
+      </figure>
+
+      <section class="details-info" aria-labelledby="about-heading">
+        <div class="details-badges">
+          <span class="details-badge" th:if="${book.genre() != null}" th:text="${book.genre()}">Genre</span>
+          <span class="details-badge popular" th:if="${book.popular}">Popular</span>
+        </div>
+        <h2 id="about-heading" class="details-lead" th:text="${book.lead() != null ? book.lead() : 'About this book'}">Lead</h2>
+        <p class="details-description" th:if="${book.bodyText() != null}" th:text="${book.bodyText()}">Description</p>
+        <p class="details-description" th:if="${book.lead() == null}">The library has not added a description for this book yet.</p>
+
+        <dl class="details-facts">
+          <div><dt>Author</dt><dd th:text="${book.authorLine()}">Author</dd></div>
+          <div th:if="${book.translator != null}"><dt>Translator</dt><dd th:text="${book.translator}">Translator</dd></div>
+          <div th:if="${book.publisher != null}"><dt>Publisher</dt><dd th:text="${book.publisher}">Publisher</dd></div>
+          <div th:if="${book.publishYear != null}"><dt>Publication year</dt><dd th:text="${book.publishYear}">2023</dd></div>
+          <div th:if="${book.pagesAndLanguage() != null}"><dt>Pages / Language</dt><dd th:text="${book.pagesAndLanguage()}">378 pages</dd></div>
+          <div th:if="${book.isbn != null}"><dt>ISBN</dt><dd th:text="${book.isbn}">ISBN</dd></div>
+          <div><dt>Shelf location</dt><dd th:text="${book.shelfLocation != null ? book.shelfLocation : 'Ask at the circulation desk'}">Floor 1</dd></div>
+        </dl>
+      </section>
+
+      <aside class="details-side">
+        <section class="details-card" aria-labelledby="borrow-heading">
+          <h2 id="borrow-heading" th:text="${book.onShelf() ? 'Ready for you' : (book.allOnLoan() ? 'All copies are out' : 'Not available to borrow')}">Ready for you</h2>
+          <span class="details-badge" th:classappend="${book.onShelf() ? '' : (book.allOnLoan() ? 'on-loan' : 'muted')}" th:text="${book.copyBadge()}">Available</span>
+
+          <th:block th:if="${book.onShelf()}">
+            <p class="details-card-text">Borrow for 14 days. Free with an active member card.</p>
+            <dl class="details-card-dates">
+              <div><dt>Expected loan date</dt><dd th:text="${book.loanDateText()}">02/11/2026</dd></div>
+              <div><dt>Estimated due date</dt><dd th:text="${book.dueDateText()}">16/11/2026</dd></div>
+            </dl>
+            <a class="details-primary" sec:authorize="hasRole('MEMBER')" th:href="@{/loans/confirm(bookId=${book.id})}">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 6.5C10.5 5 8.3 4 5.5 4H3v14h2.5c2.8 0 5 .9 6.5 2.5 1.5-1.6 3.7-2.5 6.5-2.5H21V4h-2.5C15.7 4 13.5 5 12 6.5Zm0 0V20"/></svg>
+              Borrow this book
+            </a>
+            <a class="details-primary" sec:authorize="isAnonymous()" th:href="@{/login}">Sign in to borrow</a>
+            <p class="details-card-note" sec:authorize="!hasAnyRole('LIBRARIAN', 'ADMIN')">Confirm in the next step. You may borrow up to 5 books at a time.</p>
+            <p class="details-card-note" sec:authorize="hasAnyRole('LIBRARIAN', 'ADMIN')">Members borrow from this page; staff hand copies over at the desk.</p>
+          </th:block>
+
+          <th:block th:if="${book.allOnLoan()}">
+            <p class="details-card-text">Every copy is on loan right now.
+              <th:block th:if="${book.earliestReturnText() != null}">The earliest is due back on <strong th:text="${book.earliestReturnText()}">05/11/2026</strong>.</th:block></p>
+            <a class="details-secondary" sec:authorize="hasAuthority('RESERVE')"
+               th:if="${alreadyReserved}" th:href="@{/member/reservations}">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M18.5 21 12 17l-6.5 4V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2Z"/></svg>
+              In your queue →
+            </a>
+            <form sec:authorize="hasAuthority('RESERVE')" th:unless="${alreadyReserved}"
+                  th:action="@{/member/reservations}" method="post" style="margin: 0;">
+              <input type="hidden" name="bookId" th:value="${book.id}">
+              <button class="details-secondary" type="submit" style="width: 100%;">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M18.5 21 12 17l-6.5 4V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2Z"/></svg>
+                Reserve book
+              </button>
+            </form>
+            <a class="details-secondary" sec:authorize="isAnonymous()" th:href="@{/login}">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M18.5 21 12 17l-6.5 4V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2Z"/></svg>
+              Sign in to reserve
+            </a>
+            <p class="details-card-note" sec:authorize="!hasAnyRole('LIBRARIAN', 'ADMIN')">Join the waiting queue. Held copies are kept at the Circulation Desk for 2 days.</p>
+            <p class="details-card-note" sec:authorize="hasAnyRole('LIBRARIAN', 'ADMIN')">Members reserve from this page; staff manage queues in Reservation management.</p>
+          </th:block>
+
+          <p class="details-card-text" th:if="${!book.onShelf() and !book.allOnLoan()}">There is no copy to lend right now. A librarian can tell you when one will be back.</p>
+        </section>
+        <a class="details-ask" th:href="@{/contact}">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2.5 21.5Z"/></svg>
+          Need another copy? Ask a librarian <span aria-hidden="true">→</span>
+        </a>
+      </aside>
+    </div>
+
+    <section class="details-tabs" aria-label="More about this book">
+      <div class="details-tab-list" role="tablist">
+        <a href="#tab-about" role="tab" id="tab-about-label" aria-controls="tab-about" aria-selected="true" class="is-current">About the book</a>
+        <a href="#tab-copies" role="tab" id="tab-copies-label" aria-controls="tab-copies" aria-selected="false" th:text="|Copy status (${book.totalCopies})|">Copy status (8)</a>
+        <a href="#tab-policy" role="tab" id="tab-policy-label" aria-controls="tab-policy" aria-selected="false">Borrowing policy</a>
+      </div>
+
+      <div class="details-tab-panel" id="tab-about" role="tabpanel" aria-labelledby="tab-about-label">
+        <p th:text="${book.description != null ? book.description : 'The library has not added a description for this book yet.'}">Description</p>
+        <ul class="details-keywords" th:unless="${#lists.isEmpty(book.keywords)}" aria-label="Keywords">
+          <li th:each="keyword : ${book.keywords}"><a th:href="@{/catalog(keyword=${keyword})}" th:text="${keyword}">keyword</a></li>
+        </ul>
+      </div>
+
+      <div class="details-tab-panel" id="tab-copies" role="tabpanel" aria-labelledby="tab-copies-label">
+        <div class="details-copy-grid">
+          <article class="details-copy available">
+            <strong th:text="${book.availableCopies == 1 ? '1 copy' : book.availableCopies + ' copies'}">3 copies</strong>
+            <div><h3>Available</h3><p th:text="${book.availableBarcodes.isEmpty() ? 'None on the shelf right now' : #strings.listJoin(book.availableBarcodes, ' · ')}">VN001-06</p></div>
+          </article>
+          <article class="details-copy on-loan">
+            <strong th:text="${book.onLoanCopies == 1 ? '1 copy' : book.onLoanCopies + ' copies'}">5 copies</strong>
+            <div><h3>On loan</h3><p th:text="${book.earliestReturnText() != null ? 'Earliest return: ' + book.earliestReturnText() : 'No copies on loan'}">Earliest return</p></div>
+          </article>
+          <article class="details-copy other" th:if="${book.otherCopies > 0}">
+            <strong th:text="${book.otherCopies == 1 ? '1 copy' : book.otherCopies + ' copies'}">1 copy</strong>
+            <div><h3>Not on the shelf</h3><p>Held for a reader, being repaired or missing</p></div>
+          </article>
+        </div>
+        <div class="details-copy-table" th:unless="${#lists.isEmpty(book.copies)}" tabindex="0" role="region" aria-label="Every copy of this book">
+          <table>
+            <caption class="details-sr-only">Every copy of this book, with its barcode, status and shelf</caption>
+            <thead><tr><th scope="col">Barcode</th><th scope="col">Status</th><th scope="col">Shelf location</th></tr></thead>
+            <tbody>
+              <tr th:each="copy : ${book.copies}">
+                <td class="details-barcode" th:text="${copy.barcode}">VN001-06</td>
+                <td><span class="details-badge" th:classappend="${copy.tone}" th:text="${copy.status}">On the shelf</span></td>
+                <td th:text="${copy.shelf != null ? copy.shelf : '—'}">Floor 1</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="details-card-text" th:if="${#lists.isEmpty(book.copies)}">The library has no copies of this book yet.</p>
+      </div>
+
+      <div class="details-tab-panel" id="tab-policy" role="tabpanel" aria-labelledby="tab-policy-label">
+        <ul class="details-policy">
+          <li>Borrow for <strong>14 days</strong>, free with an active member card.</li>
+          <li>Keep up to <strong>5 books</strong> at a time.</li>
+          <li>Renew once for <strong>7 more days</strong> if the book is not overdue and no one is waiting for it.</li>
+          <li>Collect and return books at the circulation desk.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="details-related" th:unless="${#lists.isEmpty(book.related)}" aria-label="Also loved by readers">
+      <article class="details-related-card" th:each="other : ${book.related}">
+        <a class="related-cover" th:href="@{/catalog/{id}(id=${other.id})}" tabindex="-1" aria-hidden="true">
+          <img th:if="${other.coverUrl != null and !#strings.isEmpty(other.coverUrl)}" th:src="${other.coverUrl}" alt="">
+          <span th:unless="${other.coverUrl != null and !#strings.isEmpty(other.coverUrl)}" th:text="${other.title}">Title</span>
+        </a>
+        <div class="related-copy">
+          <p class="details-kicker">ALSO LOVED BY READERS</p>
+          <h2><a th:href="@{/catalog/{id}(id=${other.id})}" th:text="${other.title}">Title</a></h2>
+          <p th:text="${#strings.listJoin(other.authors, ', ') + (other.availableCopies > 0 ? ' · ' + other.availableCopies + ' of ' + other.totalCopies + ' copies on the shelf.' : (other.canReserve ? ' · All copies are on loan.' : ''))}">Author</p>
+        </div>
+        <div class="related-action">
+          <span class="details-badge" th:classappend="${other.availableCopies > 0 ? '' : 'on-loan'}"
+                th:text="${other.availableCopies > 0 ? 'Available' : (other.canReserve ? 'No copies available' : 'Not in circulation')}">Available</span>
+          <a class="details-button" th:href="@{/catalog/{id}(id=${other.id})}">View book</a>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <footer th:replace="~{shared/footer :: footer-section}"></footer>
+  <script th:src="@{/js/book-details.js}" defer></script>
+</body>
+</html>

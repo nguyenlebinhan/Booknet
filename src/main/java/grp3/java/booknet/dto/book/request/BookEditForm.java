@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import org.springframework.web.multipart.MultipartFile;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -38,13 +39,14 @@ public class BookEditForm {
 
     @NotEmpty(message = "At least one author must be selected")
     @Builder.Default
-    private List<Long> authorIds = new ArrayList<>();
+    private List<Integer> authorIds = new ArrayList<>();
 
     @NotEmpty(message = "At least one category must be selected")
     @Builder.Default
-    private List<Long> categoryIds = new ArrayList<>();
+    private List<Integer> categoryIds = new ArrayList<>();
 
-    private Long publisherId;
+    @Size(max = 150, message = "Publisher name cannot exceed 150 characters")
+    private String publisherName;
 
     @Size(max = 150, message = "Translator name cannot exceed 150 characters")
     private String translator;
@@ -73,6 +75,5 @@ public class BookEditForm {
     @Size(max = 255, message = "Keywords cannot exceed 255 characters")
     private String keywords;
 
-    @Size(max = 500, message = "Cover URL cannot exceed 500 characters")
-    private String coverUrl;
+    private MultipartFile coverImage;
 }

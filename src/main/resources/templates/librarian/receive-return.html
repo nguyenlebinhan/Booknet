@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Record Loan / Return | booknet Librarian</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Serif:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/dashboard.css}">
+  <link rel="stylesheet" th:href="@{/css/librarian/circulation.css}">
+</head>
+<body class="admin-page">
+
+<div class="admin-shell">
+  <!-- Sidebar -->
+  <aside th:replace="~{admin/fragments/dashboard :: sidebar}"></aside>
+
+  <div class="admin-workspace">
+    <!-- Topbar -->
+    <header th:replace="~{member/fragments :: topbar(section='Circulation')}"></header>
+
+    <main class="admin-main">
+      
+      <!-- Page Header -->
+      <section class="bn-page-header">
+        <div>
+          <p class="bn-kicker">COUNTER TRANSACTIONS</p>
+          <h1 class="bn-page-title">Receive Book Return at Desk</h1>
+          <p class="bn-page-subtitle">Look up patron records, perform check-out handovers, inspect physical return copies, and issue official receipts.</p>
+        </div>
+        <div class="bn-header-actions">
+          <a th:href="@{/staff/loans}" class="bn-btn bn-btn-secondary">
+            ← Back to Loans Desk
+          </a>
+        </div>
+      </section>
+
+      <!-- Alert messages -->
+      <div th:if="${successMessage}" class="bn-alert bn-alert-success">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        <span th:text="${successMessage}">Operation completed successfully.</span>
+      </div>
+
+      <div th:if="${errorMessage}" class="bn-alert bn-alert-danger">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span th:text="${errorMessage}">An error occurred.</span>
+      </div>
+
+      <!-- Main Layout: 2 Columns for Desk Workflows -->
+      <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 32px; align-items: start;">
+        
+        <!-- ==========================================
+             LEFT COLUMN: UC22 & UC25 (Check-out Flow)
+             ========================================== -->
+        <div>
+          <!-- UC22: Search Patron Record -->
+          <div class="bn-panel">
+            <div class="bn-panel-header">
+              <h2 class="bn-panel-title">1. Search Patron Record</h2>
+              <span style="font-size: 12px; color: var(--bn-muted);">Card ID, email or phone</span>
+            </div>
+            <div style="padding: 24px;">
+              <form th:action="@{/staff/loans/receive-return}" method="get" style="display: flex; gap: 8px;">
+                <input type="text" name="keyword" th:value="${keyword}" placeholder="Enter card code, email or phone..." class="bn-form-input" required>
+                <button type="submit" class="bn-btn bn-btn-primary" style="white-space: nowrap;">Look up</button>
+                <a th:if="${keyword}" th:href="@{/staff/loans/receive-return}" class="bn-btn bn-btn-secondary">Clear</a>
+              </form>
+
+              <!-- Patron Info Result -->
+              <div th:if="${patron != null}" style="margin-top: 20px; border-top: 1px solid var(--bn-line); padding-top: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                  <div>
+                    <h3 style="font-size: 18px; margin: 0 0 4px 0;" th:text="${patron.fullName}">Nguyễn Văn A</h3>
+                    <div style="font-size: 13px; color: var(--bn-muted);" th:text="${patron.email + ' · ' + (patron.phone ?: 'No phone')}">user@example.com</div>
+                    <div style="font-size: 12px; margin-top: 4px;">
+                      <strong>Card Code:</strong> <span th:text="${patron.memberCode ?: 'N/A'}">MB-001</span> · 
+                      <strong>Card Status:</strong> 
+                      <span class="bn-badge" th:classappend="${patron.cardStatus == 'ACTIVE' ? 'bn-badge-success' : 'bn-badge-danger'}" th:text="${patron.cardStatus}">ACTIVE</span>
+                    </div>
+                  </div>
+                  <div style="text-align: right;">
+                    <div style="font-size: 12px; color: var(--bn-muted);">Active quota</div>
+                    <strong style="font-size: 18px;" th:text="${patron.activeLoansCount + ' / ' + patron.maxAllowedLoans}">2 / 5</strong>
+                  </div>
+                </div>
+
+                <!-- Eligibility Banner -->
+                <div th:if="${patron.eligible}" class="bn-patron-badge-banner bn-patron-eligible">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                  <span>Patron is eligible for borrowing. Quota remaining: <strong th:text="${patron.maxAllowedLoans - patron.activeLoansCount}">3</strong> book(s).</span>
+                </div>
+
+                <div th:unless="${patron.eligible}" class="bn-patron-badge-banner bn-patron-ineligible">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                  <span>Ineligible for borrowing: <strong th:text="${patron.ineligibilityReason}">Overdue books present</strong></span>
+                </div>
+
+                <!-- Current Active Loans -->
+                <div th:if="${!#lists.isEmpty(patron.currentBorrowings)}" style="margin-top: 16px;">
+                  <span style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--bn-muted);">Books currently in possession:</span>
+                  <ul style="padding-left: 20px; font-size: 13px; margin: 8px 0 0 0;">
+                    <li th:each="b : ${patron.currentBorrowings}">
+                      <span th:text="${b.bookTitle}">Effective Java</span> 
+                      <small style="color: var(--bn-muted);" th:text="'(Due: ' + ${#temporals.format(b.dueDate, 'dd/MM/yyyy')} + ')'">(Due: 20/11/2026)</small>
+                      <span th:if="${b.overdue}" class="bn-badge bn-badge-danger" style="margin-left: 6px;">Overdue</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div th:if="${keyword != null and patron == null}" style="margin-top: 16px; color: var(--bn-danger); font-size: 13px;">
+                No patron found matching "<span th:text="${keyword}">keyword</span>".
+              </div>
+            </div>
+          </div>
+
+          <!-- UC25: Hand Over Books (Check-out) -->
+          <div class="bn-panel">
+            <div class="bn-panel-header">
+              <h2 class="bn-panel-title">2. Hand Over Books Check-out</h2>
+              <span style="font-size: 12px; color: var(--bn-muted);">Bind physical barcode and issue 14-day loan</span>
+            </div>
+            <div style="padding: 24px;">
+              <form th:action="@{/staff/loans/checkout}" method="post">
+                <div class="bn-form-group">
+                  <label class="bn-form-label">Approved Borrow Request</label>
+                  <select name="requestId" class="bn-form-select" required>
+                    <option value="">-- Select approved request --</option>
+                    <option th:each="req : ${awaitingHandoverList}" 
+                            th:value="${req.requestId}" 
+                            th:selected="${selectedRequestId != null and selectedRequestId == req.requestId}"
+                            th:text="${req.requestCode + ' · ' + req.memberName + ' (' + #strings.listJoin(req.bookTitles, ', ') + ')'}">
+                      BR-001 · Nguyễn Văn A
+                    </option>
+                  </select>
+                </div>
+
+                <div class="bn-form-group">
+                  <label class="bn-form-label">Physical Copy Barcode(s)</label>
+                  <input type="text" name="copyBarcode" placeholder="Scan or enter copy barcode (e.g. BC-001)" class="bn-form-input" required>
+                  <small style="display: block; color: var(--bn-muted); margin-top: 4px; font-size: 11px;">
+                    Scan the barcode sticker on the physical book. Barcode will be marked BORROWED and official due date set to 14 days.
+                  </small>
+                </div>
+
+                <div class="bn-form-group">
+                  <label class="bn-form-label">Desk Notes (Optional)</label>
+                  <input type="text" name="notes" placeholder="Note reader ID verified, condition at handover..." class="bn-form-input">
+                </div>
+
+                <button type="submit" class="bn-btn bn-btn-primary" style="width: 100%; justify-content: center; margin-top: 8px;">
+                  Complete Handover &amp; Issue Loan (14 Days)
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==========================================
+             RIGHT COLUMN: UC26 & UC27 (Check-in Flow)
+             ========================================== -->
+        <div>
+          <div class="bn-panel">
+            <div class="bn-panel-header">
+              <h2 class="bn-panel-title">Receive Book Return &amp; Issue Receipt</h2>
+            </div>
+            <div style="padding: 24px;">
+              <p style="font-size: 13px; color: var(--bn-muted); margin-top: 0; margin-bottom: 20px;">
+                Scan the returned book barcode. The system calculates late fees (2.000 VNĐ/day), records damaged/lost fees, creates an official Return Receipt, and unlocks reservations.
+              </p>
+
+              <form th:action="@{/staff/loans/return}" method="post">
+                <div class="bn-form-group">
+                  <label class="bn-form-label">Copy Barcode to Return *</label>
+                  <input type="text" name="barcode" th:value="${barcode}" placeholder="Scan copy barcode (e.g. BC-001)..." class="bn-form-input" required autofocus>
+                </div>
+
+                <div class="bn-form-group">
+                  <label class="bn-form-label">Physical Condition Evaluation *</label>
+                  <select name="condition" class="bn-form-select" id="condition-selector" required>
+                    <option value="GOOD" selected>GOOD - Clean &amp; Undamaged (No extra fees)</option>
+                    <option value="DAMAGED">DAMAGED - Torn/stained/broken (+50.000 VNĐ fine)</option>
+                    <option value="LOST">LOST - Reader reported lost copy (+100.000 VNĐ fine)</option>
+                  </select>
+                </div>
+
+                <div class="bn-form-group">
+                  <label class="bn-form-label">Condition &amp; Inspection Notes</label>
+                  <textarea name="conditionNotes" rows="3" placeholder="Describe damage if any, or general return condition..." class="bn-form-textarea"></textarea>
+                </div>
+
+                <div style="background: var(--bn-paper); border: 1px solid var(--bn-line); border-radius: 8px; padding: 16px; margin-bottom: 20px; font-size: 12px; color: var(--bn-ink);">
+                  <div style="font-weight: 600; margin-bottom: 6px;">Library Fine Rates:</div>
+                  <div>• Overdue rate: <strong>2.000 VNĐ / day</strong> after due date</div>
+                  <div>• Damaged copy fee: <strong>50.000 VNĐ</strong></div>
+                  <div>• Lost copy replacement fee: <strong>100.000 VNĐ</strong></div>
+                  <div style="margin-top: 8px; color: var(--bn-muted);">* Unpaid fines will automatically attach to patron's profile upon receipt generation.</div>
+                </div>
+
+                <button type="submit" class="bn-btn bn-btn-primary" style="width: 100%; justify-content: center;">
+                  Receive Physical Return &amp; Issue Receipt →
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

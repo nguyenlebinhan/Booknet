@@ -31,7 +31,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -70,14 +70,14 @@ class AdminBookControllerFeature3Tests {
 
     @Test
     @DisplayName("Admin can display edit form for existing book")
-    @WithMockUser(username = "admin@booknet.vn", roles = {"ADMIN"})
+    @WithMockUser(username = "admin@booknet.vn", authorities = {"ROLE_ADMIN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void adminCanDisplayEditBookForm() throws Exception {
         BookEditForm dummyForm = BookEditForm.builder()
                 .title("Spring in Action")
                 .bookCode("BK-SIA-01")
                 .isbn("978-1617294945")
-                .authorIds(List.of(1L))
-                .categoryIds(List.of(1L))
+                .authorIds(List.of(1))
+                .categoryIds(List.of(1))
                 .publishYear((short) 2018)
                 .pageCount(520)
                 .build();
@@ -91,21 +91,22 @@ class AdminBookControllerFeature3Tests {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Copies &amp; shelf locations")))
                 .andExpect(model().attributeExists("bookForm"))
                 .andExpect(model().attribute("bookId", 1L))
-                .andExpect(model().attributeExists("categories"))
-                .andExpect(model().attributeExists("authors"))
-                .andExpect(model().attributeExists("publishers"));
+                .andExpect(model().attributeExists("selectedCategories"))
+                .andExpect(model().attributeExists("selectedAuthors"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Category *")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Authors *")));
     }
 
     @Test
     @DisplayName("Librarian can view the book edit page")
-    @WithMockUser(username = "librarian@booknet.vn", roles = {"LIBRARIAN"})
+    @WithMockUser(username = "librarian@booknet.vn", authorities = {"ROLE_LIBRARIAN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void librarianCanDisplayEditBookForm() throws Exception {
         when(bookService.getBookForEdit(1L)).thenReturn(BookEditForm.builder()
                 .title("Spring in Action")
                 .bookCode("BK-SIA-01")
                 .isbn("978-1617294945")
-                .authorIds(List.of(1L))
-                .categoryIds(List.of(1L))
+                .authorIds(List.of(1))
+                .categoryIds(List.of(1))
                 .publishYear((short) 2018)
                 .pageCount(520)
                 .build());
@@ -117,7 +118,7 @@ class AdminBookControllerFeature3Tests {
 
     @Test
     @DisplayName("Redirects to catalog with error message when book ID not found for edit")
-    @WithMockUser(username = "admin@booknet.vn", roles = {"ADMIN"})
+    @WithMockUser(username = "admin@booknet.vn", authorities = {"ROLE_ADMIN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void editNonExistentBookRedirects() throws Exception {
         when(bookService.getBookForEdit(999L)).thenThrow(new IllegalArgumentException("Book not found with ID: 999"));
 
@@ -129,9 +130,9 @@ class AdminBookControllerFeature3Tests {
 
     @Test
     @DisplayName("Admin can successfully submit valid book update and be redirected")
-    @WithMockUser(username = "admin@booknet.vn", roles = {"ADMIN"})
+    @WithMockUser(username = "admin@booknet.vn", authorities = {"ROLE_ADMIN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void adminCanSubmitValidBookUpdate() throws Exception {
-        mockMvc.perform(post("/admin/books/1/edit")
+        mockMvc.perform(multipart("/admin/books/1/edit")
                         .with(csrf())
                         .param("title", "Spring in Action 5th Edition")
                         .param("bookCode", "BK-SIA-05")
@@ -148,9 +149,9 @@ class AdminBookControllerFeature3Tests {
 
     @Test
     @DisplayName("Librarian can save and publish an edited book")
-    @WithMockUser(username = "librarian@booknet.vn", roles = {"LIBRARIAN"})
+    @WithMockUser(username = "librarian@booknet.vn", authorities = {"ROLE_LIBRARIAN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void librarianCanPublishEditedBook() throws Exception {
-        mockMvc.perform(post("/admin/books/1/publish")
+        mockMvc.perform(multipart("/admin/books/1/publish")
                         .with(csrf())
                         .param("title", "Spring in Action")
                         .param("bookCode", "BK-SIA-01")
@@ -169,9 +170,9 @@ class AdminBookControllerFeature3Tests {
 
     @Test
     @DisplayName("Validation failure on edit preserves form view with errors")
-    @WithMockUser(username = "admin@booknet.vn", roles = {"ADMIN"})
+    @WithMockUser(username = "admin@booknet.vn", authorities = {"ROLE_ADMIN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void editValidationFailurePreservesView() throws Exception {
-        mockMvc.perform(post("/admin/books/1/edit")
+        mockMvc.perform(multipart("/admin/books/1/edit")
                         .with(csrf())
                         .param("title", "") // blank title
                         .param("bookCode", "Invalid Space Code")
@@ -184,12 +185,12 @@ class AdminBookControllerFeature3Tests {
 
     @Test
     @DisplayName("Conflict error on update is displayed via globalError attribute")
-    @WithMockUser(username = "admin@booknet.vn", roles = {"ADMIN"})
+    @WithMockUser(username = "admin@booknet.vn", authorities = {"ROLE_ADMIN","CATALOG_EDIT","COPY_MANAGE","BOOK_RETIRE"})
     void editConflictCapturedInGlobalError() throws Exception {
         doThrow(new IllegalArgumentException("Book code 'BK-CONFLICT' is already in use by another book"))
                 .when(bookService).updateBook(eq(1L), any(BookEditForm.class));
 
-        mockMvc.perform(post("/admin/books/1/edit")
+        mockMvc.perform(multipart("/admin/books/1/edit")
                         .with(csrf())
                         .param("title", "Spring in Action")
                         .param("bookCode", "BK-CONFLICT")

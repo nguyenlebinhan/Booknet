@@ -2,6 +2,12 @@ package grp3.java.booknet.controller.catalog;
 
 import grp3.java.booknet.dto.catalog.CatalogFilter;
 import grp3.java.booknet.dto.catalog.CatalogBookView;
+import grp3.java.booknet.entity.book_service.Reservation;
+import grp3.java.booknet.enums.book_service.ReservationStatus;
+import grp3.java.booknet.repository.book_service.ReservationRepository;
+import grp3.java.booknet.repository.user.UserRepository;
+import grp3.java.booknet.security.dto.CustomUserDetails;
+import grp3.java.booknet.security.principal.CustomOAuth2User;
 import grp3.java.booknet.service.catalog.CatalogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +31,8 @@ public class CatalogController {
     private static final int PAGE_SIZE = 6;
 
     private final CatalogService catalogService;
+    private final ReservationRepository reservationRepository;
+    private final UserRepository userRepository;
 
     @GetMapping("/catalog")
     public String catalog(
@@ -48,7 +56,30 @@ public class CatalogController {
         model.addAttribute("visiblePages", visiblePages);
         model.addAttribute("activePage", "catalog");
         model.addAttribute("staffCatalog", staffCatalog);
+        model.addAttribute("reservedBookIds", resolveActiveReservedBookIds(authentication));
         return "catalog/index";
+    }
+
+    private java.util.Set<Long> resolveActiveReservedBookIds(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated() || isStaff(authentication)) {
+            return java.util.Set.of();
+        }
+        Long userId = null;
+        if (authentication.getPrincipal() instanceof CustomUserDetails local) {
+            userId = local.getId();
+        } else if (authentication.getPrincipal() instanceof CustomOAuth2User oauth) {
+            userId = oauth.getId();
+        } else if (authentication.getName() != null) {
+            userId = userRepository.findIdByEmail(authentication.getName()).orElse(null);
+        }
+        if (userId == null) {
+            return java.util.Set.of();
+        }
+        return reservationRepository
+                .findByMember_IdAndStatusIn(userId, List.of(ReservationStatus.PENDING, ReservationStatus.READY))
+                .stream()
+                .map(r -> r.getBook().getId())
+                .collect(java.util.stream.Collectors.toSet());
     }
 
     private static boolean isStaff(Authentication authentication) {
@@ -58,14 +89,22 @@ public class CatalogController {
     }
 
     private static void normalizeFilter(CatalogFilter filter) {
-        if (filter.getSort() == null || !List.of("recent", "title-asc", "title-desc", "year-desc").contains(filter.getSort())) {
-            filter.setSort("recent");
+        // "Most popular" is the default, as in the Figma design.
+        if (filter.getSort() == null || !List.of("popular", "recent", "title-asc", "title-desc", "year-desc").contains(filter.getSort())) {
+            filter.setSort("popular");
+        }
+        if (filter.getYearFrom() != null && filter.getYearTo() != null && filter.getYearFrom() > filter.getYearTo()) {
+            Integer from = filter.getYearTo();
+            filter.setYearTo(filter.getYearFrom());
+            filter.setYearFrom(from);
         }
         filter.setKeyword(filter.getKeyword() == null ? "" : filter.getKeyword().trim());
     }
 
     private static Sort sortFor(String sort) {
         return switch (sort) {
+            // Ranked by loan count in the catalog service.
+            case "popular" -> Sort.unsorted();
             case "title-asc" -> Sort.by(Sort.Order.asc("title"), Sort.Order.asc("id"));
             case "title-desc" -> Sort.by(Sort.Order.desc("title"), Sort.Order.desc("id"));
             case "year-desc" -> Sort.by(Sort.Order.desc("publishYear"), Sort.Order.desc("id"));

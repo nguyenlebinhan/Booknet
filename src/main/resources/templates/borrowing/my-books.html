@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loans & History · booknet Library</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}" href="/css/base/tokens.css">
+  <link rel="stylesheet" th:href="@{/css/layout/navbar.css}" href="/css/layout/navbar.css">
+  <link rel="stylesheet" th:href="@{/css/pages/mybooks.css}" href="/css/pages/mybooks.css">
+  <link rel="stylesheet" th:href="@{/css/layout/footer.css}" href="/css/layout/footer.css">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+</head>
+<body>
+
+  <th:block th:replace="~{shared/navigation :: navigation}"></th:block>
+
+  <main class="mybooks-main">
+    <div class="mybooks-container">
+
+      <!-- Breadcrumb & Back button -->
+      <nav class="mybooks-breadcrumb" aria-label="Breadcrumb">
+        <button type="button" class="btn-nav-back" onclick="if(window.history.length > 1) { window.history.back(); } else { window.location.href='/'; }" title="Go back to previous page">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Back</span>
+        </button>
+        <div class="mybooks-breadcrumb-links">
+          <a th:href="@{/}">Home</a>
+          <span class="sep">/</span>
+          <span class="current">Loans & history</span>
+        </div>
+      </nav>
+
+      <!-- Page Header -->
+      <header class="mybooks-header">
+        <div>
+          <p class="mybooks-kicker">MEMBER SPACE</p>
+          <h1 class="mybooks-title">The books keeping you company.</h1>
+          <p class="mybooks-meta">
+            <span th:text="${view.memberName}">Nguyễn Minh Anh</span> ·
+            <span th:text="'Card ' + ${view.memberCode}">Card TV-02481</span> ·
+            <span th:text="'Updated ' + ${#temporals.format(view.updatedDate, 'dd/MM/yyyy')}">Updated 02/11/2026</span>
+          </p>
+        </div>
+
+        <a th:href="@{/catalog}" class="btn-find-more">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span>Find more books</span>
+        </a>
+      </header>
+
+      <!-- Flash Messages -->
+      <div th:if="${successMessage}" class="home-notice success" role="status" style="margin-bottom: 20px;" th:text="${successMessage}"></div>
+      <div th:if="${errorMessage}" class="home-notice" role="alert" style="margin-bottom: 20px;" th:text="${errorMessage}"></div>
+
+      <!-- Stats Row -->
+      <section class="mybooks-stats" aria-label="Borrowing overview">
+        <div class="stat-box">
+          <span class="stat-num" th:text="${#numbers.formatInteger(view.activeLoansCount, 2)} + ' / ' + ${#numbers.formatInteger(view.maxAllowedLoans, 2)}">03 / 05</span>
+          <span class="stat-sub">books on loan</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-num" th:classappend="${view.dueSoonCount > 0 ? 'ochre' : ''}" th:text="${#numbers.formatInteger(view.dueSoonCount, 2)}">01</span>
+          <span class="stat-sub">book due soon</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-num" th:classappend="${view.overdueCount > 0 ? 'danger' : ''}" th:text="${#numbers.formatInteger(view.overdueCount, 2)}">01</span>
+          <span class="stat-sub">book overdue</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-num" th:text="${view.booksReadThisYear}">12</span>
+          <span class="stat-sub">books read this year</span>
+        </div>
+      </section>
+
+      <!-- Alert Banner (Overdue Notice) -->
+      <section th:if="${view.topAlertMessage}" class="mybooks-alert-banner" role="alert">
+        <svg class="mybooks-alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <div class="mybooks-alert-content">
+          <h4>Attention: Overdue Notice</h4>
+          <p th:text="${view.topAlertMessage}">Book is overdue. Please return it to the circulation desk so the next reader doesn't have to wait.</p>
+        </div>
+      </section>
+
+      <!-- Navigation Tabs -->
+      <div class="mybooks-tabs" role="tablist">
+        <a th:href="@{/member/my-books(tab='current')}" class="tab-btn" th:classappend="${activeTab == 'current' ? 'is-active' : ''}">
+          Current loans (<span th:text="${#lists.size(view.activeLoans) + #lists.size(view.pendingReservations)}">3</span>)
+        </a>
+        <a th:href="@{/member/my-books(tab='history')}" class="tab-btn" th:classappend="${activeTab == 'history' ? 'is-active' : ''}">
+          Loan history (<span th:text="${#lists.size(view.historyLoans)}">12</span>)
+        </a>
+      </div>
+
+      <!-- Tab Content 1: Current Loans -->
+      <div th:if="${activeTab == 'current'}">
+
+        <!-- Pending Loan Requests (Reservations) -->
+        <div th:if="${!#lists.isEmpty(view.pendingReservations)}" class="loans-table-card" style="margin-bottom: 20px;">
+          <table class="loans-table">
+            <thead>
+              <tr>
+                <th style="width: 55%;">LOAN REQUESTS (PENDING PICKUP)</th>
+                <th style="width: 25%;">REQUESTED ON</th>
+                <th style="width: 20%;">STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="res : ${view.pendingReservations}">
+                <!-- Book info -->
+                <td>
+                  <div class="loan-book-cell">
+                    <img class="loan-book-cover" th:src="${res.coverUrl}" th:alt="${res.bookTitle}">
+                    <div>
+                      <div class="loan-book-title" th:text="${res.bookTitle}">Book Title</div>
+                      <div class="loan-book-author" th:text="${res.authors}">Author</div>
+                      <div class="loan-book-code" th:text="${res.reservationCode}">RQ-0001</div>
+                    </div>
+                  </div>
+                </td>
+                <!-- Requested at -->
+                <td>
+                  <span class="loan-date-text" th:text="${#temporals.format(res.requestedAt, 'dd/MM/yyyy HH:mm')}">16/11/2026 10:30</span>
+                </td>
+                <!-- Status -->
+                <td>
+                  <div class="loan-actions-cell">
+                    <div class="loan-actions-btns">
+                      <span th:if="${res.status.name() == 'READY'}" class="due-badge due-soon">Ready for pickup</span>
+                      <span th:if="${res.status.name() == 'PENDING'}" class="due-badge normal">Awaiting librarian</span>
+                    </div>
+                    <span class="loan-action-hint"
+                          th:text="${res.status.name() == 'READY' ? 'Please collect at the circulation desk' : 'Request submitted · Waiting for librarian to process'}">
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="loans-table-card">
+          <table class="loans-table">
+            <thead>
+              <tr>
+                <th style="width: 45%;">CURRENT LOANS</th>
+                <th style="width: 18%;">LOAN DATE</th>
+                <th style="width: 18%;">DUE DATE</th>
+                <th style="width: 19%;">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${#lists.isEmpty(view.activeLoans)}">
+                <td colspan="4" style="text-align: center; color: var(--bn-muted); padding: 48px;">
+                  You currently have no books on loan.
+                </td>
+              </tr>
+              <tr th:each="loan : ${view.activeLoans}">
+                <!-- Book Title & Cover -->
+                <td>
+                  <div class="loan-book-cell">
+                    <img class="loan-book-cover" th:src="${loan.coverUrl}" th:alt="${loan.bookTitle}">
+                    <div>
+                      <div class="loan-book-title" th:text="${loan.bookTitle}">Book Title</div>
+                      <div class="loan-book-author" th:text="${loan.authors}">Author</div>
+                      <div class="loan-book-code" th:text="${loan.loanCode}">LM-2026-0241</div>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Loan Date -->
+                <td>
+                  <span class="loan-date-text" th:text="${#temporals.format(loan.loanDate, 'dd/MM/yyyy')}">17/10/2026</span>
+                </td>
+
+                <!-- Due Date & Status Badge -->
+                <td>
+                  <div class="loan-due-wrap">
+                    <span class="loan-date-text" style="font-weight: 600;" th:text="${#temporals.format(loan.dueDate, 'dd/MM/yyyy')}">31/10/2026</span>
+                    <span class="due-badge" th:classappend="${loan.dueBadgeType}" th:text="${loan.dueBadgeText}">2 days overdue</span>
+                  </div>
+                </td>
+
+                <!-- Actions -->
+                <td>
+                  <div class="loan-actions-cell">
+                    <div class="loan-actions-btns">
+                      <!-- Nút Return book → mở trang Returns & receipts -->
+                      <a th:if="${loan.canReturn and !loan.isReturnPending}"
+                         th:href="@{/member/loans/{id}/return-detail(id=${loan.loanId})}"
+                         class="btn-action-return" style="text-decoration: none;">Return book</a>
+
+                      <!-- Return pending: hiện badge + link xem chi tiết -->
+                      <a th:if="${loan.isReturnPending}"
+                         th:href="@{/member/loans/{id}/return-detail(id=${loan.loanId})}"
+                         class="btn-action-disabled" style="text-decoration: none;" title="Click to view return details">Return pending</a>
+
+                      <!-- Nút Renew -->
+                      <form th:if="${loan.canRenew and !loan.isRenewPending}" th:action="@{/member/loans/{id}/renew(id=${loan.loanId})}" method="post">
+                        <button type="submit" class="btn-action-renew">Renew</button>
+                      </form>
+                      <button th:if="${!loan.canRenew and !loan.isRenewPending}" type="button" class="btn-action-disabled" disabled>Cannot renew</button>
+                      <button th:if="${loan.isRenewPending}" type="button" class="btn-action-disabled" title="Waiting for librarian confirmation">Renew pending</button>
+                    </div>
+
+                    <span class="loan-action-hint" th:text="${loan.renewalStatusHint}">Please return soon</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Bottom Grid: Renewal Suggestion & Recent History -->
+        <div class="mybooks-bottom-grid">
+          <!-- Renewal Card -->
+          <div class="bottom-card" th:if="${view.renewSuggestion}">
+            <div>
+              <h3 class="bottom-card-title">A little more reading time</h3>
+              <p class="bottom-card-desc">
+                <strong th:text="${view.renewSuggestion.bookTitle}">Book Title</strong> may be renewed once. Estimated new due date:
+                <strong th:text="${#temporals.format(view.renewSuggestion.estimatedNewDueDate, 'dd/MM/yyyy')}">12/11/2026</strong>. Only available if no one has reserved it.
+              </p>
+            </div>
+            <div class="bottom-card-footer">
+              <form th:action="@{/member/loans/{id}/renew(id=${view.renewSuggestion.loanId})}" method="post">
+                <button type="submit" class="btn-bottom-confirm">Confirm 7-day renewal</button>
+              </form>
+              <span class="bottom-card-sub" th:text="'Renewals used: ' + ${view.renewSuggestion.renewalsUsed} + '/' + ${view.renewSuggestion.maxRenewals}">Renewals used: 0/1</span>
+            </div>
+          </div>
+
+          <!-- Recent History Card -->
+          <div class="bottom-card">
+            <div>
+              <h3 class="bottom-card-title">Recent history</h3>
+              <div th:if="${#lists.isEmpty(view.historyLoans)}" style="color: var(--bn-muted); font-size: 14px; padding: 12px 0;">
+                No returned books yet.
+              </div>
+              <div th:each="hist, iter : ${view.historyLoans}" th:if="${iter.index < 3}" class="recent-history-row">
+                <div class="recent-history-left">
+                  <svg class="recent-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="9 12 12 15 16 10"></polyline>
+                  </svg>
+                  <div>
+                    <div class="recent-history-title" th:text="${hist.bookTitle}">Book Title</div>
+                    <div class="recent-history-date" th:text="'Borrowed ' + ${#temporals.format(hist.borrowedDate, 'dd/MM/yyyy')} + ' · Returned ' + (${hist.returnedAt != null} ? ${#temporals.format(hist.returnedAt, 'dd/MM/yyyy')} : 'N/A')">
+                      Borrowed 10/10/2026 · Returned 24/10/2026
+                    </div>
+                  </div>
+                </div>
+                <a th:href="@{/member/loans/{id}/return-detail(id=${hist.loanId})}" class="recent-history-badge" style="text-decoration: none;">Receipt</a>
+              </div>
+            </div>
+            <a th:href="@{/member/my-books(tab='history')}" class="link-view-all">View all history →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content 2: Loan History Table -->
+      <div th:if="${activeTab == 'history'}">
+        <div class="loans-table-card">
+          <table class="loans-table">
+            <thead>
+              <tr>
+                <th style="width: 35%;">BOOK & COPY</th>
+                <th style="width: 15%;">LOAN DATE</th>
+                <th style="width: 15%;">DUE DATE</th>
+                <th style="width: 18%;">RETURNED AT</th>
+                <th style="width: 17%;">RECEIPT</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${#lists.isEmpty(view.historyLoans)}">
+                <td colspan="5" style="text-align: center; color: var(--bn-muted); padding: 48px;">
+                  No past borrowing history records found.
+                </td>
+              </tr>
+              <tr th:each="hist : ${view.historyLoans}">
+                <td>
+                  <div class="loan-book-title" th:text="${hist.bookTitle}">Book Title</div>
+                  <div class="loan-book-code" th:text="${hist.loanCode} + ' · Barcode: ' + ${hist.barcode}">LM-2026-0001 · Barcode: VN001-01</div>
+                </td>
+                <td class="loan-date-text" th:text="${#temporals.format(hist.borrowedDate, 'dd/MM/yyyy')}">10/10/2026</td>
+                <td class="loan-date-text" th:text="${#temporals.format(hist.dueDate, 'dd/MM/yyyy')}">24/10/2026</td>
+                <td>
+                  <div class="loan-date-text" th:text="${hist.returnedAt != null ? #temporals.format(hist.returnedAt, 'dd/MM/yyyy HH:mm') : 'Pending'}">24/10/2026 14:30</div>
+                  <div class="loan-action-hint" th:text="'Librarian: ' + ${hist.receivedByLibrarian}">Librarian: Desk Librarian</div>
+                </td>
+                <td>
+                  <a th:if="${hist.returnedAt != null}"
+                     th:href="@{/member/loans/{id}/return-detail(id=${hist.loanId})}"
+                     class="btn-action-renew" style="text-decoration: none; display: inline-block;">
+                    View receipt
+                  </a>
+                  <span th:if="${hist.returnedAt == null}" class="due-badge due-soon">Pending return</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Return Receipt Modal Popup -->
+  <div th:if="${receipt != null}" class="receipt-modal-backdrop" id="receiptModal">
+    <div class="receipt-modal" role="dialog" aria-modal="true" aria-labelledby="receiptModalTitle">
+      <div class="receipt-header">
+        <span class="receipt-kicker">BOOKNET COMMUNITY LIBRARY</span>
+        <h2 id="receiptModalTitle" class="receipt-title">Return Receipt</h2>
+        <p style="font-size: 13px; color: var(--bn-muted);" th:text="'Official acknowledgement · ' + ${receipt.receiptCode}">Official acknowledgement</p>
+      </div>
+
+      <div class="receipt-row">
+        <span class="receipt-row-label">Receipt Code</span>
+        <span class="receipt-row-val" th:text="${receipt.receiptCode}">REC-101-20261116</span>
+      </div>
+      <div class="receipt-row">
+        <span class="receipt-row-label">Loan Code</span>
+        <span class="receipt-row-val" th:text="${receipt.loanCode}">LM-2026-0101</span>
+      </div>
+      <div class="receipt-row">
+        <span class="receipt-row-label">Member</span>
+        <span class="receipt-row-val" th:text="${receipt.memberName} + ' (' + ${receipt.memberCode} + ')'">Nguyễn Minh Anh</span>
+      </div>
+      <div class="receipt-row">
+        <span class="receipt-row-label">Book</span>
+        <span class="receipt-row-val" th:text="${receipt.bookTitle}">Tôi thấy hoa vàng trên cỏ xanh</span>
+      </div>
+      <div class="receipt-row">
+        <span class="receipt-row-label">Copy Barcode</span>
+        <span class="receipt-row-val" th:text="${receipt.barcode}">VN001-06</span>
+      </div>
+      <div class="receipt-row">
+        <span class="receipt-row-label">Borrowed At</span>
+        <span class="receipt-row-val" th:text="${receipt.borrowedAt != null ? #temporals.format(receipt.borrowedAt, 'dd/MM/yyyy HH:mm') : 'N/A'}">02/11/2026</span>
+      </div>
+      <div class="receipt-row">
+        <span class="receipt-row-label">Returned At</span>
+        <span class="receipt-row-val" th:text="${receipt.returnedAt != null ? #temporals.format(receipt.returnedAt, 'dd/MM/yyyy HH:mm') : 'N/A'}">16/11/2026 15:30</span>
+      </div>
+      <div class="receipt-row">
+        <span class="receipt-row-label">Received By</span>
+        <span class="receipt-row-val" th:text="${receipt.librarianName}">Thủ thư Trần Văn B</span>
+      </div>
+
+      <div class="receipt-actions">
+        <a th:href="@{/member/my-books(tab=${activeTab})}" class="btn-receipt-close">Close</a>
+        <button type="button" class="btn-receipt-print" onclick="window.print()">Print receipt</button>
+      </div>
+    </div>
+  </div>
+
+  <footer th:replace="~{shared/footer :: footer-section}"></footer>
+
+</body>
+</html>

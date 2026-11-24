@@ -19,17 +19,17 @@ public enum UserRole {
     }
 
     public List<GrantedAuthority> authorities() {
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(authorityName()));
-        if (this == ROLE_LIBRARIAN || this == ROLE_ADMIN) {
-            authorities.add(new SimpleGrantedAuthority(UserPermission.MEMBER_READ.name()));
-            authorities.add(new SimpleGrantedAuthority(UserPermission.MEMBER_CARD_ACTIVATE.name()));
-        }
-        if (this == ROLE_ADMIN) {
-            authorities.add(new SimpleGrantedAuthority(UserPermission.USER_READ.name()));
-            authorities.add(new SimpleGrantedAuthority(UserPermission.USER_ROLE_UPDATE.name()));
-            authorities.add(new SimpleGrantedAuthority(UserPermission.USER_ACCESS_UPDATE.name()));
-        }
-        return List.copyOf(authorities);
+        var result=new ArrayList<GrantedAuthority>();result.add(new SimpleGrantedAuthority(authorityName()));
+        defaults(this).stream().sorted().forEach(p -> result.add(new SimpleGrantedAuthority(p.name())));
+        return List.copyOf(result);
+    }
+    public static java.util.Set<RoleCapability> defaults(UserRole role) {
+        var set=java.util.EnumSet.noneOf(RoleCapability.class);
+        if(role==ROLE_GUEST)return set;
+        set.add(RoleCapability.PROFILE_UPDATE);
+        if(role==ROLE_USER){set.addAll(java.util.Set.of(RoleCapability.LOAN_REQUEST,RoleCapability.RESERVE,RoleCapability.RENEW));return set;}
+        set.addAll(java.util.Set.of(RoleCapability.CATALOG_EDIT,RoleCapability.COPY_MANAGE,RoleCapability.BOOK_RETIRE,RoleCapability.MEMBER_READ,RoleCapability.MEMBER_CARD_ACTIVATE,RoleCapability.CIRCULATION,RoleCapability.FINE_PAYMENT,RoleCapability.INVENTORY_REPORT,RoleCapability.CIRCULATION_REPORT,RoleCapability.SERVICE_EMAIL));
+        if(role==ROLE_ADMIN)for(var p:RoleCapability.values())if(p.administrative())set.add(p);
+        return set;
     }
 }

@@ -1,12 +1,15 @@
 package grp3.java.booknet.service.book;
 
+import grp3.java.booknet.dto.book.request.BookCreateForm;
+import grp3.java.booknet.dto.book.request.BookEditForm;
+
 public interface BookService {
 
-    Long createBook(grp3.java.booknet.dto.book.request.BookCreateForm form);
+    Long createBook(BookCreateForm form);
 
-    grp3.java.booknet.dto.book.request.BookEditForm getBookForEdit(Long id);
+    BookEditForm getBookForEdit(Long id);
 
-    void updateBook(Long id, grp3.java.booknet.dto.book.request.BookEditForm form);
+    void updateBook(Long id, BookEditForm form);
 
-    void updateAndPublishBook(Long id, grp3.java.booknet.dto.book.request.BookEditForm form);
+    void updateAndPublishBook(Long id, BookEditForm form);
 }

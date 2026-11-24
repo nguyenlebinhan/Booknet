@@ -77,7 +77,7 @@ public class AccountServiceImpl implements AccountService {
             User user = lockUser(id);
             if (!user.isEnabled() || user.getStatus() != UserStatus.ACTIVE
                     || (purpose == AccountTokenPurpose.VERIFY_EMAIL
-                        && (user.getProvider() != AuthProvider.LOCAL || user.isEmailVerified()))
+                        && (user.getProvider() != AuthProvider.LOCAL || !user.hasPassword() || user.isEmailVerified()))
                     || (purpose == AccountTokenPurpose.RESET_PASSWORD && !user.isEmailVerified())) {
                 return;
             }
@@ -114,23 +114,34 @@ public class AccountServiceImpl implements AccountService {
         AccountToken token = lockValidToken(rawToken, AccountTokenPurpose.VERIFY_EMAIL);
         User user = token.getUser();
         requireLocalActive(user);
+        if(!user.hasPassword())throw invalidToken();
         user.setEmailVerified(true);
         invalidateTokens(user.getId(), AccountTokenPurpose.VERIFY_EMAIL);
     }
 
+    @Transactional(readOnly=true)
+    public boolean isInvitation(String rawToken){
+        if(rawToken==null || rawToken.isBlank() || rawToken.length()>200)return false;
+        return tokens.findPurposeByHash(hash(rawToken)).map(p->p==AccountTokenPurpose.INVITE_ACCOUNT).orElse(false);
+    }
     @Transactional(readOnly = true)
     public void validateResetToken(String rawToken) {
         AccountToken token = tokens.findByTokenHash(hash(rawToken)).orElseThrow(AccountServiceImpl::invalidToken);
-        validateToken(token, AccountTokenPurpose.RESET_PASSWORD);
-        requirePasswordEligible(token.getUser());
+        if(token.getPurpose()==AccountTokenPurpose.INVITE_ACCOUNT){
+            validateToken(token,AccountTokenPurpose.INVITE_ACCOUNT);requireLocalActive(token.getUser());
+            if(token.getUser().hasPassword() || token.getUser().isEmailVerified())throw invalidToken();
+        }else{validateToken(token,AccountTokenPurpose.RESET_PASSWORD);requirePasswordEligible(token.getUser());}
     }
 
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
         validateNewPassword(request.newPassword(), request.confirmPassword());
-        AccountToken token = lockValidToken(request.token(), AccountTokenPurpose.RESET_PASSWORD);
-        User user = token.getUser();
-        requirePasswordEligible(user);
+        var purpose=tokens.findPurposeByHash(hash(request.token())).orElseThrow(AccountServiceImpl::invalidToken);
+        boolean invitation=purpose==AccountTokenPurpose.INVITE_ACCOUNT;
+        AccountToken token=lockValidToken(request.token(),invitation?AccountTokenPurpose.INVITE_ACCOUNT:AccountTokenPurpose.RESET_PASSWORD);
+        User user=token.getUser();
+        if(invitation){requireLocalActive(user);if(user.hasPassword() || user.isEmailVerified())throw invalidToken();user.setEmailVerified(true);invalidateTokens(user.getId(),AccountTokenPurpose.INVITE_ACCOUNT);}
+        else requirePasswordEligible(user);
         replacePassword(user, request.newPassword());
     }
 
@@ -157,6 +168,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Transactional
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('PROFILE_UPDATE') or hasAuthority('USER_ACCESS_UPDATE')")
     public ProfileResponse updateProfile(Long userId, ProfileUpdateRequest request) {
         User user = lockUser(userId);
         String name = request.fullName().trim();
@@ -177,7 +189,22 @@ public class AccountServiceImpl implements AccountService {
         invalidateTokens(user.getId(), AccountTokenPurpose.RESET_PASSWORD);
     }
 
-    private void issueToken(User user, AccountTokenPurpose purpose) {
+    @Transactional
+    public void invite(User user,String message) {
+        if(user.hasPassword() || user.isEmailVerified())throw new IllegalArgumentException("Only pending accounts can be invited.");
+        try { issueToken(user,AccountTokenPurpose.INVITE_ACCOUNT,message); }
+        catch(MailException ex){throw new AccountException(HttpStatus.SERVICE_UNAVAILABLE,"Unable to send the invitation. Please try again.");}
+    }
+    @Transactional
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') and hasAuthority('USER_ACCESS_UPDATE')")
+    public void requestAdminReset(Long id){
+        User user=lockUser(id);requirePasswordEligible(user);
+        try{issueToken(user,AccountTokenPurpose.RESET_PASSWORD);}catch(MailException ex){
+            throw new AccountException(HttpStatus.SERVICE_UNAVAILABLE,"Unable to send the reset email. Please try again.");
+        }
+    }
+    private void issueToken(User user,AccountTokenPurpose purpose){issueToken(user,purpose,null);}
+    private void issueToken(User user, AccountTokenPurpose purpose,String personalMessage) {
         Instant now = clock.instant();
         boolean recentlySent = tokens.findFirstByUser_IdAndPurposeOrderByIssuedAtDesc(user.getId(), purpose)
                 .map(token -> token.getIssuedAt().plusSeconds(60).isAfter(now)).orElse(false);
@@ -186,11 +213,12 @@ public class AccountServiceImpl implements AccountService {
         byte[] bytes = new byte[32];
         RANDOM.nextBytes(bytes);
         String rawToken = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-        Duration lifetime = purpose == AccountTokenPurpose.VERIFY_EMAIL
+        Duration lifetime = purpose != AccountTokenPurpose.RESET_PASSWORD
                 ? AccountPolicy.VERIFICATION_TOKEN_LIFETIME : AccountPolicy.RESET_TOKEN_LIFETIME;
         tokens.save(AccountToken.builder().user(user).purpose(purpose).tokenHash(hash(rawToken))
                 .issuedAt(now).expiresAt(now.plus(lifetime)).build());
-        mail.send(user.getEmail(), rawToken, purpose);
+        if(purpose==AccountTokenPurpose.INVITE_ACCOUNT)mail.sendInvitation(user.getEmail(),rawToken,personalMessage);
+        else mail.send(user.getEmail(), rawToken, purpose);
     }
 
     private AccountToken lockValidToken(String rawToken, AccountTokenPurpose purpose) {

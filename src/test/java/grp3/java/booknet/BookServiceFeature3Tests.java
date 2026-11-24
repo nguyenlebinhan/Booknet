@@ -71,6 +71,7 @@ class BookServiceFeature3Tests {
                 .publishYear((short) 2018)
                 .pageCount(412)
                 .language("en")
+                .coverUrl("https://legacy.example/cover.jpg")
                 .publicationStatus(PublicationStatus.DRAFT)
                 .build());
     }
@@ -83,9 +84,9 @@ class BookServiceFeature3Tests {
         assertThat(editForm.getTitle()).isEqualTo("Effective Java");
         assertThat(editForm.getBookCode()).isEqualTo("BK-EJ-01");
         assertThat(editForm.getIsbn()).isEqualTo("978-0134685991");
-        assertThat(editForm.getAuthorIds()).contains(author1.getId().longValue());
-        assertThat(editForm.getCategoryIds()).contains(cat1.getId().longValue());
-        assertThat(editForm.getPublisherId()).isEqualTo(pub1.getId().longValue());
+        assertThat(editForm.getAuthorIds()).containsExactly(author1.getId());
+        assertThat(editForm.getCategoryIds()).contains(cat1.getId());
+        assertThat(editForm.getPublisherName()).isEqualTo(pub1.getName());
     }
 
     @Test
@@ -95,9 +96,9 @@ class BookServiceFeature3Tests {
                 .title("Effective Java 3rd Edition")
                 .bookCode("BK-EJ-03")
                 .isbn("978-0134685991")
-                .authorIds(List.of(author1.getId().longValue(), author2.getId().longValue()))
-                .categoryIds(List.of(cat1.getId().longValue(), cat2.getId().longValue()))
-                .publisherId(pub2.getId().longValue())
+                .authorIds(List.of(author1.getId(), author2.getId()))
+                .categoryIds(List.of(cat1.getId(), cat2.getId()))
+                .publisherName(pub2.getName())
                 .translator("Nguyen Van A")
                 .edition("3rd")
                 .language("vi")
@@ -105,7 +106,6 @@ class BookServiceFeature3Tests {
                 .pageCount(450)
                 .description("Updated items for Java 7, 8, and 9")
                 .keywords("java, best practices, bloch")
-                .coverUrl("https://example.com/cover.jpg")
                 .build();
 
         bookService.updateBook(existingBook.getId(), form);
@@ -117,6 +117,7 @@ class BookServiceFeature3Tests {
         assertThat(updated.getCategories()).extracting(Category::getName).containsExactlyInAnyOrder("Java", "Best Practices");
         assertThat(updated.getPublisher().getName()).isEqualTo("O'Reilly");
         assertThat(updated.getTranslator()).isEqualTo("Nguyen Van A");
+        assertThat(updated.getCoverUrl()).isEqualTo("https://legacy.example/cover.jpg");
 
         // Verify shared authors and categories are not deleted
         assertThat(authorRepository.findAll()).hasSize(2);
@@ -137,8 +138,8 @@ class BookServiceFeature3Tests {
                 .title("Effective Java")
                 .bookCode("BK-OTHER") // conflict
                 .isbn("978-0134685991")
-                .authorIds(List.of(author1.getId().longValue()))
-                .categoryIds(List.of(cat1.getId().longValue()))
+                .authorIds(List.of(author1.getId()))
+                .categoryIds(List.of(cat1.getId()))
                 .publishYear((short) 2018)
                 .pageCount(412)
                 .build();
@@ -155,8 +156,8 @@ class BookServiceFeature3Tests {
                 .title("Non existent")
                 .bookCode("BK-NEW")
                 .isbn("978-0000000000")
-                .authorIds(List.of(author1.getId().longValue()))
-                .categoryIds(List.of(cat1.getId().longValue()))
+                .authorIds(List.of(author1.getId()))
+                .categoryIds(List.of(cat1.getId()))
                 .publishYear((short) 2018)
                 .pageCount(412)
                 .build();

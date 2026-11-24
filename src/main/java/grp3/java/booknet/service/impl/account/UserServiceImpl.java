@@ -21,8 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final grp3.java.booknet.repository.user.RoleDefinitionRepository roles;
     private final PasswordEncoder passwordEncoder;
     private final AccountServiceImpl accountServiceImpl;
+    private final grp3.java.booknet.service.member.MemberCardService memberCards;
 
     @Override
     @Transactional
@@ -53,6 +55,8 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         User saved = userRepository.saveAndFlush(newUser);
+        roles.findBySystemRole(UserRole.ROLE_USER).ifPresent(saved::setAssignedRole);
+        memberCards.createPending(saved);
         accountServiceImpl.sendInitialVerification(saved);
         return saved;
     }

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Returns &amp; receipts · booknet Library</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/layout/navbar.css}">
+  <link rel="stylesheet" th:href="@{/css/pages/return-detail.css}">
+  <link rel="stylesheet" th:href="@{/css/layout/footer.css}">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+</head>
+<body>
+
+  <th:block th:replace="~{shared/navigation :: navigation}"></th:block>
+
+  <main class="rd-main">
+    <div class="rd-container">
+
+      <!-- Breadcrumb -->
+      <nav class="rd-breadcrumb" aria-label="Breadcrumb">
+        <div class="rd-breadcrumb-links">
+          <a th:href="@{/}">Home</a>
+          <span class="sep">/</span>
+          <span class="current">Returns &amp; receipts</span>
+        </div>
+      </nav>
+
+      <!-- Page header -->
+      <header class="rd-header">
+        <p class="rd-kicker">RETURN AT THE LIBRARY</p>
+        <h1 class="rd-title">Return a book. Pass on the journey.</h1>
+        <p class="rd-subtitle">Bring your book to the circulation desk. The loan is complete only after a librarian confirms physical receipt.</p>
+      </header>
+
+      <!-- Flash messages -->
+      <div th:if="${successMessage}" class="rd-flash rd-flash--success" role="status" th:text="${successMessage}"></div>
+      <div th:if="${errorMessage}"   class="rd-flash rd-flash--error"   role="alert"  th:text="${errorMessage}"></div>
+
+      <!-- Two-column grid -->
+      <div class="rd-grid">
+
+        <!-- ══ LEFT: Return confirmation form ══ -->
+        <section class="rd-card" aria-labelledby="rd-left-heading">
+          <p class="rd-section-label">01 / REQUEST A RETURN</p>
+
+          <!-- Book to return -->
+          <h2 id="rd-left-heading" class="rd-card-title">Book to return</h2>
+          <div class="rd-book-block">
+            <img class="rd-book-cover" th:src="${detail.coverUrl}" th:alt="${detail.bookTitle}">
+            <div class="rd-book-info">
+              <h3 class="rd-book-title" th:text="${detail.bookTitle}">Book Title</h3>
+              <p class="rd-book-author" th:text="${detail.authors}">Author</p>
+              <p class="rd-book-meta">
+                <span th:text="${detail.copyCode}">KH003-04</span>
+                · Loan <span th:text="${detail.loanCode}">LM-2026-0241</span>
+              </p>
+              <span class="due-badge" th:classappend="${detail.dueBadgeType}" th:text="${detail.dueBadgeText}">2 days overdue</span>
+            </div>
+          </div>
+
+          <!-- Loan dates -->
+          <dl class="rd-dates">
+            <div class="rd-date-row">
+              <dt>Loan date</dt>
+              <dd th:text="${detail.borrowedAt != null ? #temporals.format(detail.borrowedAt, 'dd/MM/yyyy') : '—'}">17/10/2026</dd>
+            </div>
+            <div class="rd-date-row">
+              <dt>Due date</dt>
+              <dd th:text="${#temporals.format(detail.dueDate, 'dd/MM/yyyy')}">31/10/2026</dd>
+            </div>
+            <div class="rd-date-row">
+              <dt>Expected return date</dt>
+              <dd th:text="${detail.returnRequestedAt != null ? #temporals.format(detail.returnRequestedAt, 'dd/MM/yyyy') : '—'}">02/11/2026</dd>
+            </div>
+          </dl>
+
+          <!-- ── Member: submit return request (khi chưa RETURN_PENDING) ── -->
+          <div th:if="${!isLibrarian
+                        and detail.loanStatusName != 'RETURN_PENDING'
+                        and detail.loanStatusName != 'RETURNED'
+                        and detail.loanStatusName != 'LOST'}">
+            <form th:action="@{/member/loans/{id}/return(id=${detail.loanId})}" method="post">
+              <label class="rd-checkbox-label">
+                <input type="checkbox" required>
+                <span>I have brought this exact copy to the circulation desk.</span>
+              </label>
+              <div class="rd-form-actions">
+                <button type="submit" class="btn-rd-confirm">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Confirm return at desk
+                </button>
+                <a th:href="@{/member/my-books}" class="btn-rd-back">Back</a>
+              </div>
+            </form>
+          </div>
+
+          <!-- ── Librarian confirm form (only when NOT yet returned) ── -->
+          <div th:if="${isLibrarian and detail.loanStatusName != 'RETURNED' and detail.loanStatusName != 'LOST'}">
+            <form th:action="@{/member/loans/{id}/return/confirm(id=${detail.loanId})}" method="post">
+
+              <label class="rd-textarea-label" for="conditionNote">Book condition notes (optional)</label>
+              <textarea id="conditionNote" name="conditionNote" class="rd-textarea"
+                        rows="4" placeholder="Book intact, with no markings or damage."
+                        th:text="${detail.conditionNote}"></textarea>
+
+              <label class="rd-checkbox-label">
+                <input type="checkbox" required>
+                <span>I have brought this exact copy to the circulation desk.</span>
+              </label>
+
+              <div class="rd-form-actions">
+                <button type="submit" class="btn-rd-confirm">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Confirm return at desk
+                </button>
+                <a th:href="@{/member/my-books}" class="btn-rd-back">Back</a>
+              </div>
+            </form>
+          </div>
+
+          <!-- ── Member view: status when RETURN_PENDING ── -->
+          <div th:if="${!isLibrarian and detail.loanStatusName == 'RETURN_PENDING'}" class="rd-pending-notice">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <div>
+              <strong>Return requested</strong>
+              <p>Bring this book to the circulation desk. A librarian will confirm the return.</p>
+            </div>
+          </div>
+
+          <!-- ── Already returned state ── -->
+          <div th:if="${detail.loanStatusName == 'RETURNED'}" class="rd-returned-notice">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <div>
+              <strong>Return confirmed</strong>
+              <p th:if="${detail.conditionNote != null and !#strings.isEmpty(detail.conditionNote)}"
+                 th:text="'Note: ' + ${detail.conditionNote}"></p>
+            </div>
+          </div>
+
+          <div th:if="${detail.loanStatusName == 'RETURNED' or !isLibrarian}" class="rd-form-actions" style="margin-top: 20px;">
+            <a th:href="@{/member/my-books}" class="btn-rd-back">Back</a>
+          </div>
+        </section>
+
+        <!-- ══ RIGHT: Receipt panel ══ -->
+        <section class="rd-card rd-card--receipt" aria-labelledby="rd-right-heading" id="receipt-section">
+          <p class="rd-section-label">02 / RECEIPT AFTER LIBRARIAN CONFIRMATION</p>
+
+          <!-- Waiting state -->
+          <div th:if="${!detail.isReturned}" class="rd-receipt-waiting">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--bn-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="48" height="48">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <p>Receipt will appear here once the librarian has confirmed the return at the desk.</p>
+          </div>
+
+          <!-- Confirmed receipt -->
+          <div th:if="${detail.isReturned}" class="rd-receipt-content" id="printable-receipt">
+            <!-- Checkmark -->
+            <div class="rd-receipt-check">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="28" height="28">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+
+            <h2 id="rd-right-heading" class="rd-receipt-heading">Your book is back at booknet.</h2>
+            <p class="rd-receipt-sub">
+              Thank you, <span th:text="${detail.memberName}">Minh Anh</span>, for taking care of the book.<br>
+              The <strong th:text="${detail.bookTitle}">Sapiens</strong> loan is now complete.
+            </p>
+            <span class="rd-receipt-badge">Return confirmed</span>
+
+            <!-- Receipt details -->
+            <dl class="rd-receipt-dl">
+              <div class="rd-receipt-row">
+                <dt>Return receipt ID</dt>
+                <dd th:text="${detail.receiptCode}">TR-2026-0112</dd>
+              </div>
+              <div class="rd-receipt-row">
+                <dt>Loan ID</dt>
+                <dd th:text="${detail.loanCode}">LM-2026-0241</dd>
+              </div>
+              <div class="rd-receipt-row">
+                <dt>Copy barcode</dt>
+                <dd th:text="${detail.barcode}">KH003-04</dd>
+              </div>
+              <div class="rd-receipt-row">
+                <dt>Member</dt>
+                <dd th:text="${detail.memberName}">Nguyễn Minh Anh</dd>
+              </div>
+              <div class="rd-receipt-row">
+                <dt>Confirmed at</dt>
+                <dd th:text="${detail.returnedAt != null ? #temporals.format(detail.returnedAt, 'dd/MM/yyyy · HH:mm') : '—'}">02/11/2026 · 10:24</dd>
+              </div>
+              <div class="rd-receipt-row">
+                <dt>Received by librarian</dt>
+                <dd th:text="${detail.librarianName}">Trần Thu Hà</dd>
+              </div>
+              <div class="rd-receipt-row">
+                <dt>Books still on loan</dt>
+                <dd th:text="${detail.booksStillOnLoan} + ' book(s)'">2 books</dd>
+              </div>
+            </dl>
+
+            <!-- Actions (hidden on print) -->
+            <div class="rd-receipt-actions no-print">
+              <a th:href="@{/member/my-books}" class="btn-rd-mybooks">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+                Back to my books
+              </a>
+              <button type="button" class="btn-rd-print" onclick="window.print()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="8 17 12 21 16 17"></polyline>
+                  <line x1="12" y1="12" x2="12" y2="21"></line>
+                  <path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"></path>
+                </svg>
+                Download receipt PDF
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- /.rd-grid -->
+
+      <!-- Bottom row -->
+      <div class="rd-bottom-grid">
+        <!-- Fine notice card -->
+        <div th:if="${detail.dueBadgeType == 'overdue' and !detail.isReturned}" class="rd-notice-card rd-notice-card--warn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div>
+            <strong>No late fee collected yet</strong>
+            <p>Overdue returns incur daily fines. A librarian finalises the fine upon receiving the book; pay by QR or at the desk.</p>
+          </div>
+        </div>
+        <div th:if="${detail.dueBadgeType != 'overdue' or detail.isReturned}" class="rd-notice-card rd-notice-card--neutral"></div>
+
+        <!-- Discover next read -->
+        <div class="rd-notice-card rd-notice-card--discover">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <div>
+            <span>One book closes. </span>
+            <a th:href="@{/catalog}">Discover your next read →</a>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.rd-container -->
+  </main>
+
+  <footer th:replace="~{shared/footer :: footer-section}"></footer>
+
+</body>
+</html>

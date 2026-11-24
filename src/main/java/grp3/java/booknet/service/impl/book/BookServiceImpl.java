@@ -9,10 +9,14 @@ import grp3.java.booknet.entity.book.Publisher;
 import grp3.java.booknet.enums.book.PublicationStatus;
 import grp3.java.booknet.repository.book.*;
 import grp3.java.booknet.service.book.BookService;
+import grp3.java.booknet.service.book.CoverImageStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,6 +31,7 @@ public class BookServiceImpl implements BookService {
     private final AuthorRepository authorRepository;
     private final CategoryRepository categoryRepository;
     private final PublisherRepository publisherRepository;
+    private final CoverImageStorage coverImageStorage;
 
     @Override
     @Transactional
@@ -38,29 +43,10 @@ public class BookServiceImpl implements BookService {
             throw new IllegalArgumentException("ISBN '" + form.getIsbn() + "' is already in use");
         }
 
-        Set<Author> authors = new HashSet<>();
-        if (form.getAuthorIds() != null && !form.getAuthorIds().isEmpty()) {
-            for (Long authorId : form.getAuthorIds()) {
-                Author author = authorRepository.findById(authorId)
-                        .orElseThrow(() -> new IllegalArgumentException("Author not found with ID: " + authorId));
-                authors.add(author);
-            }
-        }
-
-        Set<Category> categories = new HashSet<>();
-        if (form.getCategoryIds() != null && !form.getCategoryIds().isEmpty()) {
-            for (Long catId : form.getCategoryIds()) {
-                Category category = categoryRepository.findById(catId)
-                        .orElseThrow(() -> new IllegalArgumentException("Category not found with ID: " + catId));
-                categories.add(category);
-            }
-        }
-
-        Publisher publisher = null;
-        if (form.getPublisherId() != null) {
-            publisher = publisherRepository.findById(form.getPublisherId())
-                    .orElseThrow(() -> new IllegalArgumentException("Publisher not found with ID: " + form.getPublisherId()));
-        }
+        Set<Author> authors = resolveAuthors(form.getAuthorIds());
+        Set<Category> categories = resolveCategories(form.getCategoryIds());
+        Publisher publisher = resolvePublisher(form.getPublisherName());
+        String coverUrl = storeCoverImage(form.getCoverImage(), null);
 
         Book newBook = Book.builder()
                 .title(form.getTitle().trim())
@@ -76,7 +62,7 @@ public class BookServiceImpl implements BookService {
                 .pageCount(form.getPageCount())
                 .description(form.getDescription() != null ? form.getDescription().trim() : null)
                 .keywords(form.getKeywords() != null ? form.getKeywords().trim() : null)
-                .coverUrl(form.getCoverUrl() != null ? form.getCoverUrl().trim() : null)
+                .coverUrl(coverUrl)
                 .publicationStatus(PublicationStatus.DRAFT) // Default to DRAFT
                 .deleted(false)
                 .build();
@@ -92,15 +78,16 @@ public class BookServiceImpl implements BookService {
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Book not found with ID: " + id));
 
-        List<Long> authorIds = book.getAuthors().stream()
-                .map(a -> a.getId().longValue())
+        List<Integer> authorIds = book.getAuthors().stream()
+                .map(Author::getId)
+                .sorted()
+                .toList();
+
+        List<Integer> categoryIds = book.getCategories().stream()
+                .map(Category::getId)
                 .collect(Collectors.toList());
 
-        List<Long> categoryIds = book.getCategories().stream()
-                .map(c -> c.getId().longValue())
-                .collect(Collectors.toList());
-
-        Long publisherId = book.getPublisher() != null ? book.getPublisher().getId().longValue() : null;
+        String publisherName = book.getPublisher() != null ? book.getPublisher().getName() : null;
 
         return BookEditForm.builder()
                 .title(book.getTitle())
@@ -108,7 +95,7 @@ public class BookServiceImpl implements BookService {
                 .isbn(book.getIsbn())
                 .authorIds(authorIds)
                 .categoryIds(categoryIds)
-                .publisherId(publisherId)
+                .publisherName(publisherName)
                 .translator(book.getTranslator())
                 .edition(book.getEdition())
                 .language(book.getLanguage())
@@ -116,7 +103,6 @@ public class BookServiceImpl implements BookService {
                 .pageCount(book.getPageCount())
                 .description(book.getDescription())
                 .keywords(book.getKeywords())
-                .coverUrl(book.getCoverUrl())
                 .build();
     }
 
@@ -153,29 +139,9 @@ public class BookServiceImpl implements BookService {
             throw new IllegalArgumentException("ISBN '" + form.getIsbn() + "' is already in use by another book");
         }
 
-        Set<Author> authors = new HashSet<>();
-        if (form.getAuthorIds() != null && !form.getAuthorIds().isEmpty()) {
-            for (Long authorId : form.getAuthorIds()) {
-                Author author = authorRepository.findById(authorId)
-                        .orElseThrow(() -> new IllegalArgumentException("Author not found with ID: " + authorId));
-                authors.add(author);
-            }
-        }
-
-        Set<Category> categories = new HashSet<>();
-        if (form.getCategoryIds() != null && !form.getCategoryIds().isEmpty()) {
-            for (Long catId : form.getCategoryIds()) {
-                Category category = categoryRepository.findById(catId)
-                        .orElseThrow(() -> new IllegalArgumentException("Category not found with ID: " + catId));
-                categories.add(category);
-            }
-        }
-
-        Publisher publisher = null;
-        if (form.getPublisherId() != null) {
-            publisher = publisherRepository.findById(form.getPublisherId())
-                    .orElseThrow(() -> new IllegalArgumentException("Publisher not found with ID: " + form.getPublisherId()));
-        }
+        Set<Author> authors = resolveAuthors(form.getAuthorIds());
+        Set<Category> categories = resolveCategories(form.getCategoryIds());
+        Publisher publisher = resolvePublisher(form.getPublisherName());
 
         book.setTitle(form.getTitle().trim());
         book.setBookCode(trimmedCode);
@@ -190,12 +156,86 @@ public class BookServiceImpl implements BookService {
         book.setPageCount(form.getPageCount());
         book.setDescription(form.getDescription() != null ? form.getDescription().trim() : null);
         book.setKeywords(form.getKeywords() != null ? form.getKeywords().trim() : null);
-        book.setCoverUrl(form.getCoverUrl() == null || form.getCoverUrl().isBlank()
-                ? null
-                : form.getCoverUrl().trim());
+        book.setCoverUrl(storeCoverImage(form.getCoverImage(), book.getCoverUrl()));
 
         bookRepository.save(book);
         log.info("Updated book ID: {}, code: {}", book.getId(), book.getBookCode());
+    }
+
+    private Set<Author> resolveAuthors(List<Integer> authorIds) {
+        if (authorIds == null || authorIds.isEmpty()) {
+            throw new IllegalArgumentException("At least one author must be selected.");
+        }
+
+        Set<Integer> uniqueIds = new HashSet<>(authorIds);
+        List<Author> authors = authorRepository.findAllById(uniqueIds);
+        if (authors.size() != uniqueIds.size()) {
+            Set<Integer> foundIds = authors.stream().map(Author::getId).collect(Collectors.toSet());
+            uniqueIds.removeAll(foundIds);
+            throw new IllegalArgumentException("Author not found with ID: " + uniqueIds.iterator().next());
+        }
+        return new HashSet<>(authors);
+    }
+
+    private Set<Category> resolveCategories(List<Integer> categoryIds) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            throw new IllegalArgumentException("At least one category must be selected.");
+        }
+        Set<Category> categories = new HashSet<>();
+        for (Integer categoryId : categoryIds) {
+            Category category = categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new IllegalArgumentException("Category not found with ID: " + categoryId));
+            categories.add(category);
+        }
+        return categories;
+    }
+
+    private Publisher resolvePublisher(String name) {
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        String normalized = name.trim();
+        if (normalized.length() > 150) {
+            throw new IllegalArgumentException("Publisher name cannot exceed 150 characters.");
+        }
+        return publisherRepository.findByNameIgnoreCase(normalized)
+                .orElseGet(() -> publisherRepository.save(Publisher.builder().name(normalized).build()));
+    }
+
+    private String storeCoverImage(MultipartFile image, String currentCoverUrl) {
+        if (image == null || image.isEmpty()) {
+            return currentCoverUrl;
+        }
+        String storedUrl = coverImageStorage.store(image);
+        registerCoverCleanup(storedUrl, currentCoverUrl);
+        return storedUrl;
+    }
+
+    private void registerCoverCleanup(String newCoverUrl, String previousCoverUrl) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            coverImageStorage.delete(newCoverUrl);
+            throw new IllegalStateException("Cover images must be stored within a database transaction.");
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status == STATUS_COMMITTED) {
+                    if (previousCoverUrl != null && !previousCoverUrl.equals(newCoverUrl)) {
+                        deleteCoverAfterTransaction(previousCoverUrl);
+                    }
+                } else {
+                    deleteCoverAfterTransaction(newCoverUrl);
+                }
+            }
+        });
+    }
+
+    private void deleteCoverAfterTransaction(String coverUrl) {
+        try {
+            coverImageStorage.delete(coverUrl);
+        } catch (RuntimeException ex) {
+            log.error("Failed to clean up cover image {} after book transaction.", coverUrl, ex);
+        }
     }
 
 }

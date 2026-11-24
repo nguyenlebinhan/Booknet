@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My reservations • booknet Library</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}" href="/css/base/tokens.css">
+  <link rel="stylesheet" th:href="@{/css/layout/navbar.css}" href="/css/layout/navbar.css">
+  <link rel="stylesheet" th:href="@{/css/pages/reservations.css}" href="/css/pages/reservations.css">
+  <link rel="stylesheet" th:href="@{/css/layout/footer.css}" href="/css/layout/footer.css">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+</head>
+<body>
+
+  <th:block th:replace="~{shared/navigation :: navigation}"></th:block>
+
+  <main class="res-main">
+    <div class="res-container">
+
+      <nav class="res-breadcrumb" aria-label="Breadcrumb">
+        <a th:href="@{/}">Home</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">My reservations</span>
+      </nav>
+
+      <header class="res-header">
+        <div>
+          <p class="res-kicker">MEMBER SPACE</p>
+          <h1 class="res-title">A book worth waiting for.</h1>
+          <p class="res-subtitle">Track queue positions for books currently on loan, check held copy pickup windows, or release your spot when you no longer need it.</p>
+        </div>
+        <a th:href="@{/catalog}" class="res-btn-outline">Explore books</a>
+      </header>
+
+      <div class="res-flash res-flash-success" th:if="${successMessage}" th:text="${successMessage}">Reservation updated.</div>
+      <div class="res-flash res-flash-error" th:if="${errorMessage}" th:text="${errorMessage}">Unable to update reservation.</div>
+      <div class="res-flash res-flash-error" th:if="${!canReserve}">
+        Your account currently cannot place or modify reservations. Contact a librarian if you believe this is a mistake.
+      </div>
+
+      <!-- Ready pickup callout -->
+      <section class="res-ready-banner" th:if="${view.readyBanner != null}" aria-label="Pickup hold notice">
+        <div class="res-ready-banner-copy">
+          <span class="res-ready-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6 9 17l-5-5"/>
+            </svg>
+          </span>
+          <div>
+            <h2>A book is waiting for you</h2>
+            <p>
+              A returned copy of <strong th:text="${view.readyBanner.bookTitle}">Book title</strong> is held at the Circulation Desk
+              until <strong th:text="${view.readyBanner.pickupUntil != null ? #temporals.format(view.readyBanner.pickupUntil, 'dd/MM/yyyy · HH:mm') : '48 hours'}">dd/MM/yyyy · HH:mm</strong>.
+              Please bring your library card (<span th:text="${view.readyBanner.memberCode ?: 'Active Member'}">BN-2026</span>) to pick it up.
+            </p>
+          </div>
+        </div>
+        <a href="#pickup-policy" class="res-btn-primary">View pickup instructions</a>
+      </section>
+
+      <!-- Tabs -->
+      <nav class="res-tabs" aria-label="Reservation status filters">
+        <a th:href="@{/member/reservations(tab='active')}" class="res-tab"
+           th:classappend="${activeTab == 'active'} ? ' is-active' : ''">
+          <span>Active reservations</span>
+          <span class="res-tab-count" th:text="${view.activeCount}">0</span>
+        </a>
+        <a th:href="@{/member/reservations(tab='completed')}" class="res-tab"
+           th:classappend="${activeTab == 'completed'} ? ' is-active' : ''">
+          <span>Completed</span>
+          <span class="res-tab-count" th:text="${view.completedCount}">0</span>
+        </a>
+        <a th:href="@{/member/reservations(tab='canceled')}" class="res-tab"
+           th:classappend="${activeTab == 'canceled'} ? ' is-active' : ''">
+          <span>Canceled</span>
+          <span class="res-tab-count" th:text="${view.canceledCount}">0</span>
+        </a>
+      </nav>
+
+      <!-- Explicit Cancellation Confirmation Card -->
+      <section class="res-cancel-modal-card" id="cancel-confirm-box" th:if="${view.cancelCandidate != null}">
+        <div class="res-cancel-modal-head">
+          <div>
+            <p class="res-cancel-kicker">CONFIRM RESERVATION CANCELLATION</p>
+            <h2 th:text="${'Cancel reservation for &quot;' + view.cancelCandidate.bookTitle + '&quot;?'}">Cancel reservation?</h2>
+            <p>
+              Reservation <strong th:text="${view.cancelCandidate.reservationCode}">RS-2026-0001</strong> will be canceled immediately.
+              <span th:if="${view.cancelCandidate.status.name() == 'READY'}">Your held copy (<strong th:text="${view.cancelCandidate.heldCopyBarcode}">BC-01</strong>) will be released to the next waiting reader.</span>
+              <span th:if="${view.cancelCandidate.status.name() == 'PENDING'}">You will release queue position #<span th:text="${view.cancelCandidate.queuePosition}">1</span>.</span>
+            </p>
+          </div>
+        </div>
+        <div class="res-cancel-actions">
+          <form th:action="@{/member/reservations/{id}/cancel(id=${view.cancelCandidate.reservationId})}" method="post">
+            <button type="submit" class="res-btn-danger-solid">Confirm cancellation</button>
+          </form>
+          <a th:href="@{/member/reservations(tab=${activeTab})}" class="res-btn-outline">Keep reservation</a>
+        </div>
+      </section>
+
+      <!-- Active Tab -->
+      <section th:if="${activeTab == 'active'}">
+        <div class="res-card-grid" th:if="${!view.activeReservations.isEmpty()}">
+          <article class="res-card" th:each="card : ${view.activeReservations}"
+                   th:classappend="${card.status.name() == 'READY'} ? ' is-ready' : ''">
+            <div>
+              <div class="res-card-top">
+                <div class="res-cover">
+                  <img th:src="@{${card.coverUrl}}" th:alt="${card.bookTitle}">
+                </div>
+                <div class="res-card-meta">
+                  <div class="res-badges-row">
+                    <span class="res-pill res-pill-ready" th:if="${card.status.name() == 'READY'}">Ready for pickup</span>
+                    <span class="res-pill res-pill-pending" th:if="${card.status.name() == 'PENDING'}">Waiting for a copy</span>
+                    <span class="res-code" th:text="${card.reservationCode}">RS-2026-0001</span>
+                  </div>
+                  <h2 class="res-book-title" th:text="${card.bookTitle}">Clean Code</h2>
+                  <p class="res-book-author" th:text="${card.authors + ' · ' + card.category}">Robert C. Martin</p>
+                </div>
+              </div>
+
+              <div class="res-facts" th:if="${card.status.name() == 'READY'}">
+                <div>
+                  <span class="res-fact-label">Held copy</span>
+                  <span class="res-fact-value" th:text="${card.heldCopyBarcode ?: 'Assigned at desk'}">BC-01</span>
+                </div>
+                <div>
+                  <span class="res-fact-label">Collect by</span>
+                  <span class="res-fact-value is-highlight"
+                        th:text="${card.pickupUntil != null ? #temporals.format(card.pickupUntil, 'dd/MM/yyyy · HH:mm') : 'Within 48h'}">dd/MM/yyyy</span>
+                </div>
+                <div>
+                  <span class="res-fact-label">Pickup location</span>
+                  <span class="res-fact-value" th:text="${card.pickupLocation}">Circulation Desk · Floor 1</span>
+                </div>
+                <div>
+                  <span class="res-fact-label">Reserved on</span>
+                  <span class="res-fact-value"
+                        th:text="${card.reservedAt != null ? #temporals.format(card.reservedAt, 'dd/MM/yyyy') : '-'}">dd/MM/yyyy</span>
+                </div>
+              </div>
+
+              <div class="res-facts" th:if="${card.status.name() == 'PENDING'}">
+                <div>
+                  <span class="res-fact-label">Queue position</span>
+                  <span class="res-fact-value is-highlight"
+                        th:text="${card.paddedQueuePosition() + ' / ' + card.paddedTotalInQueue() + ' readers'}">01 / 01 readers</span>
+                </div>
+                <div>
+                  <span class="res-fact-label">Est. availability</span>
+                  <span class="res-fact-value"
+                        th:text="${card.estimatedAvailabilityDate != null ? 'Around ' + #temporals.format(card.estimatedAvailabilityDate, 'dd/MM/yyyy') : 'Pending return'}">Around dd/MM/yyyy</span>
+                </div>
+                <div>
+                  <span class="res-fact-label">Reserved on</span>
+                  <span class="res-fact-value"
+                        th:text="${card.reservedAt != null ? #temporals.format(card.reservedAt, 'dd/MM/yyyy · HH:mm') : '-'}">dd/MM/yyyy</span>
+                </div>
+                <div>
+                  <span class="res-fact-label">Queue rule</span>
+                  <span class="res-fact-value">First come, first served</span>
+                </div>
+              </div>
+
+              <p class="res-card-note" th:if="${card.status.name() == 'READY'}">
+                This copy is reserved exclusively for you for 2 days. If not picked up on time, it automatically passes to the next reader.
+              </p>
+              <p class="res-card-note" th:if="${card.status.name() == 'PENDING'}">
+                We will notify you by website and email as soon as a returned copy becomes available for your turn.
+              </p>
+            </div>
+
+            <div class="res-card-actions">
+              <a th:href="@{/catalog(keyword=${card.bookTitle})}" class="res-link">Find in catalog →</a>
+              <div th:if="${canReserve and card.canCancel}">
+                <a th:href="@{/member/reservations(tab=${activeTab}, cancelId=${card.reservationId})}"
+                   class="res-btn-danger-outline">Cancel reservation</a>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="res-empty" th:if="${view.activeReservations.isEmpty()}">
+          <h2>No active reservations</h2>
+          <p>When all copies of a published book are checked out, you can join the waiting queue directly from the catalog.</p>
+          <a th:href="@{/catalog}" class="res-btn-primary">Browse catalog</a>
+        </div>
+      </section>
+
+      <!-- Completed Tab -->
+      <section th:if="${activeTab == 'completed'}">
+        <div class="res-card-grid" th:if="${!view.completedReservations.isEmpty()}">
+          <article class="res-card" th:each="card : ${view.completedReservations}">
+            <div>
+              <div class="res-card-top">
+                <div class="res-cover"><img th:src="@{${card.coverUrl}}" th:alt="${card.bookTitle}"></div>
+                <div class="res-card-meta">
+                  <div class="res-badges-row">
+                    <span class="res-pill res-pill-fulfilled">Picked up &amp; borrowed</span>
+                    <span class="res-code" th:text="${card.reservationCode}">RS-2026-0001</span>
+                  </div>
+                  <h2 class="res-book-title" th:text="${card.bookTitle}">Book title</h2>
+                  <p class="res-book-author" th:text="${card.authors}">Author</p>
+                </div>
+              </div>
+              <div class="res-facts">
+                <div>
+                  <span class="res-fact-label">Borrowed copy</span>
+                  <span class="res-fact-value" th:text="${card.heldCopyBarcode ?: 'Issued copy'}">BC-01</span>
+                </div>
+                <div>
+                  <span class="res-fact-label">Fulfilled on</span>
+                  <span class="res-fact-value"
+                        th:text="${card.closedAt != null ? #temporals.format(card.closedAt, 'dd/MM/yyyy · HH:mm') : '-'}">dd/MM/yyyy</span>
+                </div>
+              </div>
+              <p class="res-card-note" th:if="${card.notes}" th:text="${card.notes}">Picked up at Circulation Desk.</p>
+            </div>
+            <div class="res-card-actions">
+              <a th:href="@{/member/my-books}" class="res-link">View in My books →</a>
+            </div>
+          </article>
+        </div>
+        <div class="res-empty" th:if="${view.completedReservations.isEmpty()}">
+          <h2>No completed reservations yet</h2>
+          <p>Reservations fulfilled at the Circulation Desk appear here once your 14-day loan begins.</p>
+        </div>
+      </section>
+
+      <!-- Canceled / Expired Tab -->
+      <section th:if="${activeTab == 'canceled'}">
+        <div class="res-card-grid" th:if="${!view.canceledReservations.isEmpty()}">
+          <article class="res-card" th:each="card : ${view.canceledReservations}">
+            <div>
+              <div class="res-card-top">
+                <div class="res-cover"><img th:src="@{${card.coverUrl}}" th:alt="${card.bookTitle}"></div>
+                <div class="res-card-meta">
+                  <div class="res-badges-row">
+                    <span class="res-pill res-pill-canceled" th:if="${card.status.name() == 'EXPIRED'}">Pickup window expired</span>
+                    <span class="res-pill res-pill-canceled" th:unless="${card.status.name() == 'EXPIRED'}">Canceled</span>
+                    <span class="res-code" th:text="${card.reservationCode}">RS-2026-0001</span>
+                  </div>
+                  <h2 class="res-book-title" th:text="${card.bookTitle}">Book title</h2>
+                  <p class="res-book-author" th:text="${card.authors}">Author</p>
+                </div>
+              </div>
+              <div class="res-facts">
+                <div>
+                  <span class="res-fact-label">Reserved on</span>
+                  <span class="res-fact-value"
+                        th:text="${card.reservedAt != null ? #temporals.format(card.reservedAt, 'dd/MM/yyyy') : '-'}">dd/MM/yyyy</span>
+                </div>
+                <div>
+                  <span class="res-fact-label">Closed on</span>
+                  <span class="res-fact-value"
+                        th:text="${card.closedAt != null ? #temporals.format(card.closedAt, 'dd/MM/yyyy · HH:mm') : '-'}">dd/MM/yyyy</span>
+                </div>
+              </div>
+              <p class="res-card-note" th:if="${card.notes}" th:text="${card.notes}">Canceled or expired.</p>
+            </div>
+            <div class="res-card-actions">
+              <a th:href="@{/catalog(keyword=${card.bookTitle})}" class="res-link">Reserve again in catalog →</a>
+            </div>
+          </article>
+        </div>
+        <div class="res-empty" th:if="${view.canceledReservations.isEmpty()}">
+          <h2>No canceled or expired reservations</h2>
+          <p>Canceled reservations or unclaimed pickup holds are archived here for your reference.</p>
+        </div>
+      </section>
+
+      <!-- Reservation Policy & Pickup Instructions -->
+      <section class="res-policy-card" id="pickup-policy">
+        <div>
+          <p class="res-policy-kicker">RESERVATION &amp; PICKUP POLICY</p>
+          <h3>Held for 2 days (48 hours)</h3>
+          <p>
+            Members may hold up to <strong th:text="${view.maxActiveReservations}">5</strong> active reservations at a time.
+            Once a copy returns, your reservation switches to <strong>Ready for pickup</strong> and holds that physical copy for 2 days.
+            If uncollected by the deadline, the hold expires automatically and the copy passes to the next member in queue.
+          </p>
+        </div>
+        <div class="res-policy-steps">
+          <strong>At the Circulation Desk:</strong>
+          <span>1. Present your reservation code &amp; library card.</span>
+          <span>2. Librarian verifies eligibility and scans your held copy.</span>
+          <span>3. Enjoy a standard 14-day borrowing period.</span>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer th:replace="~{shared/footer :: footer-section}"></footer>
+
+</body>
+</html>

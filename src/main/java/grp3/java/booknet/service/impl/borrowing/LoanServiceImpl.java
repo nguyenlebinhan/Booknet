@@ -252,12 +252,12 @@ public class LoanServiceImpl implements LoanService {
         BorrowRequest req = borrowRequestRepository.findById(requestId)
                 .orElseThrow(() -> new LoanException("Borrow request not found: " + requestId));
 
-        if (req.getStatus() != BorrowRequestStatus.APPROVED && req.getStatus() != BorrowRequestStatus.PENDING) {
-            throw new LoanException("Request cannot be checked out with status: " + req.getStatus());
-        }
-
         if (req.getStatus() == BorrowRequestStatus.COMPLETED) {
             throw new LoanException("This request has already been handed over into an active loan.");
+        }
+
+        if (req.getStatus() != BorrowRequestStatus.APPROVED && req.getStatus() != BorrowRequestStatus.PENDING) {
+            throw new LoanException("Request cannot be checked out with status: " + req.getStatus());
         }
 
         MemberCirculationInfoDto memberInfo = lookupMember(req.getMember().getEmail());
@@ -265,15 +265,69 @@ public class LoanServiceImpl implements LoanService {
             throw new LoanException("Member is ineligible for handover: " + (memberInfo == null ? "Account not found." : memberInfo.getIneligibilityReason()));
         }
 
+        List<BorrowRequestItem> reqItems = borrowRequestItemRepository.findByRequest_Id(req.getId());
+        if (reqItems.isEmpty()) {
+            throw new LoanException("Borrow request has no requested books.");
+        }
+
+        if (memberInfo.getActiveLoansCount() + reqItems.size() > MAX_LOANS_PER_MEMBER) {
+            throw new LoanException("Member quota exceeded: active loans (" + memberInfo.getActiveLoansCount()
+                    + ") + requested books (" + reqItems.size() + ") exceeds limit of " + MAX_LOANS_PER_MEMBER + ".");
+        }
+
+        List<String> cleanedBarcodes = copyBarcodes == null
+                ? List.of()
+                : copyBarcodes.stream()
+                        .filter(Objects::nonNull)
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .toList();
+
+        if (cleanedBarcodes.isEmpty()) {
+            throw new LoanException("Please enter at least one physical copy barcode.");
+        }
+
+        if (cleanedBarcodes.size() != reqItems.size()) {
+            throw new LoanException("Expected " + reqItems.size() + " barcode(s) for this request, but received " + cleanedBarcodes.size() + ".");
+        }
+
+        List<BookCopy> resolvedCopies = new ArrayList<>();
+        Set<Long> usedCopyIds = new HashSet<>();
+        for (String barcode : cleanedBarcodes) {
+            BookCopy copy = findCopyByBarcodeOrThrow(barcode);
+            if (copy.getStatus() != CopyStatus.AVAILABLE) {
+                throw new LoanException("Copy " + copy.getBarcode() + " is currently " + copy.getStatus() + " and not available for checkout.");
+            }
+            if (!usedCopyIds.add(copy.getId())) {
+                throw new LoanException("Duplicate barcode entered: " + copy.getBarcode());
+            }
+            resolvedCopies.add(copy);
+        }
+
+        // Match each requested item to a distinct scanned copy regardless of scan order.
+        List<BookCopy> remainingCopies = new ArrayList<>(resolvedCopies);
+        List<BookCopy> matchedCopies = new ArrayList<>(reqItems.size());
+        for (BorrowRequestItem rItem : reqItems) {
+            BookCopy matched = null;
+            for (int j = 0; j < remainingCopies.size(); j++) {
+                BookCopy candidate = remainingCopies.get(j);
+                if (Objects.equals(candidate.getBook().getId(), rItem.getBook().getId())) {
+                    matched = remainingCopies.remove(j);
+                    break;
+                }
+            }
+            if (matched == null) {
+                throw new LoanException("No scanned barcode matches requested book: " + rItem.getBook().getTitle());
+            }
+            matchedCopies.add(matched);
+        }
+
         User librarian = findUserByEmail(librarianEmail).orElse(null);
         LocalDateTime checkoutTime = LocalDateTime.now();
         LocalDate dueDate = checkoutTime.toLocalDate().plusDays(STANDARD_LOAN_DAYS);
 
-        BookCopy primaryCopy = bookCopyRepository.findByBarcode(copyBarcodes.get(0))
-                .orElseThrow(() -> new LoanException("Physical copy not found for barcode: " + copyBarcodes.get(0)));
-
         Loan loan = Loan.builder()
-                .copy(primaryCopy)
+                .copy(matchedCopies.get(0))
                 .member(req.getMember())
                 .issuedBy(librarian)
                 .borrowedAt(checkoutTime)
@@ -285,39 +339,15 @@ public class LoanServiceImpl implements LoanService {
 
         loan = loanRepository.save(loan);
 
-        List<BorrowRequestItem> reqItems = borrowRequestItemRepository.findByRequest_Id(req.getId());
         for (int i = 0; i < reqItems.size(); i++) {
             BorrowRequestItem rItem = reqItems.get(i);
-            String barcode = (copyBarcodes != null && i < copyBarcodes.size()) ? copyBarcodes.get(i).trim() : null;
-
-            BookCopy copy = null;
-            if (barcode != null && !barcode.isEmpty()) {
-                copy = bookCopyRepository.findByBarcode(barcode)
-                        .orElseGet(() -> bookCopyRepository.findAll().stream()
-                                .filter(c -> barcode.equalsIgnoreCase(c.getBarcode()))
-                                .findFirst()
-                                .orElseThrow(() -> new LoanException("Physical copy not found with barcode: " + barcode)));
-
-                if (!Objects.equals(copy.getBook().getId(), rItem.getBook().getId())) {
-                    throw new LoanException("Copy " + barcode + " does not belong to the requested book: " + rItem.getBook().getTitle());
-                }
-                if (copy.getStatus() != CopyStatus.AVAILABLE) {
-                    throw new LoanException("Copy " + barcode + " is currently " + copy.getStatus() + " and not available for checkout.");
-                }
-            } else {
-                copy = bookCopyRepository.findFirstByBook_IdAndStatus(rItem.getBook().getId(), CopyStatus.AVAILABLE)
-                        .orElseThrow(() -> new LoanException("No available copies for book: " + rItem.getBook().getTitle()));
-            }
+            BookCopy copy = matchedCopies.get(i);
 
             copy.setStatus(CopyStatus.BORROWED);
             bookCopyRepository.save(copy);
 
             rItem.setAssignedCopy(copy);
             borrowRequestItemRepository.save(rItem);
-
-            if (loan.getCopy() == null) {
-                loan.setCopy(copy);
-            }
 
             LoanItem lItem = LoanItem.builder()
                     .loan(loan)
@@ -329,8 +359,6 @@ public class LoanServiceImpl implements LoanService {
             loanItemRepository.save(lItem);
         }
 
-        loan = loanRepository.save(loan);
-
         req.setStatus(BorrowRequestStatus.COMPLETED);
         if (req.getApprovedAt() == null) {
             req.setApprovedAt(checkoutTime);
@@ -341,6 +369,14 @@ public class LoanServiceImpl implements LoanService {
         borrowRequestRepository.save(req);
 
         return loan;
+    }
+
+    private BookCopy findCopyByBarcodeOrThrow(String barcode) {
+        return bookCopyRepository.findByBarcode(barcode)
+                .orElseGet(() -> bookCopyRepository.findAll().stream()
+                        .filter(c -> barcode.equalsIgnoreCase(c.getBarcode()))
+                        .findFirst()
+                        .orElseThrow(() -> new LoanException("Physical copy not found with barcode: " + barcode)));
     }
 
     @Override

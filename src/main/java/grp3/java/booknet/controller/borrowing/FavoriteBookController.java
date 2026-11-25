@@ -1,19 +1,22 @@
 package grp3.java.booknet.controller.borrowing;
 
-import grp3.java.booknet.security.dto.CustomUserDetails;
-import grp3.java.booknet.security.principal.AccountPrincipal;
-import grp3.java.booknet.security.principal.CustomOAuth2User;
-import grp3.java.booknet.service.borrowing.FavoriteBookService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.Map;
+import grp3.java.booknet.security.principal.AccountPrincipal;
+import grp3.java.booknet.service.borrowing.FavoriteBookService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Controller

@@ -1,6 +1,34 @@
-<!DOCTYPE html><html lang="en" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Administration | booknet</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Serif:wght@400;500;600&amp;display=swap" rel="stylesheet"><link rel="stylesheet" th:href="@{/css/base/tokens.css}"><th:block th:replace="~{shared/navigation :: staffStyles}"></th:block><link rel="stylesheet" th:href="@{/css/member/admin-accounts.css}"></head><body><div class="admin-shell ad-shell" th:with="activePage='roles'"><aside th:replace="~{admin/fragments/dashboard :: sidebar}"></aside><main class="ad-page" id="main-content"><p class="ad-crumb">Administration / Roles &amp; permissions</p><div class="ad-heading"><div><h1>Roles &amp; permissions</h1><p>Control what each role can access across booknet.</p></div><div class="ad-actions"><a class="ad-button " th:href="@{/admin/roles#activity}">View audit log</a><a class="ad-button primary" th:href="@{/admin/roles/select}">Edit roles</a></div></div><p class="ad-notice" th:if="${successMessage}" th:text="${successMessage}"></p>
-<div class="ad-notice green"><strong>Administrator-only workspace</strong><p>Permission changes require review and are recorded in the audit log. Protected administrator rights cannot be removed.</p></div>
-<div class="ad-role-cards"><a th:each="role : ${roles}" class="ad-card" th:classappend="${role.id == selected.id ? 'selected' : ''}" th:href="@{/admin/roles(selected=${role.id})}"><div class="ad-heading"><h2 th:text="${role.name}"></h2><span class="ad-count" th:text="${counts[role.id]}"></span></div><p th:text="${role.description}"></p><small th:text="${role.id == selected.id ? 'Selected role' : 'System access'}"></small></a></div>
-<p class="ad-meta">Guests can browse public pages without an account; Guest is not an assigned account role.</p><a class="ad-back" th:href="@{/admin/roles/select}">Select a role / Add roles &rarr;</a>
-<h2 class="ad-section-title">Permission comparison</h2><p class="ad-meta">Allowed means every permission in the capability group is enabled. Personal records remain limited to their owner.</p><div class="ad-table-wrap"><table><thead><tr><th>CAPABILITY</th><th th:each="role : ${roles}" th:text="${role.name}"></th></tr></thead><tbody><tr th:each="cap : ${comparisons}"><td th:text="${cap.label}"></td><td th:each="role : ${roles}" th:classappend="${role.id == selected.id ? 'highlight' : ''}" th:text="${cap.access(role)}"></td></tr></tbody></table></div>
-<h2 class="ad-section-title" id="activity">Recent role activity</h2><section class="ad-card"><table><thead><tr><th>TIME</th><th>ACTIVITY</th><th>ACTOR</th></tr></thead><tbody><tr th:each="entry : ${activities}"><td th:text="${entry.createdAt}"></td><td th:text="${entry.action + ' / ' + entry.newValue}"></td><td th:text="${'Account #' + entry.actorId}"></td></tr><tr th:if="${activities.isEmpty()}"><td colspan="3">No role activity recorded.</td></tr></tbody></table></section></main></div><script th:src="@{/js/admin-accounts.js}"></script></body></html>
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Roles &amp; permissions | booknet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Serif:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+  <link rel="stylesheet" th:href="@{/css/member/admin-accounts.css}">
+</head>
+<body>
+<div class="admin-shell ad-shell" th:with="activePage='roles'">
+  <aside th:replace="~{admin/fragments/dashboard :: sidebar}"></aside>
+  <main class="ad-page" id="main-content">
+    <p class="ad-crumb">Administration / Roles &amp; permissions</p>
+    <h1>Roles &amp; permissions</h1>
+    <p class="ad-intro">Compare access to the functions currently available in booknet.</p>
+    <p class="ad-meta" id="permission-scope">Allowed reflects the page and action access rules, using each role's current permissions. Personal records remain limited to their owner. Account status, card validity and transaction conditions still apply. Guest is public access without an account.</p>
+    <div class="ad-table-wrap ad-comparison">
+      <table aria-describedby="permission-scope">
+        <thead><tr><th scope="col">FUNCTION &amp; ACCESS SCOPE</th><th scope="col" th:each="role : ${roles}" th:text="${role.name}"></th></tr></thead>
+        <tbody>
+          <tr th:each="permission : ${comparisons}">
+            <th scope="row"><strong th:text="${permission.label}"></strong><small th:text="${permission.detail}"></small></th>
+            <td th:each="role : ${roles}" th:text="${permission.access(role)}"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+</body>
+</html>

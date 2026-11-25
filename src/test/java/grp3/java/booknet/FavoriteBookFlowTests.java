@@ -261,5 +261,18 @@ class FavoriteBookFlowTests {
                 .andExpect(view().name("borrowing/confirm"))
                 .andExpect(model().attribute("view", org.hamcrest.Matchers.hasToString(org.hamcrest.Matchers.containsString("eligibleToBorrow=false"))))
                 .andExpect(model().attribute("view", org.hamcrest.Matchers.hasToString(org.hamcrest.Matchers.containsString("You can only request 5 more book(s)"))));
+
+        // Submit confirm loan for 2 saved books -> both should be removed from favorites
+        mockMvc.perform(post("/loans/confirm")
+                        .session(session)
+                        .with(csrf())
+                        .param("bookIds", String.valueOf(id1))
+                        .param("bookIds", String.valueOf(id2))
+                        .param("termsAccepted", "true"))
+                .andExpect(status().is3xxRedirection());
+
+        assertThat(favoriteBookRepository.existsByUser_IdAndBook_Id(member.getId(), id1)).isFalse();
+        assertThat(favoriteBookRepository.existsByUser_IdAndBook_Id(member.getId(), id2)).isFalse();
+        assertThat(favoriteBookRepository.count()).isEqualTo(4);
     }
 }

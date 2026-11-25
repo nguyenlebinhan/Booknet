@@ -22,6 +22,7 @@ import grp3.java.booknet.repository.book.BookRepository;
 import grp3.java.booknet.repository.book_service.BorrowRequestRepository;
 import grp3.java.booknet.repository.book_service.FineRepository;
 import grp3.java.booknet.repository.book_service.LoanRepository;
+import grp3.java.booknet.repository.book_service.FavoriteBookRepository;
 import grp3.java.booknet.repository.book_service.ReservationRepository;
 import grp3.java.booknet.repository.user.UserRepository;
 import grp3.java.booknet.service.borrowing.BorrowService;
@@ -64,6 +65,7 @@ public class BorrowServiceImpl implements BorrowService {
     private final LoanRepository loanRepository;
     private final ReservationRepository reservationRepository;
     private final BorrowRequestRepository borrowRequestRepository;
+    private final FavoriteBookRepository favoriteBookRepository;
     private final FineRepository fineRepository;
     private final MemberEligibilityService memberEligibility;
 
@@ -213,6 +215,9 @@ public class BorrowServiceImpl implements BorrowService {
 
         borrowRequestRepository.save(borrowRequest);
         reservationRepository.saveAll(newReservations);
+        for (Book book : books) {
+            favoriteBookRepository.deleteByUser_IdAndBook_Id(userId, book.getId());
+        }
         log.info("Member {} requested {} book(s) under BorrowRequest {} and reservation IDs: {}",
                 user.getId(), newReservations.size(), borrowRequest.getRequestCode(),
                 newReservations.stream().map(Reservation::getId).toList());

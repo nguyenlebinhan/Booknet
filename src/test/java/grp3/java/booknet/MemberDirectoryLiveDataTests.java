@@ -1,33 +1,54 @@
 package grp3.java.booknet;
 
-import grp3.java.booknet.dto.member.MemberDirectoryView;
-import grp3.java.booknet.entity.book.*;
-import grp3.java.booknet.entity.book_service.*;
-import grp3.java.booknet.entity.user.*;
-import grp3.java.booknet.enums.book_service.*;
-import grp3.java.booknet.enums.user.*;
-import grp3.java.booknet.repository.book.*;
-import grp3.java.booknet.repository.book_service.*;
-import grp3.java.booknet.repository.user.*;
-import grp3.java.booknet.security.dto.CustomUserDetails;
-import grp3.java.booknet.service.fine.FineService;
-import org.junit.jupiter.api.*;
+import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.mail.javamail.JavaMailSender;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import java.math.BigDecimal;
-import java.nio.file.*;
-import java.time.*;
-import java.util.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import grp3.java.booknet.dto.member.MemberDirectoryView;
+import grp3.java.booknet.entity.book.Book;
+import grp3.java.booknet.entity.book.BookCopy;
+import grp3.java.booknet.entity.book_service.Fine;
+import grp3.java.booknet.entity.book_service.Loan;
+import grp3.java.booknet.entity.book_service.LoanItem;
+import grp3.java.booknet.entity.user.MemberCard;
+import grp3.java.booknet.entity.user.User;
+import grp3.java.booknet.enums.book_service.FineReason;
+import grp3.java.booknet.enums.book_service.FineStatus;
+import grp3.java.booknet.enums.book_service.LoanItemStatus;
+import grp3.java.booknet.enums.book_service.LoanStatus;
+import grp3.java.booknet.enums.user.AuthProvider;
+import grp3.java.booknet.enums.user.UserRole;
+import grp3.java.booknet.enums.user.UserStatus;
+import grp3.java.booknet.repository.book.BookCopyRepository;
+import grp3.java.booknet.repository.book.BookRepository;
+import grp3.java.booknet.repository.book_service.FineRepository;
+import grp3.java.booknet.repository.book_service.LoanItemRepository;
+import grp3.java.booknet.repository.book_service.LoanRepository;
+import grp3.java.booknet.repository.user.AccountAccessAuditRepository;
+import grp3.java.booknet.repository.user.AccountTokenRepository;
+import grp3.java.booknet.repository.user.OAuthIdentityRepository;
+import grp3.java.booknet.repository.user.UserRepository;
+import grp3.java.booknet.security.dto.CustomUserDetails;
+import grp3.java.booknet.service.fine.FineService;
 
 @SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:member_directory_live;MODE=MySQL;DB_CLOSE_DELAY=-1")
 @AutoConfigureMockMvc @ActiveProfiles("test")

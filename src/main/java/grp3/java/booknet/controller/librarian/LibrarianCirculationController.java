@@ -1,5 +1,21 @@
 package grp3.java.booknet.controller.librarian;
 
+import java.util.List;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import grp3.java.booknet.dto.loan.LibrarianDeskSummaryDto;
 import grp3.java.booknet.dto.loan.MemberCirculationInfoDto;
 import grp3.java.booknet.dto.loan.ReturnReceiptViewDto;
@@ -7,19 +23,10 @@ import grp3.java.booknet.enums.book_service.ReturnCondition;
 import grp3.java.booknet.exception.borrowing.LoanException;
 import grp3.java.booknet.security.dto.CustomUserDetails;
 import grp3.java.booknet.security.principal.CustomOAuth2User;
+import grp3.java.booknet.service.admin.CirculationPolicyService;
 import grp3.java.booknet.service.borrowing.LoanService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.util.List;
 
 @Slf4j
 @Controller
@@ -29,6 +36,7 @@ import java.util.List;
 public class LibrarianCirculationController {
 
     private final LoanService loanService;
+    private final CirculationPolicyService policyService;
 
     @ModelAttribute("activePage")
     public String activePage() {
@@ -118,7 +126,8 @@ public class LibrarianCirculationController {
             RedirectAttributes redirectAttributes) {
         try {
             loanService.renewLoanItem(id, getLibrarianEmail(authentication));
-            redirectAttributes.addFlashAttribute("successMessage", "Loan extended successfully by 7 days.");
+            int renewDays = policyService.getPolicy().getRenewPeriodDays();
+            redirectAttributes.addFlashAttribute("successMessage", "Loan extended successfully by " + renewDays + " days.");
         } catch (LoanException e) {
             log.warn("Cannot renew loan {}: {}", id, e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -137,6 +146,7 @@ public class LibrarianCirculationController {
         model.addAttribute("keyword", keyword);
         model.addAttribute("barcode", barcode);
         model.addAttribute("selectedRequestId", requestId);
+        model.addAttribute("policy", policyService.getPolicy());
 
         if (keyword != null && !keyword.trim().isEmpty()) {
             MemberCirculationInfoDto patron = loanService.lookupMember(keyword.trim());

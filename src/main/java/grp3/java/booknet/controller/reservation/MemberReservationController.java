@@ -4,6 +4,7 @@ import grp3.java.booknet.dto.reservation.MemberReservationsView;
 import grp3.java.booknet.entity.book_service.Reservation;
 import grp3.java.booknet.exception.reservation.ReservationException;
 import grp3.java.booknet.security.principal.AccountPrincipal;
+import grp3.java.booknet.service.admin.CirculationPolicyService;
 import grp3.java.booknet.service.reservation.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,6 +20,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class MemberReservationController {
 
     private final ReservationService reservationService;
+    private final CirculationPolicyService policyService;
 
     @GetMapping
     @PreAuthorize("hasRole('MEMBER')")
@@ -34,6 +36,7 @@ public class MemberReservationController {
                 .anyMatch(a -> "RESERVE".equals(a.getAuthority()));
 
         model.addAttribute("view", view);
+        model.addAttribute("policy", policyService.getPolicy());
         model.addAttribute("activeTab", normalizeTab(tab));
         model.addAttribute("activePage", "reservations");
         model.addAttribute("canReserve", canReserve);

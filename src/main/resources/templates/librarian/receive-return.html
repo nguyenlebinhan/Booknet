@@ -134,7 +134,8 @@
           <div class="bn-panel">
             <div class="bn-panel-header">
               <h2 class="bn-panel-title">2. Hand Over Books Check-out</h2>
-              <span style="font-size: 12px; color: var(--bn-muted);">Bind physical barcode and issue 14-day loan</span>
+              <span style="font-size: 12px; color: var(--bn-muted);"
+                    th:text="${'Bind physical barcode and issue ' + (policy != null ? policy.loanPeriodDays : 14) + '-day loan'}">Bind physical barcode and issue 14-day loan</span>
             </div>
             <div style="padding: 24px;">
               <form th:action="@{/staff/loans/checkout}" method="post">
@@ -156,7 +157,8 @@
                   <textarea id="checkout-copy-barcodes" name="copyBarcode" rows="2"
                             placeholder="Scan or enter barcodes separated by comma or new line (e.g. BC-001, BC-002)"
                             class="bn-form-textarea" required></textarea>
-                  <small style="display: block; color: var(--bn-muted); margin-top: 4px; font-size: 11px;">
+                  <small style="display: block; color: var(--bn-muted); margin-top: 4px; font-size: 11px;"
+                         th:text="${'For multi-book requests, enter one barcode per book (separated by comma or new line, in any order). All copies will be marked BORROWED with a ' + (policy != null ? policy.loanPeriodDays : 14) + '-day due date.'}">
                     For multi-book requests, enter one barcode per book (separated by comma or new line, in any order). All copies will be marked BORROWED with a 14-day due date.
                   </small>
                 </div>
@@ -166,7 +168,8 @@
                   <input type="text" name="notes" placeholder="Note reader ID verified, condition at handover..." class="bn-form-input">
                 </div>
 
-                <button type="submit" class="bn-btn bn-btn-primary" style="width: 100%; justify-content: center; margin-top: 8px;">
+                <button type="submit" class="bn-btn bn-btn-primary" style="width: 100%; justify-content: center; margin-top: 8px;"
+                        th:text="${'Complete Handover & Issue Loan (' + (policy != null ? policy.loanPeriodDays : 14) + ' Days)'}">
                   Complete Handover &amp; Issue Loan (14 Days)
                 </button>
               </form>

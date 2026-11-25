@@ -11,6 +11,7 @@ import grp3.java.booknet.entity.book_service.Loan;
 import grp3.java.booknet.entity.book_service.LoanItem;
 import grp3.java.booknet.entity.book_service.Reservation;
 import grp3.java.booknet.entity.user.User;
+import grp3.java.booknet.enums.book.CopyStatus;
 import grp3.java.booknet.enums.book_service.LoanItemStatus;
 import grp3.java.booknet.enums.book_service.LoanStatus;
 import grp3.java.booknet.enums.book_service.ReservationStatus;
@@ -45,9 +46,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MemberLoanServiceImpl implements MemberLoanService {
 
-    public static final int MAX_LOANS_LIMIT = 5;
     public static final int DUE_SOON_THRESHOLD_DAYS = 2;
-    public static final int RENEW_DAYS = 7;
     public static final int MAX_RENEWS_ALLOWED = 1;
 
     private static final Set<LoanStatus> ACTIVE_LOAN_STATUSES = Set.of(
@@ -70,12 +69,16 @@ public class MemberLoanServiceImpl implements MemberLoanService {
     private final BookCopyRepository bookCopyRepository;
     private final FineService fineService;
     private final FavoriteBookRepository favoriteBookRepository;
+    private final grp3.java.booknet.service.admin.CirculationPolicyService policyService;
 
     @Override
     @Transactional
     public MemberLoansView getMemberLoansView(Long userId) {
         User user = validateAndGetUser(userId);
         LocalDate today = LocalDate.now();
+        var policy = policyService.getPolicy();
+        int maxLoansLimit = policy.getMaxLoansPerMember();
+        int renewDays = policy.getRenewPeriodDays();
 
         List<Loan> userLoans = loanRepository.findByMember_IdOrderByBorrowedAtDesc(userId);
 
@@ -184,14 +187,15 @@ public class MemberLoanServiceImpl implements MemberLoanService {
             } else if (hasQueue) {
                 renewalHint = "Cannot renew (Reserved by another reader)";
             } else {
-                renewalHint = "Eligible for a 7-day renewal";
+                renewalHint = "Eligible for a " + renewDays + "-day renewal";
                 if (renewSuggestion == null) {
                     renewSuggestion = new MemberLoansView.RenewSuggestion(
                             loan.getId(),
                             book.getTitle(),
-                            dueDate.plusDays(RENEW_DAYS),
+                            dueDate.plusDays(renewDays),
                             entry.renewCount(),
-                            MAX_RENEWS_ALLOWED
+                            MAX_RENEWS_ALLOWED,
+                            renewDays
                     );
                 }
             }
@@ -331,7 +335,7 @@ public class MemberLoanServiceImpl implements MemberLoanService {
                 memberCode,
                 today,
                 activeItems.size(),
-                MAX_LOANS_LIMIT,
+                maxLoansLimit,
                 dueSoonCount,
                 overdueCount,
                 booksReadThisYear,

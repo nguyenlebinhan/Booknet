@@ -24,6 +24,8 @@ import grp3.java.booknet.repository.book_service.LoanRepository;
 import grp3.java.booknet.repository.book_service.FavoriteBookRepository;
 import grp3.java.booknet.repository.book_service.ReservationRepository;
 import grp3.java.booknet.repository.user.UserRepository;
+import grp3.java.booknet.entity.book_service.CirculationPolicy;
+import grp3.java.booknet.service.admin.CirculationPolicyService;
 import grp3.java.booknet.service.borrowing.BorrowService;
 import grp3.java.booknet.service.member.MemberEligibilityService;
 import lombok.RequiredArgsConstructor;
@@ -42,9 +44,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class BorrowServiceImpl implements BorrowService {
-
-    public static final int MAX_LOAN_LIMIT = 5;
-    public static final int LOAN_PERIOD_DAYS = 14;
 
     private static final Set<LoanStatus> ACTIVE_LOAN_STATUSES = Set.of(
             LoanStatus.BORROWING,
@@ -67,6 +66,7 @@ public class BorrowServiceImpl implements BorrowService {
     private final FavoriteBookRepository favoriteBookRepository;
     private final FineRepository fineRepository;
     private final MemberEligibilityService memberEligibility;
+    private final CirculationPolicyService policyService;
 
     @Override
     @Transactional(readOnly = true)
@@ -82,8 +82,13 @@ public class BorrowServiceImpl implements BorrowService {
             throw new AccountException(HttpStatus.NOT_FOUND, "Selected book(s) not found.");
         }
 
+        CirculationPolicy policy = policyService.getPolicy();
+        int maxLoanLimit = policy.getMaxLoansPerMember();
+        int loanPeriodDays = policy.getLoanPeriodDays();
+        int renewPeriodDays = policy.getRenewPeriodDays();
+
         int activeLoans = getActiveBorrowCount(userId);
-        int remainingQuota = MAX_LOAN_LIMIT - activeLoans;
+        int remainingQuota = maxLoanLimit - activeLoans;
 
         String ineligibleReason = null;
         boolean eligible = true;
@@ -93,14 +98,14 @@ public class BorrowServiceImpl implements BorrowService {
             ineligibleReason = "Your account has unpaid library fines. Please clear fines before requesting loans.";
         } else if (remainingQuota <= 0) {
             eligible = false;
-            ineligibleReason = "You have reached the maximum borrowing limit of " + MAX_LOAN_LIMIT + " books.";
+            ineligibleReason = "You have reached the maximum borrowing limit of " + maxLoanLimit + " books.";
         } else if (books.size() > remainingQuota) {
             eligible = false;
-            ineligibleReason = "You can only request " + remainingQuota + " more book(s) (Limit: " + MAX_LOAN_LIMIT + ", currently active: " + activeLoans + ").";
+            ineligibleReason = "You can only request " + remainingQuota + " more book(s) (Limit: " + maxLoanLimit + ", currently active: " + activeLoans + ").";
         }
 
         LocalDate pickupDate = LocalDate.now();
-        LocalDate returnDueDate = pickupDate.plusDays(LOAN_PERIOD_DAYS);
+        LocalDate returnDueDate = pickupDate.plusDays(loanPeriodDays);
 
         List<BorrowConfirmView.SelectedBookItem> bookItems = books.stream().map(book -> {
             String authorNames = book.getAuthors().stream()
@@ -151,7 +156,9 @@ public class BorrowServiceImpl implements BorrowService {
                 pickupDate,
                 returnDueDate,
                 activeLoans,
-                MAX_LOAN_LIMIT,
+                maxLoanLimit,
+                loanPeriodDays,
+                renewPeriodDays,
                 eligible,
                 ineligibleReason
         );
@@ -175,10 +182,11 @@ public class BorrowServiceImpl implements BorrowService {
             throw new AccountException(HttpStatus.BAD_REQUEST, "Your account has unpaid library fines.");
         }
 
+        int maxLoanLimit = policyService.getPolicy().getMaxLoansPerMember();
         int activeLoans = getActiveBorrowCount(userId);
-        if (activeLoans + bookIds.size() > MAX_LOAN_LIMIT) {
+        if (activeLoans + bookIds.size() > maxLoanLimit) {
             throw new AccountException(HttpStatus.BAD_REQUEST,
-                    "Borrowing limit exceeded. Maximum allowed: " + MAX_LOAN_LIMIT + ", currently active: " + activeLoans);
+                    "Borrowing limit exceeded. Maximum allowed: " + maxLoanLimit + ", currently active: " + activeLoans);
         }
 
         List<Book> books = bookRepository.findAllById(bookIds);

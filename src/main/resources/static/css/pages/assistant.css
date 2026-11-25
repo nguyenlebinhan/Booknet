@@ -12,6 +12,7 @@
 .ai-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* Below the page dialogs, which start at 100. */
+.ai-widget { position: fixed; right: 0; bottom: 0; z-index: 90; width: 0; height: 0; }
 .ai-launch { position: fixed; right: 24px; bottom: 24px; z-index: 90; display: flex; align-items: center; justify-content: center; width: 58px; height: 58px; padding: 0; border: 2px solid var(--bn-surface); border-radius: 50%; background: var(--bn-forest); box-shadow: 0 6px 20px #202e2840; color: #fff; text-decoration: none; cursor: pointer; }
 .ai-widget a.ai-launch { color: #fff; }
 .ai-launch:hover { background: var(--bn-forest-hover); }

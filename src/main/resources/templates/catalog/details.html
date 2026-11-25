@@ -103,7 +103,8 @@
               Borrow this book
             </a>
             <a class="details-primary" sec:authorize="isAnonymous()" th:href="@{/login}">Sign in to borrow</a>
-            <p class="details-card-note" sec:authorize="!hasAnyRole('LIBRARIAN', 'ADMIN')">Confirm in the next step. You may borrow up to 5 books at a time.</p>
+            <p class="details-card-note" sec:authorize="!hasAnyRole('LIBRARIAN', 'ADMIN')"
+               th:text="${'Confirm in the next step. You may borrow up to ' + (policy != null ? policy.maxLoansPerMember : 5) + ' books at a time.'}">Confirm in the next step. You may borrow up to 5 books at a time.</p>
             <p class="details-card-note" sec:authorize="hasAnyRole('LIBRARIAN', 'ADMIN')">Members borrow from this page; staff hand copies over at the desk.</p>
           </th:block>
 
@@ -127,7 +128,8 @@
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M18.5 21 12 17l-6.5 4V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2Z"/></svg>
               Sign in to reserve
             </a>
-            <p class="details-card-note" sec:authorize="!hasAnyRole('LIBRARIAN', 'ADMIN')">Join the waiting queue. Held copies are kept at the Circulation Desk for 2 days.</p>
+            <p class="details-card-note" sec:authorize="!hasAnyRole('LIBRARIAN', 'ADMIN')"
+               th:text="${'Join the waiting queue. Held copies are kept at the Circulation Desk for ' + (policy != null ? policy.reservationHoldDays : 2) + ' days.'}">Join the waiting queue. Held copies are kept at the Circulation Desk for 2 days.</p>
             <p class="details-card-note" sec:authorize="hasAnyRole('LIBRARIAN', 'ADMIN')">Members reserve from this page; staff manage queues in Reservation management.</p>
           </th:block>
 

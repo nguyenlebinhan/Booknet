@@ -167,7 +167,8 @@
                 </div>
               </div>
 
-              <p class="res-card-note" th:if="${card.status.name() == 'READY'}">
+              <p class="res-card-note" th:if="${card.status.name() == 'READY'}"
+                 th:text="${'This copy is reserved exclusively for you for ' + (policy != null ? policy.reservationHoldDays : 2) + ' days. If not picked up on time, it automatically passes to the next reader.'}">
                 This copy is reserved exclusively for you for 2 days. If not picked up on time, it automatically passes to the next reader.
               </p>
               <p class="res-card-note" th:if="${card.status.name() == 'PENDING'}">
@@ -228,7 +229,7 @@
         </div>
         <div class="res-empty" th:if="${view.completedReservations.isEmpty()}">
           <h2>No completed reservations yet</h2>
-          <p>Reservations fulfilled at the Circulation Desk appear here once your 14-day loan begins.</p>
+          <p th:text="${'Reservations fulfilled at the Circulation Desk appear here once your ' + (policy != null ? policy.loanPeriodDays : 14) + '-day loan begins.'}">Reservations fulfilled at the Circulation Desk appear here once your 14-day loan begins.</p>
         </div>
       </section>
 
@@ -278,10 +279,11 @@
       <section class="res-policy-card" id="pickup-policy">
         <div>
           <p class="res-policy-kicker">RESERVATION &amp; PICKUP POLICY</p>
-          <h3>Held for 2 days (48 hours)</h3>
+          <h3 th:text="${'Held for ' + (policy != null ? policy.reservationHoldDays : 2) + ' days (' + ((policy != null ? policy.reservationHoldDays : 2) * 24) + ' hours)'}">Held for 2 days (48 hours)</h3>
           <p>
             Members may hold up to <strong th:text="${view.maxActiveReservations}">5</strong> active reservations at a time.
-            Once a copy returns, your reservation switches to <strong>Ready for pickup</strong> and holds that physical copy for 2 days.
+            Once a copy returns, your reservation switches to <strong>Ready for pickup</strong> and holds that physical copy for
+            <strong th:text="${policy != null ? policy.reservationHoldDays : 2}">2</strong> days.
             If uncollected by the deadline, the hold expires automatically and the copy passes to the next member in queue.
           </p>
         </div>
@@ -289,7 +291,7 @@
           <strong>At the Circulation Desk:</strong>
           <span>1. Present your reservation code &amp; library card.</span>
           <span>2. Librarian verifies eligibility and scans your held copy.</span>
-          <span>3. Enjoy a standard 14-day borrowing period.</span>
+          <span th:text="${'3. Enjoy a standard ' + (policy != null ? policy.loanPeriodDays : 14) + '-day borrowing period.'}">3. Enjoy a standard 14-day borrowing period.</span>
         </div>
       </section>
 

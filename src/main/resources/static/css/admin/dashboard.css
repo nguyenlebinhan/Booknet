@@ -19,6 +19,15 @@
   min-height: 100vh;
 }
 
+.admin-shell > .ai-widget {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  width: 0;
+  height: 0;
+}
+
 .admin-sidebar {
   position: sticky;
   top: 0;

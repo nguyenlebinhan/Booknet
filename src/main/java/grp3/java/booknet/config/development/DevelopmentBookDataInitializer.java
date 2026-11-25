@@ -1,19 +1,27 @@
 package grp3.java.booknet.config.development;
 
-import grp3.java.booknet.entity.book.*;
-import grp3.java.booknet.enums.book.CopyStatus;
-import grp3.java.booknet.enums.book.PublicationStatus;
-import grp3.java.booknet.repository.book.*;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Set;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Set;
+import grp3.java.booknet.entity.book.Author;
+import grp3.java.booknet.entity.book.Book;
+import grp3.java.booknet.entity.book.BookCopy;
+import grp3.java.booknet.entity.book.Category;
+import grp3.java.booknet.entity.book.Publisher;
+import grp3.java.booknet.enums.book.CopyStatus;
+import grp3.java.booknet.enums.book.PublicationStatus;
+import grp3.java.booknet.repository.book.AuthorRepository;
+import grp3.java.booknet.repository.book.BookCopyRepository;
+import grp3.java.booknet.repository.book.BookRepository;
+import grp3.java.booknet.repository.book.CategoryRepository;
+import grp3.java.booknet.repository.book.PublisherRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Seeds demo books and their physical copies for local development / testing.

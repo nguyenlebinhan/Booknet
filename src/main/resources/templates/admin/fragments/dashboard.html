@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
-<aside class="admin-sidebar" th:fragment="sidebar">
+<th:block th:fragment="sidebar">
+<aside class="admin-sidebar">
   <a class="admin-brand" sec:authorize="hasRole('ADMIN')" th:href="@{/admin/dashboard}" aria-label="booknet admin dashboard">
     <span class="admin-brand-mark"><img th:src="@{/images/auth/book-open.svg}" width="24" height="24" alt=""></span>
     <span class="admin-brand-text">
@@ -132,5 +133,7 @@
     <div><a th:href="@{/account/profile}">My profile</a><a th:href="@{/contact}">Help center</a><form th:action="@{/logout}" method="post"><button type="submit">Sign out</button></form></div>
   </div>
 </aside>
+<div th:replace="~{assistant/widget :: widget}"></div>
+</th:block>
 </body>
 </html>

@@ -178,16 +178,16 @@ class Person2AcceptanceTests {
     // ------------------------------------------------------------------ 2.5 UC09
 
     @Test
-    @DisplayName("2.5 UC09 AI assistant: conversation UI, suggested questions, send and reply, real catalog books (AI service not connected by decision)")
+    @DisplayName("2.5 UC09 AI assistant: chat bubble, suggested questions, send and reply (no Gemini key in tests)")
     void uc09() throws Exception {
-        Book suggested = book("P2 Suggested read", novels, nhatAnh, 2021, "vi", "9786040000041");
-        borrowedCopies(suggested, 3);
+        assertThat(page("/")).contains("id=\"ai-widget\"");
         String page = page("/assistant");
-        assertThat(page).contains("Where would you like to start?", "Find your next read", "Suggest similar books",
-                "P2 Suggested read", "href=\"/catalog/" + suggested.getId() + "\"", "UI example · AI is not connected");
-        String sent = mvc.perform(post("/assistant").with(csrf()).param("message", "Gentle books for the weekend"))
-                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        assertThat(sent).contains("Gentle books for the weekend", "The AI assistant is not connected yet",
+        assertThat(page).contains("Hello! I can help you find a book", "How do I borrow a book?", "AI is not connected yet");
+        org.springframework.mock.web.MockHttpSession session = new org.springframework.mock.web.MockHttpSession();
+        mvc.perform(post("/assistant").session(session).with(csrf()).param("message", "Gentle books for the weekend"))
+                .andExpect(status().is3xxRedirection());
+        String sent = mvc.perform(get("/assistant").session(session)).andReturn().getResponse().getContentAsString();
+        assertThat(sent).contains("Gentle books for the weekend", "The AI assistant cannot answer right now",
                 "href=\"/catalog?keyword=Gentle%20books%20for%20the%20weekend\"");
     }
 
@@ -197,10 +197,10 @@ class Person2AcceptanceTests {
     @DisplayName("2.6 Shared navbar and footer for Guest and Member")
     void navigation() throws Exception {
         String guest = page("/catalog");
-        assertThat(guest).contains("bn-navbar", "Explore books", "About the library", "Contact", "AI assistant",
+        assertThat(guest).contains("bn-navbar", "Explore books", "About the library", "Contact", "ai-widget",
                 "Sign in", "Member registration", "bn-footer").doesNotContain("My books");
         String reader = mvc.perform(as(member, get("/catalog"))).andReturn().getResponse().getContentAsString();
-        assertThat(reader).contains("bn-navbar", "AI assistant", "My books", "/account/profile", "bn-footer")
+        assertThat(reader).contains("bn-navbar", "ai-widget", "My books", "/account/profile", "bn-footer")
                 .doesNotContain("Member registration");
     }
 

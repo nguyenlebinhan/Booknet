@@ -8,6 +8,7 @@
   </th:block>
   <th:block sec:authorize="!hasAnyRole('ADMIN', 'LIBRARIAN')">
     <header th:replace="~{shared/navbar :: navbar}"></header>
+    <div th:replace="~{assistant/widget :: widget}"></div>
   </th:block>
 </th:block>
 

@@ -1,7 +1,13 @@
 package grp3.java.booknet.controller.assistant;
 
 import grp3.java.booknet.service.assistant.AssistantService;
+import grp3.java.booknet.service.assistant.AssistantTurn;
+import grp3.java.booknet.service.assistant.GuestLimitException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,44 +15,90 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * AI book assistant page (UC09), UI only. The page works without JavaScript: the form posts the
- * message and the page shows it with the assistant's reply. Nothing is stored between requests.
+ * AI book assistant (UC09). The chat bubble on every page loads the panel of this page; without
+ * JavaScript the page works on its own. The conversation is kept only in the HTTP session.
  */
 @Controller
 @RequestMapping("/assistant")
 @RequiredArgsConstructor
 public class AssistantController {
+    private static final String CONVERSATION = "assistantConversation";
+    private static final int MAX_TURNS = 20;
+
     private final AssistantService assistant;
 
     @GetMapping
-    public String page(Model model) {
-        return render(model, null, null);
+    public String page(Model model, HttpServletRequest request, Authentication authentication) {
+        return render(model, request, authentication);
     }
 
     @PostMapping
-    public String send(@RequestParam(defaultValue = "") String message, Model model) {
+    public String send(@RequestParam(defaultValue = "") String message, Model model,
+                       HttpServletRequest request, Authentication authentication) {
         String text = message.strip();
         if (text.isEmpty()) {
             model.addAttribute("messageError", "Type a message before sending.");
-            return render(model, null, null);
+            return render(model, request, authentication);
         }
         if (text.length() > AssistantService.MAX_MESSAGE) {
             model.addAttribute("messageError", "Keep your message under " + AssistantService.MAX_MESSAGE + " characters.");
             model.addAttribute("draft", text.substring(0, AssistantService.MAX_MESSAGE));
-            return render(model, null, null);
+            return render(model, request, authentication);
         }
-        return render(model, text, assistant.reply(text));
+        try {
+            AssistantTurn turn = assistant.ask(text, conversation(request),
+                    isGuest(authentication) ? request.getRemoteAddr() : null);
+            List<AssistantTurn> turns = conversation(request);
+            turns.add(turn);
+            // Replace the stored list rather than change it, so a page being rendered never sees it change.
+            request.getSession().setAttribute(CONVERSATION,
+                    new ArrayList<>(turns.subList(Math.max(0, turns.size() - MAX_TURNS), turns.size())));
+            return "redirect:/assistant";
+        } catch (GuestLimitException exception) {
+            model.addAttribute("messageError", "You have used today's " + assistant.guestLimit()
+                    + " guest questions. Sign in to keep asking, or come back tomorrow.");
+            model.addAttribute("draft", text);
+            return render(model, request, authentication);
+        }
     }
 
-    private String render(Model model, String sent, String reply) {
-        model.addAttribute("sampleBooks", assistant.sampleBooks());
-        model.addAttribute("sent", sent);
-        model.addAttribute("reply", reply);
+    @PostMapping(params = "reset")
+    public String newConversation(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.removeAttribute(CONVERSATION);
+        }
+        return "redirect:/assistant";
+    }
+
+    private String render(Model model, HttpServletRequest request, Authentication authentication) {
+        List<AssistantTurn> turns = conversation(request);
+        boolean guest = isGuest(authentication);
+        model.addAttribute("turns", turns);
+        model.addAttribute("turnBooks", assistant.books(turns));
+        model.addAttribute("connected", assistant.isConnected());
+        model.addAttribute("guest", guest);
+        if (guest) {
+            model.addAttribute("guestLimit", assistant.guestLimit());
+            model.addAttribute("guestRemaining", assistant.guestRemaining(request.getRemoteAddr()));
+        }
         model.addAttribute("maxMessage", AssistantService.MAX_MESSAGE);
-        // The script shows the same reply instantly instead of reloading the page.
-        model.addAttribute("cannedReply", assistant.reply(""));
         model.addAttribute("activePage", "assistant");
         return "assistant/index";
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<AssistantTurn> conversation(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        Object turns = session == null ? null : session.getAttribute(CONVERSATION);
+        return turns == null ? new ArrayList<>() : new ArrayList<>((List<AssistantTurn>) turns);
+    }
+
+    private static boolean isGuest(Authentication authentication) {
+        return authentication == null || authentication instanceof AnonymousAuthenticationToken;
     }
 }

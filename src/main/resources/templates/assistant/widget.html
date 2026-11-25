@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Chat bubble, included with the shared navbar and the staff sidebar. assistant.js loads the
+     conversation from /assistant when the bubble is opened. -->
+<div class="ai-widget" id="ai-widget" th:fragment="widget" th:unless="${activePage == 'assistant'}" th:attr="data-url=@{/assistant}">
+  <link rel="stylesheet" th:href="@{/css/pages/assistant.css}">
+  <div class="ai-window" id="ai-window" role="dialog" aria-label="AI assistant" hidden>
+    <p class="ai-loading" id="ai-loading" role="status">Opening the assistant…</p>
+  </div>
+  <button class="ai-launch" id="ai-launch" type="button" aria-label="AI assistant" aria-expanded="false" aria-controls="ai-window" hidden>
+    <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l1.6-2.8A7.5 7.5 0 1 1 20 11.5z"/><path d="M12.5 7.8l1 2.7 2.7 1-2.7 1-1 2.7-1-2.7-2.7-1 2.7-1z"/></svg>
+  </button>
+  <noscript><a class="ai-launch" th:href="@{/assistant}" aria-label="AI assistant">AI</a></noscript>
+  <script th:src="@{/js/assistant.js}" defer></script>
+</div>
+</body>
+</html>

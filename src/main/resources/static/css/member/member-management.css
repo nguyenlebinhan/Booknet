@@ -4,6 +4,7 @@
 .mg-page a:hover { text-decoration: underline; }
 .mg-page button, .mg-page input, .mg-page select { font: inherit; }
 .mg-shell { display: grid; grid-template-columns: 264px minmax(0, 1fr); min-height: 100vh; }
+.mg-shell > .ai-widget { position: fixed; right: 0; bottom: 0; z-index: 90; width: 0; height: 0; }
 .mg-sidebar { background: var(--bn-forest); color: var(--bn-sage); padding: 34px 20px 24px; display: flex; flex-direction: column; }
 .mg-sidebar .mg-brand { color: var(--bn-surface); display: flex; gap: 12px; align-items: center; padding: 0 12px; font: 500 26px var(--bn-font-serif); }
 .mg-brand small { display: block; font: 8px var(--bn-font-sans); letter-spacing: 1.4px; margin-top: 5px; color: var(--bn-sage-muted); }

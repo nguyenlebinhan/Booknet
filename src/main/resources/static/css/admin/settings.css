@@ -50,6 +50,7 @@
 .settings-panel-header h2 {
   font-family: var(--bn-font-serif, serif);
   font-size: 20px;
+  font-weight: 500;
   color: var(--bn-forest, #173f35);
   margin: 0 0 4px;
 }
@@ -162,6 +163,7 @@
 .settings-info-card h3 {
   font-family: var(--bn-font-serif, serif);
   font-size: 18px;
+  font-weight: 500;
   color: var(--bn-forest, #173f35);
   margin: 0 0 16px;
 }

@@ -30,7 +30,7 @@ import java.util.TreeSet;
 
 @Controller
 @RequestMapping("/admin/authors")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('LIBRARIAN', 'ADMIN')")
 @RequiredArgsConstructor
 public class AdminAuthorController {
 

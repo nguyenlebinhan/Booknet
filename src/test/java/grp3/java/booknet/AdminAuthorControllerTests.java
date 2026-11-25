@@ -284,13 +284,20 @@ class AdminAuthorControllerTests {
 
     @Test
     @WithMockUser(authorities = {"ROLE_LIBRARIAN", "CATALOG_EDIT"})
-    void librarianCanSearchAuthorsForBookFormsButCannotManageAuthors() throws Exception {
+    void librarianCanSearchAuthorsForBookFormsAndManageAuthors() throws Exception {
         authors.save(Author.builder().name("Searchable Writer").build());
 
         mockMvc.perform(get("/api/staff/authors/options").param("query", "Searchable"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.authors[0].name").value("Searchable Writer"));
 
+        mockMvc.perform(get("/admin/authors"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void memberCannotManageAuthors() throws Exception {
         mockMvc.perform(get("/admin/authors"))
                 .andExpect(status().isForbidden());
     }

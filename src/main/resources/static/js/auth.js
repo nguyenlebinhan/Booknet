@@ -76,3 +76,5 @@
     }, 1000);
   }
 })();
+
+(() => {const dialog=document.getElementById('registration-policy');if(!dialog)return;let opener;document.querySelectorAll('[data-policy-open]').forEach(button=>button.addEventListener('click',()=>{opener=button;dialog.showModal();const body=dialog.querySelector('.policy-body');body.scrollTop=0;}));dialog.querySelectorAll('[data-policy-close]').forEach(button=>button.addEventListener('click',()=>dialog.close()));dialog.addEventListener('close',()=>opener?.focus());})();

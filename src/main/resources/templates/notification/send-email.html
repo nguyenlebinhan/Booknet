@@ -41,7 +41,8 @@
         <span th:text="${errorMessage}">Failed</span>
       </div>
 
-      <form th:action="@{${basePath}}" th:object="${sendForm}" method="post" id="email-composer-form">
+      <form th:action="@{${basePath}}" th:object="${sendForm}" method="post" id="email-composer-form"
+            th:attr="data-csrf-header=${_csrf.headerName},data-csrf-token=${_csrf.token}">
         <input type="hidden" th:field="*{idempotencyToken}">
         <input type="hidden" th:field="*{reviewStep}">
 
@@ -55,12 +56,9 @@
                   <span class="emc-step-num">01</span>
                   <div>
                     <h2>Choose notification template</h2>
-                    <p class="emc-step-sub">Select a template and load its stored wording into the message editor.</p>
+                    <p class="emc-step-sub">Select a template to load its wording automatically.</p>
                   </div>
                 </div>
-                <button type="submit" name="action" value="switch-template" class="bn-btn bn-btn-secondary bn-btn-sm">
-                  Load selected template
-                </button>
               </div>
 
               <div class="emc-tpl-grid">
@@ -76,7 +74,7 @@
             </section>
 
             <!-- 02 Choose recipients -->
-            <section class="emc-step-card">
+            <section class="emc-step-card" data-composer-recipients>
               <div class="emc-step-head">
                 <div class="emc-step-title-wrap">
                   <span class="emc-step-num">02</span>
@@ -85,9 +83,6 @@
                     <p class="emc-step-sub">Send to one individual member or all members currently matching the chosen template.</p>
                   </div>
                 </div>
-                <button type="submit" name="action" value="filter" class="bn-btn bn-btn-secondary bn-btn-sm">
-                  Refresh recipients &amp; preview
-                </button>
               </div>
 
               <div class="emc-mode-row">
@@ -141,6 +136,7 @@
               <div class="emc-context-box" th:if="${view.recipientMode == 'GROUP'}">
                 <div>
                   <strong>Batch summary for eligible group</strong>
+                  <p class="emc-empty-group" th:if="${view.preview.validRecipientCount == 0}">No eligible recipients for this template right now. Try another template or choose a specific member.</p>
                   <div style="margin-top: 6px; font-size: 13px; color: var(--bn-ink);">
                     Ready to send: <strong th:text="${view.preview.validRecipientCount}">0</strong> individual email(s)
                     <span th:if="${view.preview.skippedDuplicateCount > 0}"
@@ -160,23 +156,22 @@
 
             <!-- 03 Compose message -->
             <section class="emc-step-card">
-              <div class="emc-step-head">
+              <div class="emc-step-head emc-compose-head">
                 <div class="emc-step-title-wrap">
                   <span class="emc-step-num">03</span>
                   <div>
                     <h2>Compose message</h2>
-                    <p class="emc-step-sub">Edit the subject or body below and inspect substituted values on the right.</p>
+                    <p class="emc-step-sub">Changes save automatically. Preview updates as you type.</p>
                   </div>
                 </div>
-                <div style="display: flex; gap: 8px;">
+                <div class="emc-editor-tools">
                   <button type="submit" name="action" value="reset-template" class="bn-btn bn-btn-secondary bn-btn-sm">
                     Reset template
                   </button>
-                  <button type="submit" name="action" value="save-template" class="bn-btn bn-btn-secondary bn-btn-sm">
-                    Save template
-                  </button>
                 </div>
               </div>
+
+              <p id="composer-sync-status" class="emc-sync-status" role="status" aria-live="polite">Ready to preview</p>
 
               <div class="emc-var-list" aria-label="Supported template variables">
                 <span class="emc-var-chip">{{memberName}}</span>
@@ -189,13 +184,14 @@
                 <span class="emc-var-chip">{{copyBarcode}}</span>
               </div>
 
-              <div class="bn-alert bn-alert-danger" th:if="${!view.preview.valid}" style="margin-bottom: 14px;">
+              <div data-composer-validation><div class="bn-alert bn-alert-danger" th:if="${!view.preview.valid}" style="margin-bottom: 14px;">
                 <div>
                   <strong>Validation check:</strong>
                   <span th:text="${#strings.listJoin(view.preview.validationErrors, ' ')}">Validation error</span>
                 </div>
               </div>
 
+              </div>
               <div class="bn-form-group">
                 <label class="bn-form-label" for="subjectTemplate">Email subject *</label>
                 <input type="text" id="subjectTemplate" th:field="*{subjectTemplate}" class="bn-form-input"
@@ -212,7 +208,7 @@
             </section>
 
             <!-- 04 Review before sending -->
-            <section class="emc-step-card">
+            <section class="emc-step-card" data-composer-review>
               <div class="emc-step-head" style="margin-bottom: 10px;">
                 <div class="emc-step-title-wrap">
                   <span class="emc-step-num">04</span>
@@ -276,6 +272,7 @@
             </div>
           </aside>
         </div>
+        <noscript><p class="bn-alert">Enable JavaScript for automatic template saving and live preview.</p></noscript>
       </form>
 
       <!-- Recent Sending Log -->
@@ -339,5 +336,6 @@
   </div>
 </div>
 
+<script th:src="@{/js/email-composer.js}" src="/js/email-composer.js" defer></script>
 </body>
 </html>

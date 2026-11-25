@@ -206,7 +206,7 @@ class BorrowFlowTests {
                         .param("email", "minhanh@booknet.test")
                         .param("password", TEST_PASSWORD))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/account/profile"))
+                .andExpect(redirectedUrl("/"))
                 .andReturn().getRequest().getSession();
     }
 }

@@ -195,7 +195,7 @@ class AuthorizationTests {
 
     private static String landing(User account) {
         return account.getRole() == UserRole.ROLE_ADMIN ? "/admin/dashboard"
-                : account.getRole() == UserRole.ROLE_LIBRARIAN ? "/staff/members" : "/account/profile";
+                : account.getRole() == UserRole.ROLE_LIBRARIAN ? "/staff/members" : "/";
     }
 
     private CustomOAuth2User google(User account) {

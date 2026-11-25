@@ -93,6 +93,7 @@ public class SecurityConfig {
                 .requestMatchers("/member/loans/*/return/confirm").hasAuthority("CIRCULATION")
                 .requestMatchers("/admin/books", "/admin/books/**").hasAnyAuthority("CATALOG_EDIT", "COPY_MANAGE", "BOOK_RETIRE")
                 .requestMatchers("/admin/categories", "/admin/categories/**").hasAnyRole("LIBRARIAN", "ADMIN")
+                .requestMatchers("/admin/authors", "/admin/authors/**").hasAnyRole("LIBRARIAN", "ADMIN")
                 .requestMatchers("/api/staff/authors/options").hasAnyAuthority("CATALOG_EDIT", "MEMBER_READ")
                 .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/staff/**").hasAuthority("MEMBER_READ")

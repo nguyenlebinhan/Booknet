@@ -89,7 +89,6 @@
             <p class="ai-error" id="ai-error" th:hidden="${messageError == null}" th:text="${messageError}" role="alert"></p>
           </div>
           <p class="ai-help" id="ai-help"><span id="ai-allowance" th:if="${guest and connected}" th:text="|${guestRemaining} of ${guestLimit} guest questions left today|">Guest questions left</span><span th:unless="${connected}">AI is not connected yet</span></p>
-          <p class="ai-help">Answers only about booknet and can make mistakes. Questions go to Google Gemini and may be used to improve Google products, so do not share passwords or account details.</p>
         </form>
         </div>
       </section>

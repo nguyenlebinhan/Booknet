@@ -153,7 +153,7 @@
 .mg-stats p { font-size: 11px; }
 .mg-stat-mark { width: 22px; height: 22px; top: 28px; right: 22px; }
 .mg-panel { border-radius: 12px; }
-.mg-table th { text-transform: uppercase; font-weight: 400; }
+.mg-table th { text-transform: uppercase; font-weight: 600; }
 .mg-table td { height: 80px; }
 .mg-row-link { display: inline-flex; align-items: center; gap: 7px; }
 .mg-card-tabs { display: flex; flex-wrap: wrap; gap: 8px; flex-basis: 100%; padding-top: 8px; }

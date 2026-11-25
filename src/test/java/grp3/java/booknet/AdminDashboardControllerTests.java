@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -169,6 +170,28 @@ class AdminDashboardControllerTests {
     @Test
     @WithMockUser(roles = "USER")
     void memberCannotOpenAdminDashboard() throws Exception {
+        mockMvc.perform(get("/admin/dashboard"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(authorities = {"ROLE_LIBRARIAN", "MEMBER_READ", "CIRCULATION"})
+    void librarianCanOpenStaffDashboardWithoutAdminOnlyLinks() throws Exception {
+        mockMvc.perform(get("/staff/dashboard"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin/dashboard"))
+                .andExpect(content().string(containsString("Admin dashboard")))
+                .andExpect(content().string(containsString("href=\"/staff/dashboard\"")))
+                .andExpect(content().string(containsString("href=\"/staff/members\"")))
+                .andExpect(content().string(containsString("href=\"/admin/categories\"")))
+                .andExpect(content().string(containsString("href=\"/admin/authors\"")))
+                .andExpect(content().string(not(containsString("href=\"/admin/users\""))))
+                .andExpect(content().string(not(containsString("href=\"/admin/dashboard\""))));
+    }
+
+    @Test
+    @WithMockUser(authorities = {"ROLE_LIBRARIAN", "MEMBER_READ"})
+    void librarianCannotOpenAdminDashboardDirectly() throws Exception {
         mockMvc.perform(get("/admin/dashboard"))
                 .andExpect(status().isForbidden());
     }

@@ -84,6 +84,16 @@
             <a sec:authorize="hasAuthority('CIRCULATION')" th:href="@{/staff/reservations}">Review reservations <span aria-hidden="true">→</span></a>
             <span class="admin-notice" sec:authorize="!hasAuthority('CIRCULATION')">Circulation access required</span>
           </article>
+          <article class="admin-attention-card admin-role-card">
+            <h3>Account distribution</h3>
+            <p>Registered accounts by role.</p>
+            <ul class="admin-role-list" th:if="${roleDistribution != null and !roleDistribution.isEmpty()}">
+              <li th:each="entry : ${roleDistribution}">
+                <span th:text="${entry.key}">Role</span>
+                <strong th:text="${entry.value}">0</strong>
+              </li>
+            </ul>
+          </article>
           <article class="admin-attention-card inventory-card">
             <h3>Copy availability</h3>
             <p>Available copies compared with copies on loan.</p>
@@ -115,8 +125,26 @@
         <aside class="admin-activity-panel">
           <p class="admin-kicker">ACTIVITY</p>
           <h2>Recent administrative activity</h2>
-          <p>Audit history is not recorded by the current application, so no activity entries are shown here.</p>
-          <span class="admin-activity-status">Audit log not connected</span>
+
+          <!-- Nếu có audit log thật -->
+          <th:block th:if="${recentActivity != null and !recentActivity.isEmpty()}">
+            <ul class="admin-activity-list">
+              <li th:each="item : ${recentActivity}" class="admin-activity-item">
+                <span class="admin-activity-badge" th:classappend="${item.badgeClass()}"
+                      th:text="${item.actionLabel()}">Action</span>
+                <span class="admin-activity-desc" th:text="${item.description()}">Description</span>
+                <time class="admin-activity-time"
+                      th:text="${#temporals.format(item.occurredAt(), 'dd MMM, HH:mm')}">01 Jan, 00:00</time>
+              </li>
+            </ul>
+            <a class="admin-activity-view-all" th:href="@{/admin/audit-logs}">View full audit log →</a>
+          </th:block>
+
+          <!-- Placeholder nếu chưa có log nào -->
+          <th:block th:if="${recentActivity == null or recentActivity.isEmpty()}">
+            <p>No administrative actions have been recorded yet.</p>
+            <span class="admin-activity-status">Audit log is connected — no entries yet</span>
+          </th:block>
         </aside>
       </section>
     </main>

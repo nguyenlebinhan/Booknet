@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fine Management • Staff | booknet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/dashboard.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/staff-fines.css}">
+</head>
+<body class="admin-page">
+<a class="admin-skip-link" href="#admin-main">Skip to main</a>
+<div class="admin-shell">
+  <aside th:replace="~{admin/fragments/dashboard :: sidebar}"></aside>
+
+  <div class="admin-workspace">
+    <header class="admin-topbar">
+      <p>Staff space <span aria-hidden="true">/</span> Fines &amp; payments</p>
+      <a class="admin-topbar-account" th:href="@{/account/profile}" th:text="${adminName}">Staff</a>
+    </header>
+
+    <main class="admin-main" id="admin-main">
+      <p class="admin-breadcrumb">Staff space <span aria-hidden="true">/</span> Fines &amp; payments</p>
+
+      <section class="admin-page-heading">
+        <div>
+          <p class="admin-kicker">CIRCULATION DESK</p>
+          <h1>Fine Management</h1>
+          <p>Collect overdue penalties at desk, verify QR transfers, and track settlement records.</p>
+        </div>
+      </section>
+
+      <!-- Flash Success Alert -->
+      <div th:if="${successMessage}" class="staff-alert-success" role="alert">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        <span th:text="${successMessage}">Payment confirmed successfully.</span>
+      </div>
+
+      <!-- Stat Cards -->
+      <section class="admin-stat-grid" aria-label="Fines overview">
+        <article class="admin-stat-card">
+          <p>Pending dues (Unpaid)</p>
+          <strong class="admin-stat-danger" th:text="${unpaidCount}">0</strong>
+          <small>Statements awaiting collection</small>
+        </article>
+
+        <article class="admin-stat-card">
+          <p>Total outstanding amount</p>
+          <strong class="admin-stat-danger" th:text="${#numbers.formatDecimal(unpaidAmount, 1, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</strong>
+          <small>Pending desk/QR collection</small>
+        </article>
+
+        <article class="admin-stat-card">
+          <p>Settled statements (Paid)</p>
+          <strong th:text="${paidCount}">0</strong>
+          <small>Fully collected fines</small>
+        </article>
+      </section>
+
+      <!-- Filter & Search Bar -->
+      <section class="staff-fines-filter-bar" aria-label="Filter fines">
+        <form method="get" th:action="@{/staff/fines}" class="staff-filter-form">
+          <div class="filter-field-search">
+            <label for="keyword">Search member or statement</label>
+            <div class="search-input-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input id="keyword" type="text" name="keyword" th:value="${keyword}" placeholder="Name, email, member code, fine code...">
+            </div>
+          </div>
+
+          <div class="filter-field-select">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+              <option value="" th:selected="${currentStatus == null}">All statuses</option>
+              <option value="UNPAID" th:selected="${currentStatus != null and currentStatus.name() == 'UNPAID'}">Unpaid (Awaiting payment)</option>
+              <option value="PAID" th:selected="${currentStatus != null and currentStatus.name() == 'PAID'}">Paid (Settled)</option>
+              <option value="WAIVED" th:selected="${currentStatus != null and currentStatus.name() == 'WAIVED'}">Waived (Exempted)</option>
+            </select>
+          </div>
+
+          <div class="filter-button-group">
+            <button type="submit" class="admin-button primary">Filter</button>
+            <a th:href="@{/staff/fines}" class="admin-button secondary">Reset</a>
+          </div>
+        </form>
+      </section>
+
+      <!-- Fines Table Panel -->
+      <section class="admin-panel staff-fines-panel">
+        <div class="admin-panel-heading">
+          <div>
+            <p class="admin-kicker">DATABASE</p>
+            <h2>Fee Statements Registry</h2>
+          </div>
+          <span class="fines-count-tag" th:text="${fines.size() + ' statements found'}">0 statements found</span>
+        </div>
+
+        <div th:if="${#lists.isEmpty(fines)}" class="staff-fines-empty">
+          <p>No fine records matched your criteria.</p>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(fines)}" class="staff-table-wrapper">
+          <table class="staff-fines-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Member</th>
+                <th>Book &amp; Loan</th>
+                <th>Overdue</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Action / Settlement</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="f : ${fines}">
+                <!-- Code -->
+                <td>
+                  <strong class="fine-code-text" th:text="${f.fineCode != null ? f.fineCode : ('FN-' + f.id)}">FN-2026-0001</strong>
+                  <br>
+                  <small class="fine-created-time" th:if="${f.createdAt != null}" th:text="${#temporals.format(f.createdAt, 'dd/MM/yyyy HH:mm')}">17/11/2026</small>
+                </td>
+
+                <!-- Member -->
+                <td>
+                  <strong th:text="${f.member.fullName}">Member Name</strong>
+                  <br>
+                  <span class="member-sub-info" th:text="${f.member.email}">member@email.com</span>
+                  <br>
+                  <code class="member-card-code" th:text="${f.member.memberCode != null ? f.member.memberCode : ('TV-' + f.member.id)}">TV-00001</code>
+                </td>
+
+                <!-- Book & Loan -->
+                <td>
+                  <span th:if="${f.loan != null and f.loan.copy != null and f.loan.copy.book != null}"
+                        th:text="${f.loan.copy.book.title}">Book Title</span>
+                  <span th:unless="${f.loan != null and f.loan.copy != null and f.loan.copy.book != null}">Unknown Book</span>
+                  <br>
+                  <small class="copy-barcode" th:if="${f.loan != null and f.loan.copy != null}" th:text="${'Barcode: ' + f.loan.copy.barcode}">Barcode</small>
+                </td>
+
+                <!-- Overdue -->
+                <td>
+                  <span class="overdue-tag" th:text="${(f.overdueDays != null ? f.overdueDays : 1) + ' days'}">3 days</span>
+                  <br>
+                  <small th:text="${'@ ' + #numbers.formatDecimal(f.dailyRate != null ? f.dailyRate : 5000, 1, 'COMMA', 0, 'POINT') + ' ₫'}">@ 5,000 ₫</small>
+                </td>
+
+                <!-- Amount -->
+                <td>
+                  <strong class="fine-amount-highlight" th:text="${#numbers.formatDecimal(f.amount, 1, 'COMMA', 0, 'POINT') + ' ₫'}">15,000 ₫</strong>
+                </td>
+
+                <!-- Status -->
+                <td>
+                  <span class="staff-fine-badge"
+                        th:classappend="${f.status.name() == 'UNPAID' ? 'badge-unpaid' : (f.status.name() == 'PAID' ? 'badge-paid' : 'badge-waived')}"
+                        th:text="${f.status.name()}">UNPAID</span>
+                </td>
+
+                <!-- Action -->
+                <td>
+                  <!-- UNPAID: Confirm Button -->
+                  <form th:if="${f.status.name() == 'UNPAID'}" method="post" th:action="@{/staff/fines/{id}/collect(id=${f.id})}" onsubmit="return confirm('Confirm cash/QR collection of ' + this.getAttribute('data-amt') + ' for ' + this.getAttribute('data-code') + '?');" th:attr="data-amt=${#numbers.formatDecimal(f.amount, 1, 'COMMA', 0, 'POINT') + ' ₫'},data-code=${f.fineCode}">
+                    <button type="submit" class="btn-collect-desk">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      Confirm Payment (At Desk)
+                    </button>
+                  </form>
+
+                  <!-- PAID: Settled details -->
+                  <div th:if="${f.status.name() == 'PAID'}" class="settled-note">
+                    <strong>Settled</strong>
+                    <span th:if="${f.paidAt != null}" th:text="${#temporals.format(f.paidAt, 'dd/MM/yyyy HH:mm')}">17/11/2026</span>
+                    <small th:if="${f.confirmedByStaff != null}" th:text="${'Staff: ' + f.confirmedByStaff.fullName}">Staff: Name</small>
+                  </div>
+
+                  <!-- WAIVED: Note -->
+                  <div th:if="${f.status.name() == 'WAIVED'}" class="waived-note">
+                    <em>Waived by Admin</em>
+                    <small th:if="${f.adjustmentNote != null}" th:text="${f.adjustmentNote}">Reason</small>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+    <footer class="admin-footer"><span>booknet Library</span><a th:href="@{/contact}">Help &amp; contact</a></footer>
+  </div>
+</div>
+</body>
+</html>

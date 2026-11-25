@@ -22,32 +22,38 @@ public class BookDetailsController {
     private final BookDetailsService details;
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
+    private final grp3.java.booknet.service.borrowing.FavoriteBookService favoriteBookService;
 
     @GetMapping("/catalog/{id:\\d+}")
     public String details(@PathVariable Long id, Authentication authentication, Model model) {
+        Long userId = resolveUserId(authentication);
         model.addAttribute("book", details.details(id, isStaff(authentication)));
-        model.addAttribute("alreadyReserved", isAlreadyReserved(id, authentication));
+        model.addAttribute("alreadyReserved", isAlreadyReserved(id, userId, authentication));
+        model.addAttribute("isFavorite", userId != null && favoriteBookService.isFavorite(userId, id));
         model.addAttribute("activePage", "catalog");
         return "catalog/details";
     }
 
-    private boolean isAlreadyReserved(Long bookId, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated() || isStaff(authentication)) {
-            return false;
-        }
-        Long userId = null;
-        if (authentication.getPrincipal() instanceof CustomUserDetails local) {
-            userId = local.getId();
-        } else if (authentication.getPrincipal() instanceof CustomOAuth2User oauth) {
-            userId = oauth.getId();
-        } else if (authentication.getName() != null) {
-            userId = userRepository.findIdByEmail(authentication.getName()).orElse(null);
-        }
-        if (userId == null) {
+    private boolean isAlreadyReserved(Long bookId, Long userId, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated() || isStaff(authentication) || userId == null) {
             return false;
         }
         return reservationRepository.existsByMember_IdAndBook_IdAndStatusIn(
                 userId, bookId, List.of(ReservationStatus.PENDING, ReservationStatus.READY));
+    }
+
+    private Long resolveUserId(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated() || isStaff(authentication)) {
+            return null;
+        }
+        if (authentication.getPrincipal() instanceof CustomUserDetails local) {
+            return local.getId();
+        } else if (authentication.getPrincipal() instanceof CustomOAuth2User oauth) {
+            return oauth.getId();
+        } else if (authentication.getName() != null) {
+            return userRepository.findIdByEmail(authentication.getName()).orElse(null);
+        }
+        return null;
     }
 
     private static boolean isStaff(Authentication authentication) {

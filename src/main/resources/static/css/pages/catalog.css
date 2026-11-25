@@ -386,6 +386,58 @@
 }
 
 .book-cover-stage {
+  position: relative;
+}
+
+.book-fav-form {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+}
+
+.book-fav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  color: var(--bn-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.book-fav-btn svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  transition: all 0.15s ease;
+}
+
+.book-fav-btn:hover {
+  background: #fff;
+  color: var(--bn-danger);
+  transform: scale(1.08);
+}
+
+.book-fav-btn.is-favorited {
+  color: var(--bn-danger);
+  border-color: rgba(184, 50, 50, 0.2);
+  background: #fff;
+}
+
+.book-fav-btn.is-favorited svg {
+  fill: var(--bn-danger);
+  stroke: var(--bn-danger);
+}
+
+.book-cover-stage {
   display: flex;
   align-items: center;
   justify-content: center;

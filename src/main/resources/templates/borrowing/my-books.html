@@ -99,6 +99,9 @@
         <a th:href="@{/member/my-books(tab='current')}" class="tab-btn" th:classappend="${activeTab == 'current' ? 'is-active' : ''}">
           Current loans (<span th:text="${#lists.size(view.activeLoans) + #lists.size(view.pendingReservations)}">3</span>)
         </a>
+        <a th:href="@{/member/my-books(tab='favorites')}" class="tab-btn" th:classappend="${activeTab == 'favorites' ? 'is-active' : ''}">
+          Saved for later (<span th:text="${#lists.size(view.favoriteBooks)}">0</span>)
+        </a>
         <a th:href="@{/member/my-books(tab='history')}" class="tab-btn" th:classappend="${activeTab == 'history' ? 'is-active' : ''}">
           Loan history (<span th:text="${#lists.size(view.historyLoans)}">12</span>)
         </a>
@@ -270,7 +273,82 @@
         </div>
       </div>
 
-      <!-- Tab Content 2: Loan History Table -->
+      <!-- Tab Content 2: Saved Favorites -->
+      <div th:if="${activeTab == 'favorites'}">
+        <div class="loans-table-card">
+          <table class="loans-table">
+            <thead>
+              <tr>
+                <th style="width: 45%;">SAVED BOOKS</th>
+                <th style="width: 20%;">SAVED DATE</th>
+                <th style="width: 15%;">AVAILABILITY</th>
+                <th style="width: 20%;">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${#lists.isEmpty(view.favoriteBooks)}">
+                <td colspan="4" style="text-align: center; color: var(--bn-muted); padding: 48px;">
+                  You have not saved any favorite books yet. Explore the <a th:href="@{/catalog}" style="color: var(--bn-forest); text-decoration: underline;">book catalog</a> to save books for later.
+                </td>
+              </tr>
+              <tr th:each="fav : ${view.favoriteBooks}">
+                <!-- Book Title & Cover -->
+                <td>
+                  <div class="loan-book-cell">
+                    <img class="loan-book-cover" th:src="${fav.coverUrl}" th:alt="${fav.bookTitle}">
+                    <div>
+                      <a class="loan-book-title" th:href="@{/catalog/{id}(id=${fav.bookId})}" th:text="${fav.bookTitle}" style="color: inherit; text-decoration: none;">Book Title</a>
+                      <div class="loan-book-author" th:text="${fav.authors}">Author</div>
+                      <div class="loan-book-code" th:text="${fav.genre}">Fiction</div>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Saved Date -->
+                <td>
+                  <span class="loan-date-text" th:text="${#temporals.format(fav.savedAt, 'dd/MM/yyyy')}">18/11/2026</span>
+                </td>
+
+                <!-- Status Badge -->
+                <td>
+                  <span th:if="${fav.onShelf}" class="due-badge normal" th:text="'Available (' + ${fav.availableCopies} + '/' + ${fav.totalCopies} + ')'">Available</span>
+                  <span th:unless="${fav.onShelf}" class="due-badge overdue">All copies out</span>
+                </td>
+
+                <!-- Actions -->
+                <td>
+                  <div class="loan-actions-cell">
+                    <div class="loan-actions-btns">
+                      <!-- Nút Request Loan nếu có bản sao sẵn sàng -->
+                      <a th:if="${fav.onShelf}"
+                         th:href="@{/loans/confirm(bookId=${fav.bookId})}"
+                         class="btn-action-renew"
+                         style="text-decoration: none; display: inline-block;">
+                        Request loan
+                      </a>
+                      <!-- Nếu hết sách thì dẫn sang xem chi tiết/reserve -->
+                      <a th:unless="${fav.onShelf}"
+                         th:href="@{/catalog/{id}(id=${fav.bookId})}"
+                         class="btn-action-disabled"
+                         style="text-decoration: none; display: inline-block;">
+                        View details
+                      </a>
+
+                      <!-- Nút xóa khỏi danh sách yêu thích -->
+                      <form th:action="@{/member/favorites/{id}/remove(id=${fav.bookId})}" method="post" style="display: inline;">
+                        <input type="hidden" name="redirectUrl" value="/member/my-books?tab=favorites">
+                        <button type="submit" class="btn-action-return" style="border: 1px solid var(--bn-line); background: transparent; cursor: pointer;">Remove</button>
+                      </form>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab Content 3: Loan History Table -->
       <div th:if="${activeTab == 'history'}">
         <div class="loans-table-card">
           <table class="loans-table">

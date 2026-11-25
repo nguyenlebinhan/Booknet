@@ -5,6 +5,7 @@ import grp3.java.booknet.dto.borrowing.ReturnDetailView;
 import grp3.java.booknet.dto.borrowing.ReturnReceiptDto;
 import grp3.java.booknet.entity.book.Author;
 import grp3.java.booknet.entity.book.Book;
+import grp3.java.booknet.entity.book_service.FavoriteBook;
 import grp3.java.booknet.entity.book_service.Loan;
 import grp3.java.booknet.entity.book_service.LoanItem;
 import grp3.java.booknet.entity.book_service.Reservation;
@@ -16,6 +17,7 @@ import grp3.java.booknet.enums.book_service.ReservationStatus;
 import grp3.java.booknet.enums.user.UserStatus;
 import grp3.java.booknet.exception.account.AccountException;
 import grp3.java.booknet.repository.book.BookCopyRepository;
+import grp3.java.booknet.repository.book_service.FavoriteBookRepository;
 import grp3.java.booknet.repository.book_service.LoanItemRepository;
 import grp3.java.booknet.repository.book_service.LoanRepository;
 import grp3.java.booknet.repository.book_service.ReservationRepository;
@@ -67,6 +69,7 @@ public class MemberLoanServiceImpl implements MemberLoanService {
     private final ReservationQueueService reservationQueueService;
     private final BookCopyRepository bookCopyRepository;
     private final FineService fineService;
+    private final FavoriteBookRepository favoriteBookRepository;
 
     @Override
     @Transactional
@@ -259,6 +262,37 @@ public class MemberLoanServiceImpl implements MemberLoanService {
                     );
                 }).toList();
 
+        List<FavoriteBook> favoriteEntities = favoriteBookRepository.findByUser_IdOrderBySavedAtDesc(userId);
+        List<MemberLoansView.FavoriteItem> favoriteItems = favoriteEntities.stream()
+                .map(fav -> {
+                    Book book = fav.getBook();
+                    String authorNames = book.getAuthors().stream()
+                            .map(Author::getName)
+                            .collect(Collectors.joining(", "));
+                    if (authorNames.isBlank()) authorNames = "Unknown author";
+
+                    String cover = book.getCoverUrl() != null && !book.getCoverUrl().isBlank()
+                            ? book.getCoverUrl()
+                            : "/images/home/cover-hoa-vang.jpg";
+
+                    String genre = book.getCategories().isEmpty() ? "General" : book.getCategories().iterator().next().getName();
+                    long availableCount = bookCopyRepository.countCopies(book.getId(), CopyStatus.AVAILABLE);
+                    long totalCount = bookCopyRepository.countByBook_Id(book.getId());
+                    boolean onShelf = availableCount > 0;
+
+                    return new MemberLoansView.FavoriteItem(
+                            book.getId(),
+                            book.getTitle(),
+                            authorNames,
+                            cover,
+                            genre,
+                            onShelf,
+                            availableCount,
+                            totalCount,
+                            fav.getSavedAt()
+                    );
+                }).toList();
+
         return new MemberLoansView(
                 user.getFullName(),
                 memberCode,
@@ -272,7 +306,8 @@ public class MemberLoanServiceImpl implements MemberLoanService {
                 activeItems,
                 pendingReservations,
                 historyItems,
-                renewSuggestion
+                renewSuggestion,
+                favoriteItems
         );
     }
 

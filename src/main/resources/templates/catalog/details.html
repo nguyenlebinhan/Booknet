@@ -37,10 +37,17 @@
       </div>
       <div class="details-heading-actions">
         <a class="details-button" sec:authorize="hasAnyRole('LIBRARIAN', 'ADMIN')" th:href="@{/admin/books/{id}/edit(id=${book.id})}">Edit book</a>
-        <button class="details-button" type="button" disabled title="Saved lists are not available yet">
+        <form sec:authorize="hasAnyRole('MEMBER', 'USER')" th:action="@{/member/favorites/{id}/toggle(id=${book.id})}" method="post" style="display: inline;">
+          <input type="hidden" name="redirectUrl" th:value="@{/catalog/{id}(id=${book.id})}">
+          <button class="details-button" type="submit" th:classappend="${isFavorite ? ' is-favorite' : ''}" th:title="${isFavorite ? 'Remove from favorite list' : 'Save to favorite list'}">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" th:style="${isFavorite ? 'fill: var(--bn-danger); stroke: var(--bn-danger);' : ''}"><path d="M12 20s-7-4.4-9-8.6C1.6 8.3 3.6 5 7 5c2 0 3.3 1.1 5 3 1.7-1.9 3-3 5-3 3.4 0 5.4 3.3 4 6.4C19 15.6 12 20 12 20Z"/></svg>
+            <span th:text="${isFavorite ? 'Saved in My Books' : 'Save to list'}">Save to list</span>
+          </button>
+        </form>
+        <a class="details-button" sec:authorize="isAnonymous()" th:href="@{/login}" title="Sign in to save books">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 20s-7-4.4-9-8.6C1.6 8.3 3.6 5 7 5c2 0 3.3 1.1 5 3 1.7-1.9 3-3 5-3 3.4 0 5.4 3.3 4 6.4C19 15.6 12 20 12 20Z"/></svg>
           Save to list
-        </button>
+        </a>
       </div>
     </header>
 

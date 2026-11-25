@@ -145,6 +145,14 @@
           <div class="catalog-book-grid" th:if="${!booksPage.isEmpty()}">
             <article class="catalog-book" th:each="book : ${booksPage.content}">
               <div class="book-cover-stage">
+                <form sec:authorize="hasAnyRole('MEMBER', 'USER')" th:action="@{/member/favorites/{id}/toggle(id=${book.id})}" method="post" class="book-fav-form">
+                  <input type="hidden" name="redirectUrl" th:value="@{/catalog(page=${booksPage.number},keyword=${filter.keyword},sort=${filter.sort})}">
+                  <button type="submit" class="book-fav-btn"
+                          th:classappend="${favoriteBookIds != null and favoriteBookIds.contains(book.id)} ? ' is-favorited' : ''"
+                          th:title="${favoriteBookIds != null and favoriteBookIds.contains(book.id)} ? 'Remove from favorites' : 'Save to favorites'">
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 20s-7-4.4-9-8.6C1.6 8.3 3.6 5 7 5c2 0 3.3 1.1 5 3 1.7-1.9 3-3 5-3 3.4 0 5.4 3.3 4 6.4C19 15.6 12 20 12 20Z"/></svg>
+                  </button>
+                </form>
                 <img class="book-cover" th:if="${book.coverUrl != null and !#strings.isEmpty(book.coverUrl)}"
                      th:src="${book.coverUrl}" th:alt="${'Cover of ' + book.title}">
                 <div class="book-cover-placeholder"

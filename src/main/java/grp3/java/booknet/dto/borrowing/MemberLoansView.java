@@ -17,8 +17,20 @@ public record MemberLoansView(
         List<LoanItem> activeLoans,
         List<ReservationItem> pendingReservations,
         List<HistoryItem> historyLoans,
-        RenewSuggestion renewSuggestion
+        RenewSuggestion renewSuggestion,
+        List<FavoriteItem> favoriteBooks
 ) {
+    public record FavoriteItem(
+            Long bookId,
+            String bookTitle,
+            String authors,
+            String coverUrl,
+            String genre,
+            boolean onShelf,
+            long availableCopies,
+            long totalCopies,
+            LocalDateTime savedAt
+    ) {}
     public record LoanItem(
             Long loanId,
             String loanCode,

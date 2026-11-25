@@ -24,6 +24,8 @@
 .details-button svg, .details-primary svg, .details-secondary svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
 .details-page a.details-button { text-decoration: none; }
 .details-button:hover, .details-secondary:not(:disabled):hover { box-shadow: 0 2px 6px #173f3518; }
+.details-button.is-favorite { border-color: rgba(184, 50, 50, 0.3); color: var(--bn-danger); background: #fff; }
+.details-button.is-favorite:hover { background: #fff5f5; }
 .details-button:disabled, .details-secondary:disabled { opacity: .55; cursor: not-allowed; }
 .details-primary { background: var(--bn-forest); border-color: var(--bn-forest); color: #fff; }
 .details-page a.details-primary { color: #fff; }

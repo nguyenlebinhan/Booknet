@@ -99,6 +99,9 @@
         <a th:href="@{/member/my-books(tab='current')}" class="tab-btn" th:classappend="${activeTab == 'current' ? 'is-active' : ''}">
           Current loans (<span th:text="${#lists.size(view.activeLoans) + #lists.size(view.pendingReservations)}">3</span>)
         </a>
+        <a th:href="@{/member/my-books(tab='favorites')}" class="tab-btn" th:classappend="${activeTab == 'favorites' ? 'is-active' : ''}">
+          Saved for later (<span th:text="${#lists.size(view.favoriteBooks)}">0</span>)
+        </a>
         <a th:href="@{/member/my-books(tab='history')}" class="tab-btn" th:classappend="${activeTab == 'history' ? 'is-active' : ''}">
           Loan history (<span th:text="${#lists.size(view.historyLoans)}">12</span>)
         </a>
@@ -270,7 +273,121 @@
         </div>
       </div>
 
-      <!-- Tab Content 2: Loan History Table -->
+      <!-- Tab Content 2: Saved Favorites -->
+      <div th:if="${activeTab == 'favorites'}">
+        <!-- Batch Actions Toolbar when favorites exist -->
+        <form id="favoritesLoanForm" th:action="@{/loans/confirm}" method="get">
+          <div th:if="${not #lists.isEmpty(view.favoriteBooks)}" class="favorites-toolbar">
+            <div class="favorites-toolbar-info">
+              <span>Remaining loan allowance: <strong th:text="${view.maxAllowedLoans - view.activeLoansCount}">5</strong> of <span th:text="${view.maxAllowedLoans}">5</span> books</span>
+            </div>
+            <div class="favorites-toolbar-actions">
+              <button type="button" id="btnSelectAllFavs" class="btn-action-renew" style="padding: 6px 12px; font-size: 12px;">Select all available</button>
+              <button type="submit" id="btnRequestSelected" class="btn-action-return" style="display: inline-flex; align-items: center; gap: 6px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                Request loan for selected (<span id="selectedCount">0</span>)
+              </button>
+            </div>
+          </div>
+
+          <div class="loans-table-card" th:style="${not #lists.isEmpty(view.favoriteBooks)} ? 'border-top-left-radius: 0; border-top-right-radius: 0;' : ''">
+            <table class="loans-table">
+              <thead>
+                <tr>
+                  <th style="width: 5%; text-align: center;">
+                    <input type="checkbox" id="favCheckAll" title="Select all available books" style="cursor: pointer; width: 16px; height: 16px; accent-color: var(--bn-forest);">
+                  </th>
+                  <th style="width: 42%;">SAVED BOOKS</th>
+                  <th style="width: 18%;">SAVED DATE</th>
+                  <th style="width: 15%;">AVAILABILITY</th>
+                  <th style="width: 20%;">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:if="${#lists.isEmpty(view.favoriteBooks)}">
+                  <td colspan="5" style="text-align: center; color: var(--bn-muted); padding: 48px;">
+                    You have not saved any favorite books yet. Explore the <a th:href="@{/catalog}" style="color: var(--bn-forest); text-decoration: underline;">book catalog</a> to save books for later.
+                  </td>
+                </tr>
+                <tr th:each="fav : ${view.favoriteBooks}">
+                  <!-- Checkbox Selection -->
+                  <td style="text-align: center; vertical-align: middle;">
+                    <input th:if="${fav.onShelf}"
+                           type="checkbox"
+                           name="bookId"
+                           th:value="${fav.bookId}"
+                           class="fav-book-checkbox"
+                           style="cursor: pointer; width: 16px; height: 16px; accent-color: var(--bn-forest);">
+                    <input th:unless="${fav.onShelf}"
+                           type="checkbox"
+                           disabled
+                           title="Unavailable on shelf"
+                           style="cursor: not-allowed; opacity: 0.3; width: 16px; height: 16px;">
+                  </td>
+
+                  <!-- Book Title & Cover -->
+                  <td>
+                    <div class="loan-book-cell">
+                      <img class="loan-book-cover" th:src="${fav.coverUrl}" th:alt="${fav.bookTitle}">
+                      <div>
+                        <a class="loan-book-title" th:href="@{/catalog/{id}(id=${fav.bookId})}" th:text="${fav.bookTitle}" style="color: inherit; text-decoration: none;">Book Title</a>
+                        <div class="loan-book-author" th:text="${fav.authors}">Author</div>
+                        <div class="loan-book-code" th:text="${fav.genre}">Fiction</div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Saved Date -->
+                  <td>
+                    <span class="loan-date-text" th:text="${#temporals.format(fav.savedAt, 'dd/MM/yyyy')}">18/11/2026</span>
+                  </td>
+
+                  <!-- Status Badge -->
+                  <td>
+                    <span th:if="${fav.onShelf}" class="due-badge normal" th:text="'Available (' + ${fav.availableCopies} + '/' + ${fav.totalCopies} + ')'">Available</span>
+                    <span th:unless="${fav.onShelf}" class="due-badge overdue">All copies out</span>
+                  </td>
+
+                  <!-- Actions -->
+                  <td>
+                    <div class="loan-actions-cell">
+                      <div class="loan-actions-btns">
+                        <!-- Nút Request Loan nếu có bản sao sẵn sàng -->
+                        <a th:if="${fav.onShelf}"
+                           th:href="@{/loans/confirm(bookId=${fav.bookId})}"
+                           class="btn-action-renew"
+                           style="text-decoration: none; display: inline-block;">
+                          Request loan
+                        </a>
+                        <!-- Nếu hết sách thì dẫn sang xem chi tiết/reserve -->
+                        <a th:unless="${fav.onShelf}"
+                           th:href="@{/catalog/{id}(id=${fav.bookId})}"
+                           class="btn-action-disabled"
+                           style="text-decoration: none; display: inline-block;">
+                          View details
+                        </a>
+
+                        <!-- Nút xóa khỏi danh sách yêu thích -->
+                        <button type="submit"
+                                th:formaction="@{/member/favorites/{id}/remove(id=${fav.bookId})}"
+                                formmethod="post"
+                                class="btn-action-remove">
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tab Content 3: Loan History Table -->
       <div th:if="${activeTab == 'history'}">
         <div class="loans-table-card">
           <table class="loans-table">
@@ -368,5 +485,65 @@
 
   <footer th:replace="~{shared/footer :: footer-section}"></footer>
 
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('favoritesLoanForm');
+      if (!form) return;
+
+      const checkAll = document.getElementById('favCheckAll');
+      const selectAllBtn = document.getElementById('btnSelectAllFavs');
+      const checkboxes = Array.from(document.querySelectorAll('.fav-book-checkbox'));
+      const countSpan = document.getElementById('selectedCount');
+      const submitBtn = document.getElementById('btnRequestSelected');
+
+      function updateCount() {
+        const checked = checkboxes.filter(cb => cb.checked);
+        const count = checked.length;
+        if (countSpan) countSpan.textContent = count;
+        if (checkAll) {
+          checkAll.checked = checkboxes.length > 0 && checked.length === checkboxes.length;
+          checkAll.indeterminate = checked.length > 0 && checked.length < checkboxes.length;
+        }
+        if (submitBtn) {
+          submitBtn.disabled = count === 0;
+          submitBtn.style.opacity = count === 0 ? '0.5' : '1';
+          submitBtn.style.cursor = count === 0 ? 'not-allowed' : 'pointer';
+        }
+      }
+
+      if (checkAll) {
+        checkAll.addEventListener('change', function () {
+          checkboxes.forEach(cb => { cb.checked = checkAll.checked; });
+          updateCount();
+        });
+      }
+
+      if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', function () {
+          const allChecked = checkboxes.length > 0 && checkboxes.every(cb => cb.checked);
+          checkboxes.forEach(cb => { cb.checked = !allChecked; });
+          updateCount();
+        });
+      }
+
+      checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateCount);
+      });
+
+      // Select all available by default if any exist
+      if (checkboxes.length > 0) {
+        checkboxes.forEach(cb => { cb.checked = true; });
+      }
+      updateCount();
+
+      form.addEventListener('submit', function (e) {
+        const checked = checkboxes.filter(cb => cb.checked);
+        if (checked.length === 0) {
+          e.preventDefault();
+          alert('Please select at least one available book to request a loan.');
+        }
+      });
+    });
+  </script>
 </body>
 </html>

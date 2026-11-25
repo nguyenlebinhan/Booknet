@@ -368,6 +368,28 @@ public class LoanServiceImpl implements LoanService {
         }
         borrowRequestRepository.save(req);
 
+        // Mark matching active reservations for this member & books as FULFILLED
+        List<Reservation> activeMemberReservations = reservationRepository.findByMember_IdAndStatusIn(
+                req.getMember().getId(),
+                List.of(ReservationStatus.PENDING, ReservationStatus.READY)
+        );
+        if (!activeMemberReservations.isEmpty()) {
+            for (int i = 0; i < reqItems.size(); i++) {
+                Long bookId = reqItems.get(i).getBook().getId();
+                BookCopy assignedCopy = matchedCopies.get(i);
+                for (Reservation res : activeMemberReservations) {
+                    if (res.getStatus() != ReservationStatus.FULFILLED
+                            && res.getBook() != null
+                            && Objects.equals(res.getBook().getId(), bookId)) {
+                        res.setStatus(ReservationStatus.FULFILLED);
+                        res.setAssignedCopy(assignedCopy);
+                        reservationRepository.save(res);
+                        break;
+                    }
+                }
+            }
+        }
+
         return loan;
     }
 

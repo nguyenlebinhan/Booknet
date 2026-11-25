@@ -1,6 +1,5 @@
 package grp3.java.booknet.dto.member;
 
-import grp3.java.booknet.enums.user.UserRole;
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 

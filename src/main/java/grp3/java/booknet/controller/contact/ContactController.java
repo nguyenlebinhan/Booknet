@@ -33,7 +33,7 @@ public class ContactController {
 
     @GetMapping
     public String contact(Model model) {
-        model.addAttribute("contactForm", new ContactForm("", "", "Borrowing & renewals", ""));
+        model.addAttribute("contactForm", new ContactForm("", "", "", "Borrowing & renewals", ""));
         return "pages/contact";
     }
 

@@ -55,7 +55,7 @@ public record PermissionComparison(String label, String detail, Set<String> allo
             action("Manage loans, renewals & returns", "Staff circulation actions; loan status and eligibility rules still apply.", ACCOUNTS, CIRCULATION),
             action("Manage reservation queue & pickups", "Allocate copies and process pickup or cancellation through staff reservation actions.", ACCOUNTS, CIRCULATION),
             // Generic /staff/** requires MEMBER_READ, followed by the card action guard.
-            action("Search & view member profiles", "Member identity, contact details and card data for library service. Loan/fine details in this directory are not connected yet.", ACCOUNTS, MEMBER_READ),
+            action("Search & view member profiles", "Member profiles, cards, current copies, overdue counts and finalized unpaid balances for library service.", ACCOUNTS, MEMBER_READ),
             action("Activate a member card", "Requires verified email, identity confirmation and a valid future expiry date.", ACCOUNTS, MEMBER_READ, MEMBER_CARD_ACTIVATE),
             // StaffReportsController and StaffFinesController use staff roles, not report/payment capabilities.
             action("View circulation reports", "Staff reports covering borrowing activity in the selected date range.", STAFF, MEMBER_READ),

@@ -15,6 +15,19 @@ import java.util.Optional;
 @Repository
 public interface LoanItemRepository extends JpaRepository<LoanItem, Long> {
 
+    @org.springframework.data.jpa.repository.Query("""
+        select i.loan.member.id as memberId, count(i) as onLoan,
+               sum(case when i.dueDate < :today then 1L else 0L end) as overdue
+        from LoanItem i where i.loan.member.id in :memberIds
+          and i.status in :statuses and i.returnedAt is null
+        group by i.loan.member.id
+        """)
+    List<grp3.java.booknet.dto.member.MemberLoanTotals> summarizeMembers(
+            Collection<Long> memberIds, Collection<LoanItemStatus> statuses, LocalDate today);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"loan", "copy", "copy.book", "copy.book.authors"})
+    List<LoanItem> findByLoan_Member_IdAndStatusInAndReturnedAtIsNull(Long memberId, Collection<LoanItemStatus> statuses);
+
     long countByStatus(LoanItemStatus status);
 
     long countByStatusIn(Collection<LoanItemStatus> statuses);

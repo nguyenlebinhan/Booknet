@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Tracking Dashboard &bull; Admin | booknet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Serif:wght@400;500;600&amp;display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/dashboard.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/tracking.css}">
+</head>
+
+<body class="admin-page">
+  <a class="admin-skip-link" href="#admin-main">Skip to main</a>
+  <div class="admin-shell">
+    <aside th:replace="~{admin/fragments/dashboard :: sidebar}"></aside>
+
+    <div class="admin-workspace">
+      <header class="admin-topbar">
+        <p>Administration <span aria-hidden="true">/</span> User Tracking</p>
+        <a class="admin-topbar-account" th:href="@{/account/profile}" th:text="${adminName}">Administrator</a>
+      </header>
+
+      <main class="admin-main" id="admin-main">
+        <p class="admin-breadcrumb">Administration <span aria-hidden="true">/</span> User Tracking</p>
+
+        <section class="admin-page-heading">
+          <div>
+            <p class="admin-kicker">ANALYTICS &amp; MONITORING</p>
+            <h1>User Tracking Dashboard</h1>
+            <p>Monitor login history, locations, and page navigation logs across all user roles in the library platform.
+            </p>
+          </div>
+        </section>
+
+        <!-- KPI Cards -->
+        <section class="tracking-kpi-grid" aria-label="Tracking summary">
+          <article class="tracking-stat-card accent">
+            <span class="tracking-stat-label">Total Logins</span>
+            <strong class="tracking-stat-value" th:text="${totalLogins}">0</strong>
+            <span class="tracking-stat-sub" th:text="${loginsToday + ' logins today'}">0 logins today</span>
+          </article>
+          <article class="tracking-stat-card">
+            <span class="tracking-stat-label">Unique Active Users</span>
+            <strong class="tracking-stat-value" th:text="${uniqueActiveUsers}">0</strong>
+            <span class="tracking-stat-sub">Last 30 days</span>
+          </article>
+          <article class="tracking-stat-card">
+            <span class="tracking-stat-label">Total Page Visits</span>
+            <strong class="tracking-stat-value" th:text="${totalPageVisits}">0</strong>
+            <span class="tracking-stat-sub">All tracked HTML views</span>
+          </article>
+          <article class="tracking-stat-card">
+            <span class="tracking-stat-label">Most Visited Page</span>
+            <strong class="tracking-stat-value is-text"
+              th:text="${!#lists.isEmpty(topPages) ? topPages[0][0] : 'No data yet'}"
+              th:title="${!#lists.isEmpty(topPages) ? topPages[0][1] : ''}">No data yet</strong>
+            <span class="tracking-stat-sub"
+              th:text="${!#lists.isEmpty(topPages) ? (topPages[0][2] + ' views') : 'Waiting for traffic'}">Waiting for
+              traffic</span>
+          </article>
+        </section>
+
+        <!-- Analysis Panels: Top Pages + Locations -->
+        <section class="tracking-analysis-grid" aria-label="Traffic breakdown">
+          <!-- Top Visited Pages: row[0]=pageName, row[1]=pagePath, row[2]=count -->
+          <article class="tracking-panel">
+            <p class="tracking-panel-title">POPULARITY</p>
+            <h2 class="tracking-panel-heading">Top Visited Pages</h2>
+            <div th:if="${#lists.isEmpty(topPages)}">
+              <p class="tracking-empty">No page visit data yet.</p>
+            </div>
+            <div th:each="row : ${topPages}" class="tracking-bar-row">
+              <div class="tracking-bar-label" th:title="${row[1]}">
+                <span th:text="${row[0]}">Page</span>
+                <span class="tracking-bar-sub" th:text="${row[1]}">/path</span>
+              </div>
+              <div class="tracking-bar-track">
+                <div class="tracking-bar-fill" th:style="${'width: ' + (row[2] * 100 / maxPageCount) + '%'}"></div>
+              </div>
+              <span class="tracking-bar-count" th:text="${row[2]}">0</span>
+            </div>
+          </article>
+
+          <!-- Traffic by Location: switches cleanly to visitLocations on visits tab -->
+          <article class="tracking-panel" th:with="locRows=${activeTab == 'visits' ? visitLocations : loginLocations},
+                          locMax=${activeTab == 'visits' ? maxVisitLoc : maxLoginLoc}">
+            <p class="tracking-panel-title">TRAFFIC LOCATIONS</p>
+            <h2 class="tracking-panel-heading"
+              th:text="${activeTab == 'visits' ? 'Page Visits by Location' : 'Logins by Location'}">Logins by Location
+            </h2>
+            <div th:if="${#lists.isEmpty(locRows)}">
+              <p class="tracking-empty">No location data yet.</p>
+            </div>
+            <div th:each="row : ${locRows}" class="tracking-bar-row">
+              <span class="tracking-bar-label" th:text="${row[0]}" th:title="${row[0]}">Location</span>
+              <div class="tracking-bar-track">
+                <div class="tracking-bar-fill secondary" th:style="${'width: ' + (row[1] * 100 / locMax) + '%'}"></div>
+              </div>
+              <span class="tracking-bar-count" th:text="${row[1]}">0</span>
+            </div>
+          </article>
+        </section>
+
+        <!-- Tab Navigation -->
+        <nav class="tracking-tab-nav" aria-label="Tracking log views" th:with="fromFmt=${fromDate != null ? #temporals.format(fromDate, 'yyyy-MM-dd') : null},
+                    toFmt=${toDate != null ? #temporals.format(toDate, 'yyyy-MM-dd') : null}">
+          <a th:href="@{/admin/tracking(tab='logins', keyword=${keyword}, role=${filterRole}, from=${fromFmt}, to=${toFmt})}"
+            th:classappend="${activeTab == 'logins'} ? ' is-active'" class="tracking-tab-btn">
+            Login History
+            <span class="tracking-tab-count" th:if="${loginLogs != null}" th:text="${loginLogs.totalElements}">0</span>
+          </a>
+          <a th:href="@{/admin/tracking(tab='visits', keyword=${keyword}, role=${filterRole}, from=${fromFmt}, to=${toFmt})}"
+            th:classappend="${activeTab == 'visits'} ? ' is-active'" class="tracking-tab-btn">
+            Page Navigation Logs
+            <span class="tracking-tab-count" th:if="${visitLogs != null}" th:text="${visitLogs.totalElements}">0</span>
+          </a>
+        </nav>
+
+        <!-- Shared Filter Bar -->
+        <form method="get" th:action="@{/admin/tracking}" class="tracking-filter-bar" aria-label="Filter tracking logs">
+          <input type="hidden" name="tab" th:value="${activeTab}">
+
+          <div class="tracking-filter-group grow">
+            <label for="kwInput">Search</label>
+            <input id="kwInput" type="text" name="keyword" placeholder="Email, name, page path, or location..."
+              th:value="${keyword}">
+          </div>
+
+          <div class="tracking-filter-group">
+            <label for="roleSelect">Role</label>
+            <select id="roleSelect" name="role">
+              <option value="" th:selected="${filterRole == null or filterRole == ''}">All Roles</option>
+              <option value="ADMIN" th:selected="${filterRole == 'ADMIN'}">Admin</option>
+              <option value="LIBRARIAN" th:selected="${filterRole == 'LIBRARIAN'}">Librarian</option>
+              <option value="MEMBER" th:selected="${filterRole == 'MEMBER'}">Member</option>
+              <option value="CUSTOM" th:selected="${filterRole == 'CUSTOM'}">Custom</option>
+              <option value="GUEST" th:selected="${filterRole == 'GUEST'}">Guest</option>
+            </select>
+          </div>
+
+          <div class="tracking-filter-group">
+            <label for="fromInput">From Date</label>
+            <input id="fromInput" type="date" name="from"
+              th:value="${fromDate != null ? #temporals.format(fromDate, 'yyyy-MM-dd') : ''}">
+          </div>
+
+          <div class="tracking-filter-group">
+            <label for="toInput">To Date</label>
+            <input id="toInput" type="date" name="to"
+              th:value="${toDate != null ? #temporals.format(toDate, 'yyyy-MM-dd') : ''}">
+          </div>
+
+          <div class="tracking-filter-actions">
+            <button type="submit" class="tracking-btn-apply">Apply Filter</button>
+            <a th:href="@{/admin/tracking(tab=${activeTab})}" class="tracking-btn-clear">Reset</a>
+          </div>
+        </form>
+
+        <!-- LOGIN HISTORY TAB -->
+        <div th:if="${activeTab == 'logins'}" th:with="fromFmt=${fromDate != null ? #temporals.format(fromDate, 'yyyy-MM-dd') : null},
+                    toFmt=${toDate != null ? #temporals.format(toDate, 'yyyy-MM-dd') : null}">
+        <div class="tracking-table-wrapper">
+          <table class="tracking-table">
+            <thead>
+              <tr>
+                <th>Date &amp; Time</th>
+                <th>User</th>
+                <th>Role</th>
+                <th>Method</th>
+                <th>Location</th>
+                <th>Device / Browser</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${loginLogs.isEmpty()}">
+                <td colspan="6" class="tracking-empty">No login history records match the current filters.</td>
+              </tr>
+              <tr th:each="entry : ${loginLogs.content}">
+                <td>
+                  <div class="tracking-time">
+                    <strong th:text="${#temporals.format(entry.loginAt, 'HH:mm:ss')}">00:00:00</strong>
+                    <span th:text="${#temporals.format(entry.loginAt, 'dd/MM/yyyy')}">01/01/2026</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="tracking-user-cell">
+                    <span class="tracking-user-name" th:text="${entry.userName}">User</span>
+                    <span class="tracking-user-email" th:text="${entry.userEmail}">email@booknet.test</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="tracking-role-badge"
+                        th:classappend="${entry.userRole == 'ADMIN' ? ' role-admin' : (entry.userRole == 'LIBRARIAN' ? ' role-librarian' : (entry.userRole == 'MEMBER' ? ' role-member' : (entry.userRole == 'CUSTOM' ? ' role-custom' : ' role-guest')))}"
+                        th:text="${entry.userRole}">MEMBER</span>
+                </td>
+                <td>
+                  <span class="tracking-method-badge"
+                        th:classappend="${entry.loginMethod == 'GOOGLE_OAUTH2' ? ' method-oauth' : (entry.loginMethod == 'PASSWORD' ? ' method-password' : ' method-other')}"
+                        th:text="${entry.loginMethod == 'GOOGLE_OAUTH2' ? 'Google OAuth2' : (entry.loginMethod == 'PASSWORD' ? 'Password' : entry.loginMethod)}">Password</span>
+                </td>
+                <td class="tracking-location-text" th:text="${entry.location}">Hanoi, Vietnam (Local)</td>
+                <td>
+                  <span class="tracking-device-label"
+                        th:title="${entry.userAgent}"
+                        th:text="${deviceLabels.get(entry.id) ?: 'Unknown'}">Chrome &middot; Windows</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+            <!-- Login Pagination -->
+            <div th:if="${loginLogs.totalPages > 1}" class="tracking-pagination">
+              <span
+                th:text="${'Showing ' + loginLogs.numberOfElements + ' of ' + loginLogs.totalElements + ' logins (Page ' + (loginLogs.number + 1) + ' of ' + loginLogs.totalPages + ')'}"></span>
+              <div class="tracking-pagination-pages" th:with="startPage=${T(java.lang.Math).max(0, loginLogs.number - 2)},
+                          endPage=${T(java.lang.Math).min(loginLogs.totalPages - 1, loginLogs.number + 2)}">
+                <a th:if="${!loginLogs.first}"
+                  th:href="@{/admin/tracking(tab='logins', loginPage=${loginLogs.number - 1}, keyword=${keyword}, role=${filterRole}, from=${fromFmt}, to=${toFmt})}">&laquo;</a>
+                <th:block th:each="i : ${#numbers.sequence(startPage, endPage)}">
+                  <span th:if="${i == loginLogs.number}" class="current" th:text="${i + 1}">1</span>
+                  <a th:unless="${i == loginLogs.number}"
+                    th:href="@{/admin/tracking(tab='logins', loginPage=${i}, keyword=${keyword}, role=${filterRole}, from=${fromFmt}, to=${toFmt})}"
+                    th:text="${i + 1}">1</a>
+                </th:block>
+                <a th:if="${!loginLogs.last}"
+                  th:href="@{/admin/tracking(tab='logins', loginPage=${loginLogs.number + 1}, keyword=${keyword}, role=${filterRole}, from=${fromFmt}, to=${toFmt})}">&raquo;</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAGE VISITS TAB -->
+        <div th:if="${activeTab == 'visits'}" th:with="fromFmt=${fromDate != null ? #temporals.format(fromDate, 'yyyy-MM-dd') : null},
+                    toFmt=${toDate != null ? #temporals.format(toDate, 'yyyy-MM-dd') : null}">
+        <div class="tracking-table-wrapper">
+          <table class="tracking-table">
+            <thead>
+              <tr>
+                <th>Date &amp; Time</th>
+                <th>User</th>
+                <th>Role</th>
+                <th>Page Visited</th>
+                <th>Location</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${visitLogs.isEmpty()}">
+                <td colspan="5" class="tracking-empty">No page navigation logs match the current filters.</td>
+              </tr>
+              <tr th:each="entry : ${visitLogs.content}">
+                <td>
+                  <div class="tracking-time">
+                    <strong th:text="${#temporals.format(entry.visitedAt, 'HH:mm:ss')}">00:00:00</strong>
+                    <span th:text="${#temporals.format(entry.visitedAt, 'dd/MM/yyyy')}">01/01/2026</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="tracking-user-email" th:text="${entry.userEmail}">email@booknet.test</span>
+                </td>
+                <td>
+                  <span class="tracking-role-badge"
+                        th:classappend="${entry.userRole == 'ADMIN' ? ' role-admin' : (entry.userRole == 'LIBRARIAN' ? ' role-librarian' : (entry.userRole == 'MEMBER' ? ' role-member' : (entry.userRole == 'CUSTOM' ? ' role-custom' : ' role-guest')))}"
+                        th:text="${entry.userRole}">GUEST</span>
+                </td>
+                <td>
+                  <div class="tracking-user-cell">
+                    <span class="tracking-user-name" th:text="${entry.pageName}">Page Name</span>
+                    <span class="tracking-path-code" th:text="${entry.pagePath}" th:title="${entry.pagePath}">/path</span>
+                  </div>
+                </td>
+                <td class="tracking-location-text" th:text="${entry.location}">Hanoi, Vietnam (Local)</td>
+              </tr>
+            </tbody>
+          </table>
+
+            <!-- Visit Pagination -->
+            <div th:if="${visitLogs.totalPages > 1}" class="tracking-pagination">
+              <span
+                th:text="${'Showing ' + visitLogs.numberOfElements + ' of ' + visitLogs.totalElements + ' visits (Page ' + (visitLogs.number + 1) + ' of ' + visitLogs.totalPages + ')'}"></span>
+              <div class="tracking-pagination-pages" th:with="startPage=${T(java.lang.Math).max(0, visitLogs.number - 2)},
+                          endPage=${T(java.lang.Math).min(visitLogs.totalPages - 1, visitLogs.number + 2)}">
+                <a th:if="${!visitLogs.first}"
+                  th:href="@{/admin/tracking(tab='visits', visitPage=${visitLogs.number - 1}, keyword=${keyword}, role=${filterRole}, from=${fromFmt}, to=${toFmt})}">&laquo;</a>
+                <th:block th:each="i : ${#numbers.sequence(startPage, endPage)}">
+                  <span th:if="${i == visitLogs.number}" class="current" th:text="${i + 1}">1</span>
+                  <a th:unless="${i == visitLogs.number}"
+                    th:href="@{/admin/tracking(tab='visits', visitPage=${i}, keyword=${keyword}, role=${filterRole}, from=${fromFmt}, to=${toFmt})}"
+                    th:text="${i + 1}">1</a>
+                </th:block>
+                <a th:if="${!visitLogs.last}"
+                  th:href="@{/admin/tracking(tab='visits', visitPage=${visitLogs.number + 1}, keyword=${keyword}, role=${filterRole}, from=${fromFmt}, to=${toFmt})}">&raquo;</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+      <footer class="admin-footer"><span>booknet Library</span><a th:href="@{/contact}">Help &amp; contact</a></footer>
+    </div>
+  </div>
+</body>
+
+</html>

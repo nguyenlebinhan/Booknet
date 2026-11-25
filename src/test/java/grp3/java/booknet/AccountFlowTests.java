@@ -22,7 +22,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.mail.MailSendException;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpSession;
@@ -82,7 +81,7 @@ class AccountFlowTests {
         tokens.deleteAll();
         identities.deleteAll();
         users.deleteAll();
-        reset(sender);
+        reset(sender); TestMail.prepare(sender);
         SecurityContextHolder.clearContext();
         oauthRequest = new MockHttpServletRequest();
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(oauthRequest));
@@ -127,7 +126,7 @@ class AccountFlowTests {
 
     @Test
     void failedRegistrationMailRollsBackUserAndToken() throws Exception {
-        doThrow(new MailSendException("SMTP unavailable")).when(sender).send(any(SimpleMailMessage.class));
+        doThrow(new MailSendException("SMTP unavailable")).when(sender).send(any(jakarta.mail.internet.MimeMessage.class));
         register("reader@example.com", INITIAL_PASSWORD, true).andExpect(view().name("auth/register"))
                 .andExpect(model().attributeExists("globalError"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Unable to send the verification email")));
@@ -141,7 +140,7 @@ class AccountFlowTests {
         requestEmail("/verification/resend", "reader@example.com");
         String original = deliveredToken();
         requestEmail("/verification/resend", "reader@example.com");
-        verify(sender, times(1)).send(any(SimpleMailMessage.class));
+        verify(sender, times(1)).send(any(jakarta.mail.internet.MimeMessage.class));
         AccountToken token = tokens.findAll().getFirst();
         token.setIssuedAt(Instant.now().minusSeconds(120));
         tokens.saveAndFlush(token);
@@ -169,13 +168,13 @@ class AccountFlowTests {
         assertThat(requestEmail("/forgot-password", "google@example.com")).isEqualTo(known);
         assertThat(requestEmail("/forgot-password", "unverified@example.com")).isEqualTo(known);
         requestEmail("/forgot-password", "reader@example.com");
-        verify(sender, times(2)).send(any(SimpleMailMessage.class));
+        verify(sender, times(2)).send(any(jakarta.mail.internet.MimeMessage.class));
     }
 
     @Test
     void smtpFailureDuringForgotStillReturnsGenericResponse() throws Exception {
         localUser("reader@example.com", true);
-        doThrow(new MailSendException("SMTP unavailable")).when(sender).send(any(SimpleMailMessage.class));
+        doThrow(new MailSendException("SMTP unavailable")).when(sender).send(any(jakarta.mail.internet.MimeMessage.class));
         String known = requestEmail("/forgot-password", "reader@example.com");
         assertThat(requestEmail("/forgot-password", "missing@example.com")).isEqualTo(known);
         assertThat(tokens.findAll()).allMatch(token -> token.getUsedAt() != null);
@@ -375,7 +374,7 @@ class AccountFlowTests {
         mvc.perform(get("/reset-password").param("token", token)).andExpect(model().attribute("tokenValid", false));
         resetPassword(token, NEW_PASSWORD, NEW_PASSWORD).andExpect(model().attribute("tokenValid", false));
         assertThat(users.findById(userId).orElseThrow().getPassword()).isNull();
-        verify(sender, times(1)).send(any(SimpleMailMessage.class));
+        verify(sender, times(1)).send(any(jakarta.mail.internet.MimeMessage.class));
     }
 
     @Test
@@ -490,9 +489,7 @@ class AccountFlowTests {
     }
 
     private String deliveredToken() {
-        var messages = mockingDetails(sender).getInvocations().stream()
-                .filter(invocation -> invocation.getArgument(0) instanceof SimpleMailMessage)
-                .map(invocation -> (SimpleMailMessage) invocation.getArgument(0)).toList();
+        var messages = TestMail.messages(sender);
         String text = messages.getLast().getText();
         var matcher = Pattern.compile("[?&]token=([A-Za-z0-9_-]+)").matcher(text);
         assertThat(matcher.find()).isTrue();

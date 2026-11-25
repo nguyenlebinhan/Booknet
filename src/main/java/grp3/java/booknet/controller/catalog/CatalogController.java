@@ -2,7 +2,6 @@ package grp3.java.booknet.controller.catalog;
 
 import grp3.java.booknet.dto.catalog.CatalogFilter;
 import grp3.java.booknet.dto.catalog.CatalogBookView;
-import grp3.java.booknet.entity.book_service.Reservation;
 import grp3.java.booknet.enums.book_service.ReservationStatus;
 import grp3.java.booknet.repository.book_service.ReservationRepository;
 import grp3.java.booknet.repository.user.UserRepository;
@@ -33,6 +32,7 @@ public class CatalogController {
     private final CatalogService catalogService;
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
+    private final grp3.java.booknet.service.borrowing.FavoriteBookService favoriteBookService;
 
     @GetMapping("/catalog")
     public String catalog(
@@ -56,22 +56,27 @@ public class CatalogController {
         model.addAttribute("visiblePages", visiblePages);
         model.addAttribute("activePage", "catalog");
         model.addAttribute("staffCatalog", staffCatalog);
-        model.addAttribute("reservedBookIds", resolveActiveReservedBookIds(authentication));
+        Long memberUserId = resolveUserId(authentication);
+        model.addAttribute("reservedBookIds", resolveActiveReservedBookIds(memberUserId));
+        model.addAttribute("favoriteBookIds", memberUserId != null ? favoriteBookService.getFavoriteBookIds(memberUserId) : java.util.Set.of());
         return "catalog/index";
     }
 
-    private java.util.Set<Long> resolveActiveReservedBookIds(Authentication authentication) {
+    private Long resolveUserId(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated() || isStaff(authentication)) {
-            return java.util.Set.of();
+            return null;
         }
-        Long userId = null;
         if (authentication.getPrincipal() instanceof CustomUserDetails local) {
-            userId = local.getId();
+            return local.getId();
         } else if (authentication.getPrincipal() instanceof CustomOAuth2User oauth) {
-            userId = oauth.getId();
+            return oauth.getId();
         } else if (authentication.getName() != null) {
-            userId = userRepository.findIdByEmail(authentication.getName()).orElse(null);
+            return userRepository.findIdByEmail(authentication.getName()).orElse(null);
         }
+        return null;
+    }
+
+    private java.util.Set<Long> resolveActiveReservedBookIds(Long userId) {
         if (userId == null) {
             return java.util.Set.of();
         }

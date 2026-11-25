@@ -3,7 +3,6 @@ package grp3.java.booknet;
 import grp3.java.booknet.entity.user.User;
 import grp3.java.booknet.enums.user.*;
 import grp3.java.booknet.repository.user.*;
-import grp3.java.booknet.entity.user.AccountAccessAudit;
 import grp3.java.booknet.security.dto.CustomUserDetails;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -107,9 +106,10 @@ class MemberManagementUiTests {
     }
 
     @Test
-    void liveFiltersDoNotPretendToBeConnectedAndSearchIsEscaped() throws Exception {
+    void liveFiltersUseRealRecordsAndSearchIsEscaped() throws Exception {
         var signedIn = user(new CustomUserDetails(librarian));
-        mvc.perform(get("/staff/members").param("loan", "overdue").with(signedIn)).andExpect(status().isBadRequest());
+        mvc.perform(get("/staff/members").param("loan", "overdue").with(signedIn)).andExpect(status().isOk())
+                .andExpect(content().string(containsString("No matching records")));
         mvc.perform(get("/staff/members").param("status", "SUSPENDED").with(signedIn)).andExpect(status().isBadRequest());
         mvc.perform(get("/staff/members").param("demo", "true").param("card", "unknown").with(signedIn))
                 .andExpect(status().isBadRequest());

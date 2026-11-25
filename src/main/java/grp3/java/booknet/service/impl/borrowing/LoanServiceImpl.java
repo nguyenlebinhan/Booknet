@@ -1,7 +1,6 @@
 package grp3.java.booknet.service.impl.borrowing;
 
 import grp3.java.booknet.dto.loan.*;
-import grp3.java.booknet.entity.book.Book;
 import grp3.java.booknet.entity.book.BookCopy;
 import grp3.java.booknet.entity.book_service.*;
 import grp3.java.booknet.entity.user.User;
@@ -367,6 +366,28 @@ public class LoanServiceImpl implements LoanService {
             req.setApprovedBy(librarian);
         }
         borrowRequestRepository.save(req);
+
+        // Mark matching active reservations for this member & books as FULFILLED
+        List<Reservation> activeMemberReservations = reservationRepository.findByMember_IdAndStatusIn(
+                req.getMember().getId(),
+                List.of(ReservationStatus.PENDING, ReservationStatus.READY)
+        );
+        if (!activeMemberReservations.isEmpty()) {
+            for (int i = 0; i < reqItems.size(); i++) {
+                Long bookId = reqItems.get(i).getBook().getId();
+                BookCopy assignedCopy = matchedCopies.get(i);
+                for (Reservation res : activeMemberReservations) {
+                    if (res.getStatus() != ReservationStatus.FULFILLED
+                            && res.getBook() != null
+                            && Objects.equals(res.getBook().getId(), bookId)) {
+                        res.setStatus(ReservationStatus.FULFILLED);
+                        res.setAssignedCopy(assignedCopy);
+                        reservationRepository.save(res);
+                        break;
+                    }
+                }
+            }
+        }
 
         return loan;
     }

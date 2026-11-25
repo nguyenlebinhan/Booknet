@@ -51,7 +51,7 @@ class ThymeleafAccountFlowTests {
         tokens.deleteAll();
         identities.deleteAll();
         users.deleteAll();
-        reset(sender);
+        reset(sender); TestMail.prepare(sender);
     }
 
     @Test
@@ -292,7 +292,7 @@ class ThymeleafAccountFlowTests {
                 .isEqualTo(Duration.ofMinutes(15));
         mvc.perform(post("/account/set-password").with(authentication).with(csrf()))
                 .andExpect(redirectedUrl("/account/profile"));
-        verify(sender, times(1)).send(any(SimpleMailMessage.class));
+        verify(sender, times(1)).send(any(jakarta.mail.internet.MimeMessage.class));
 
         FormPage reset = formPage("/reset-password?token=" + token);
         mvc.perform(post("/reset-password").session(reset.session()).param("_csrf", reset.csrf())
@@ -331,7 +331,7 @@ class ThymeleafAccountFlowTests {
         users.saveAndFlush(user);
         var principal = new CustomUserDetails(user);
         var authentication = org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(principal);
-        doThrow(new org.springframework.mail.MailSendException("SMTP unavailable")).when(sender).send(any(SimpleMailMessage.class));
+        doThrow(new org.springframework.mail.MailSendException("SMTP unavailable")).when(sender).send(any(jakarta.mail.internet.MimeMessage.class));
         MvcResult failed = mvc.perform(post("/account/set-password").with(authentication).with(csrf()))
                 .andExpect(redirectedUrl("/account/profile")).andExpect(flash().attributeExists("errorMessage"))
                 .andExpect(flash().attributeCount(1)).andReturn();
@@ -339,28 +339,38 @@ class ThymeleafAccountFlowTests {
                 .andExpect(content().string(containsString("Unable to send the password setup email")));
         assertThat(tokens.count()).isZero();
         assertThat(users.findById(user.getId()).orElseThrow().getPassword()).isNull();
-        reset(sender);
+        reset(sender); TestMail.prepare(sender);
         mvc.perform(post("/account/set-password").with(authentication).with(csrf()))
                 .andExpect(flash().attributeExists("successMessage"));
-        verify(sender).send(any(SimpleMailMessage.class));
+        verify(sender).send(any(jakarta.mail.internet.MimeMessage.class));
     }
 
     @Test
     void contactSubmitsRenderedFormAndSendsToLibrariansWithReplyTo() throws Exception {
+        when(sender.createMimeMessage()).thenAnswer(invocation -> new jakarta.mail.internet.MimeMessage((jakarta.mail.Session) null));
         FormPage form = formPage("/contact");
+        assertThat(form.html()).contains("name=\"phone\"", "type=\"tel\"");
         MvcResult sent = mvc.perform(post("/contact").session(form.session()).param("_csrf", form.csrf())
                         .param("fullName", "  Contact Reader  ").param("email", "reader@example.com")
-                        .param("subject", "Book donations").param("message", "I would like to donate books."))
+                        .param("phone", "0903 248 161").param("subject", "Book donations").param("message", "I would like to donate books."))
                 .andExpect(redirectedUrl("/contact")).andExpect(flash().attributeExists("contactSuccess")).andReturn();
-        SimpleMailMessage mail = deliveredMessage();
-        assertThat(mail.getTo()).containsExactly("librarians@booknet.test");
-        assertThat(mail.getFrom()).isEqualTo("no-reply@booknet.test");
-        assertThat(mail.getReplyTo()).isEqualTo("reader@example.com");
+        var captor = org.mockito.ArgumentCaptor.forClass(jakarta.mail.internet.MimeMessage.class);
+        verify(sender).send(captor.capture());
+        var mail = captor.getValue();
+        mail.saveChanges();
+        assertThat(mail.getAllRecipients()[0].toString()).isEqualTo("librarians@booknet.test");
+        assertThat(mail.getFrom()[0].toString()).isEqualTo("no-reply@booknet.test");
+        assertThat(mail.getReplyTo()[0].toString()).isEqualTo("reader@example.com");
         assertThat(mail.getSubject()).isEqualTo("BookNet - Contact: Book donations");
-        assertThat(mail.getText()).contains("Contact Reader", "reader@example.com", "I would like to donate books.");
+        String html = contactHtml(mail);
+        assertThat(html).contains("Contact Reader", "reader@example.com", "0903 248 161", "I would like to donate books.", "mailto:reader@example.com");
+        java.nio.file.Path preview = java.nio.file.Path.of("target/contact-review/email.html");
+        java.nio.file.Files.createDirectories(preview.getParent());
+        java.nio.file.Files.writeString(preview, html);
+        java.nio.file.Files.writeString(preview.resolveSibling("form.html"), form.html().replace("href=\"/css/", "href=\"../../src/main/resources/static/css/"));
         mvc.perform(get("/contact").flashAttrs(sent.getFlashMap()))
                 .andExpect(content().string(containsString("Your message has been submitted")));
-        verify(sender, times(1)).send(any(SimpleMailMessage.class));
+        verify(sender, times(1)).send(any(jakarta.mail.internet.MimeMessage.class));
     }
 
     @Test
@@ -374,20 +384,42 @@ class ThymeleafAccountFlowTests {
         mvc.perform(post("/contact").with(csrf()).param("fullName", "X".repeat(121))
                         .param("email", "x".repeat(110) + "@example.com").param("message", "X".repeat(5001)))
                 .andExpect(model().attributeHasFieldErrors("contactForm", "fullName", "email", "message"));
+        mvc.perform(post("/contact").with(csrf()).param("fullName", "Reader")
+                        .param("email", "reader@example.com").param("phone", "invalid<script>").param("message", "Help"))
+                .andExpect(model().attributeHasFieldErrors("contactForm", "phone"));
         verifyNoInteractions(sender);
     }
 
     @Test
     void contactSmtpFailureRendersErrorAndPreservesEscapedInput() throws Exception {
-        doThrow(new org.springframework.mail.MailSendException("SMTP unavailable")).when(sender).send(any(SimpleMailMessage.class));
+        when(sender.createMimeMessage()).thenAnswer(invocation -> new jakarta.mail.internet.MimeMessage((jakarta.mail.Session) null));
+        doThrow(new org.springframework.mail.MailSendException("SMTP unavailable")).when(sender).send(any(jakarta.mail.internet.MimeMessage.class));
         mvc.perform(post("/contact").with(csrf()).param("fullName", "Reader").param("email", "reader@example.com")
-                        .param("subject", "Other").param("message", "<script>alert('test')</script>"))
+                        .param("phone", "0903 248 161").param("subject", "Other").param("message", "<script>alert('test')</script>"))
                 .andExpect(view().name("pages/contact")).andExpect(model().attributeHasErrors("contactForm"))
                 .andExpect(model().attributeDoesNotExist("contactSuccess"))
                 .andExpect(content().string(containsString("Unable to send your message")))
                 .andExpect(content().string(containsString("value=\"reader@example.com\"")))
+                .andExpect(content().string(containsString("value=\"0903 248 161\"")))
                 .andExpect(content().string(containsString("&lt;script&gt;")))
                 .andExpect(content().string(org.hamcrest.Matchers.not(containsString("<script>alert"))));
+    }
+
+    @Test
+    void contactEmailEscapesUserContentAndAllowsNoPhone() throws Exception {
+        when(sender.createMimeMessage()).thenAnswer(invocation -> new jakarta.mail.internet.MimeMessage((jakarta.mail.Session) null));
+        mvc.perform(post("/contact").with(csrf()).param("fullName", "Nguyễn Minh Anh <test>")
+                        .param("email", "reader+contact@example.com").param("subject", "Other")
+                        .param("message", "Hello\n<script>alert('test')</script>"))
+                .andExpect(redirectedUrl("/contact"));
+        var captor = org.mockito.ArgumentCaptor.forClass(jakarta.mail.internet.MimeMessage.class);
+        verify(sender).send(captor.capture());
+        captor.getValue().saveChanges();
+        String html = contactHtml(captor.getValue());
+        assertThat(html).contains("Nguyễn Minh Anh &lt;test&gt;", "&lt;script&gt;", "Not provided", "white-space:pre-wrap",
+                        "mailto:reader%2Bcontact@example.com")
+                .doesNotContain("<script>");
+        assertThat(captor.getValue().getReplyTo()[0].toString()).isEqualTo("reader+contact@example.com");
     }
 
     @ParameterizedTest
@@ -445,10 +477,19 @@ class ThymeleafAccountFlowTests {
         return new FormPage((MockHttpSession) result.getRequest().getSession(false), matcher.group(1), html);
     }
 
+    private String contactHtml(jakarta.mail.Part part) throws Exception {
+        if (part.isMimeType("text/html")) return (String) part.getContent();
+        if (part.getContent() instanceof jakarta.mail.Multipart multipart) {
+            for (int i = 0; i < multipart.getCount(); i++) {
+                String html = contactHtml(multipart.getBodyPart(i));
+                if (!html.isEmpty()) return html;
+            }
+        }
+        return "";
+    }
+
     private SimpleMailMessage deliveredMessage() {
-        return mockingDetails(sender).getInvocations().stream()
-                .filter(invocation -> invocation.getArgument(0) instanceof SimpleMailMessage)
-                .map(invocation -> (SimpleMailMessage) invocation.getArgument(0)).toList().getLast();
+        return TestMail.messages(sender).getLast();
     }
 
     private String deliveredToken() {

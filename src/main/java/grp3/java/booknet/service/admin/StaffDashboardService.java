@@ -1,6 +1,5 @@
 package grp3.java.booknet.service.admin;
 
-import grp3.java.booknet.dto.admin.LibrarianDashboardSummary;
 import grp3.java.booknet.dto.admin.RecentActivityItem;
 import grp3.java.booknet.dto.admin.ReportSummary;
 
@@ -9,9 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 public interface StaffDashboardService {
-
-    /** Dữ liệu tổng quan cho Librarian Dashboard (UC39). */
-    LibrarianDashboardSummary getLibrarianSummary();
 
     /** 10 giao dịch gần nhất trên Librarian dashboard. */
     List<RecentActivityItem> getRecentLoanActivity();

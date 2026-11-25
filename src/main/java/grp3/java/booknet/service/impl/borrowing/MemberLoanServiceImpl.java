@@ -5,17 +5,19 @@ import grp3.java.booknet.dto.borrowing.ReturnDetailView;
 import grp3.java.booknet.dto.borrowing.ReturnReceiptDto;
 import grp3.java.booknet.entity.book.Author;
 import grp3.java.booknet.entity.book.Book;
+import grp3.java.booknet.entity.book.BookCopy;
+import grp3.java.booknet.entity.book_service.FavoriteBook;
 import grp3.java.booknet.entity.book_service.Loan;
 import grp3.java.booknet.entity.book_service.LoanItem;
 import grp3.java.booknet.entity.book_service.Reservation;
 import grp3.java.booknet.entity.user.User;
-import grp3.java.booknet.enums.book.CopyStatus;
 import grp3.java.booknet.enums.book_service.LoanItemStatus;
 import grp3.java.booknet.enums.book_service.LoanStatus;
 import grp3.java.booknet.enums.book_service.ReservationStatus;
 import grp3.java.booknet.enums.user.UserStatus;
 import grp3.java.booknet.exception.account.AccountException;
 import grp3.java.booknet.repository.book.BookCopyRepository;
+import grp3.java.booknet.repository.book_service.FavoriteBookRepository;
 import grp3.java.booknet.repository.book_service.LoanItemRepository;
 import grp3.java.booknet.repository.book_service.LoanRepository;
 import grp3.java.booknet.repository.book_service.ReservationRepository;
@@ -67,6 +69,7 @@ public class MemberLoanServiceImpl implements MemberLoanService {
     private final ReservationQueueService reservationQueueService;
     private final BookCopyRepository bookCopyRepository;
     private final FineService fineService;
+    private final FavoriteBookRepository favoriteBookRepository;
 
     @Override
     @Transactional
@@ -100,9 +103,42 @@ public class MemberLoanServiceImpl implements MemberLoanService {
         List<MemberLoansView.LoanItem> activeItems = new ArrayList<>();
         MemberLoansView.RenewSuggestion renewSuggestion = null;
 
+        record ActiveCopyEntry(Loan loan, BookCopy copy, LocalDate dueDate, int renewCount, boolean isReturnPending) {}
+        List<ActiveCopyEntry> activeEntries = new ArrayList<>();
         for (Loan loan : activeEntityLoans) {
-            Book book = loan.getCopy().getBook();
-            LocalDate dueDate = loan.getDueDate();
+            List<LoanItem> loanItems = loanItemRepository.findByLoan_Id(loan.getId());
+            if (loanItems.isEmpty()) {
+                activeEntries.add(new ActiveCopyEntry(
+                        loan,
+                        loan.getCopy(),
+                        loan.getDueDate(),
+                        loan.getRenewCount(),
+                        loan.getStatus() == LoanStatus.RETURN_PENDING
+                ));
+            } else {
+                for (LoanItem item : loanItems) {
+                    if (item.getStatus() == LoanItemStatus.RETURNED) {
+                        continue;
+                    }
+                    LocalDate itemDueDate = item.getDueDate() != null ? item.getDueDate() : loan.getDueDate();
+                    boolean itemReturnPending = item.getStatus() == LoanItemStatus.RETURN_REQUESTED
+                            || loan.getStatus() == LoanStatus.RETURN_PENDING;
+                    activeEntries.add(new ActiveCopyEntry(
+                            loan,
+                            item.getCopy(),
+                            itemDueDate,
+                            item.getRenewCount(),
+                            itemReturnPending
+                    ));
+                }
+            }
+        }
+
+        for (ActiveCopyEntry entry : activeEntries) {
+            Loan loan = entry.loan();
+            BookCopy copy = entry.copy();
+            Book book = copy.getBook();
+            LocalDate dueDate = entry.dueDate();
             long daysUntilDue = ChronoUnit.DAYS.between(today, dueDate);
 
             String dueBadgeText;
@@ -130,18 +166,18 @@ public class MemberLoanServiceImpl implements MemberLoanService {
             boolean hasQueue = reservationQueueService.hasWaitingQueueForRenewal(book.getId(), userId);
             boolean renewalAllowed = user.effectiveAuthorities().stream().anyMatch(a -> a.getAuthority().equals("RENEW"));
             boolean canRenew = renewalAllowed && loan.getStatus() == LoanStatus.BORROWING
-                    && loan.getRenewCount() < MAX_RENEWS_ALLOWED
+                    && entry.renewCount() < MAX_RENEWS_ALLOWED
                     && !dueDate.isBefore(today)
                     && !hasQueue;
 
             String renewalHint;
             if (loan.getStatus() == LoanStatus.RENEW_PENDING) {
                 renewalHint = "Renewal requested - Waiting for librarian";
-            } else if (loan.getStatus() == LoanStatus.RETURN_PENDING) {
+            } else if (entry.isReturnPending()) {
                 renewalHint = "Return requested - Please bring book to desk";
             } else if (loan.getStatus() == LoanStatus.OVERDUE) {
                 renewalHint = "Please return soon";
-            } else if (loan.getRenewCount() >= MAX_RENEWS_ALLOWED) {
+            } else if (entry.renewCount() >= MAX_RENEWS_ALLOWED) {
                 renewalHint = "Renew limit reached (1/1)";
             } else if (!renewalAllowed) {
                 renewalHint = "Renewal permission is not enabled for your account";
@@ -154,7 +190,7 @@ public class MemberLoanServiceImpl implements MemberLoanService {
                             loan.getId(),
                             book.getTitle(),
                             dueDate.plusDays(RENEW_DAYS),
-                            loan.getRenewCount(),
+                            entry.renewCount(),
                             MAX_RENEWS_ALLOWED
                     );
                 }
@@ -178,14 +214,14 @@ public class MemberLoanServiceImpl implements MemberLoanService {
                     book.getTitle(),
                     authorNames,
                     cover,
-                    loan.getCopy().getBarcode(),
+                    copy.getBarcode(),
                     loan.getBorrowedAt() != null ? loan.getBorrowedAt().toLocalDate() : today,
                     dueDate,
                     loan.getStatus().name(),
                     dueBadgeText,
                     dueBadgeType,
-                    loan.getStatus() != LoanStatus.RETURN_PENDING,
-                    loan.getStatus() == LoanStatus.RETURN_PENDING,
+                    !entry.isReturnPending(),
+                    entry.isReturnPending(),
                     loan.getReturnRequestedAt(),
                     canRenew,
                     loan.getStatus() == LoanStatus.RENEW_PENDING,
@@ -259,6 +295,37 @@ public class MemberLoanServiceImpl implements MemberLoanService {
                     );
                 }).toList();
 
+        List<FavoriteBook> favoriteEntities = favoriteBookRepository.findByUser_IdOrderBySavedAtDesc(userId);
+        List<MemberLoansView.FavoriteItem> favoriteItems = favoriteEntities.stream()
+                .map(fav -> {
+                    Book book = fav.getBook();
+                    String authorNames = book.getAuthors().stream()
+                            .map(Author::getName)
+                            .collect(Collectors.joining(", "));
+                    if (authorNames.isBlank()) authorNames = "Unknown author";
+
+                    String cover = book.getCoverUrl() != null && !book.getCoverUrl().isBlank()
+                            ? book.getCoverUrl()
+                            : "/images/home/cover-hoa-vang.jpg";
+
+                    String genre = book.getCategories().isEmpty() ? "General" : book.getCategories().iterator().next().getName();
+                    long availableCount = bookCopyRepository.countCopies(book.getId(), CopyStatus.AVAILABLE);
+                    long totalCount = bookCopyRepository.countByBook_Id(book.getId());
+                    boolean onShelf = availableCount > 0;
+
+                    return new MemberLoansView.FavoriteItem(
+                            book.getId(),
+                            book.getTitle(),
+                            authorNames,
+                            cover,
+                            genre,
+                            onShelf,
+                            availableCount,
+                            totalCount,
+                            fav.getSavedAt()
+                    );
+                }).toList();
+
         return new MemberLoansView(
                 user.getFullName(),
                 memberCode,
@@ -272,7 +339,8 @@ public class MemberLoanServiceImpl implements MemberLoanService {
                 activeItems,
                 pendingReservations,
                 historyItems,
-                renewSuggestion
+                renewSuggestion,
+                favoriteItems
         );
     }
 

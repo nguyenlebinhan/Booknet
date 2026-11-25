@@ -9,7 +9,6 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.test.web.servlet.MockMvc;
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
@@ -24,20 +23,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest @AutoConfigureMockMvc @ActiveProfiles("test")
 class AdminRoleInvitationTests {
  @Autowired MockMvc mvc; @Autowired UserRepository users; @Autowired RoleDefinitionRepository roles;
- @Autowired grp3.java.booknet.service.member.RoleManagementService roleService;
  @Autowired AccountTokenRepository tokens; @Autowired OAuthIdentityRepository identities; @Autowired AccountAccessAuditRepository audits;
  @MockitoBean JavaMailSender mail;
  User admin,member;
- @BeforeEach void setup(){tokens.deleteAll();identities.deleteAll();audits.deleteAll();users.deleteAll();reset(mail);
+ @BeforeEach void setup(){tokens.deleteAll();identities.deleteAll();audits.deleteAll();users.deleteAll();reset(mail); TestMail.prepare(mail);
  for(var role:roles.findAll())if(role.getSystemRole()!=null){role.setCapabilities(new HashSet<>(UserRole.defaults(role.getSystemRole())));roles.saveAndFlush(role);}
  admin=save("admin@example.com",UserRole.ROLE_ADMIN);member=save("member@example.com",UserRole.ROLE_USER);}
  User save(String email,UserRole role){return users.saveAndFlush(User.builder().email(email).fullName("Test Account").provider(AuthProvider.LOCAL).role(role).enabled(true).emailVerified(true).status(UserStatus.ACTIVE).build());}
- Long saveRole(Long id,grp3.java.booknet.dto.member.RoleForm form,Long actor){
- var context=org.springframework.security.core.context.SecurityContextHolder.createEmptyContext();
- var principal=new CustomUserDetails(admin);context.setAuthentication(org.springframework.security.authentication.UsernamePasswordAuthenticationToken.authenticated(principal,null,principal.getAuthorities()));
- org.springframework.security.core.context.SecurityContextHolder.setContext(context);
- try{return roleService.save(id,form,actor);}finally{org.springframework.security.core.context.SecurityContextHolder.clearContext();}
- }
  @AfterEach void resetPolicies(){for(var role:roles.findAll())if(role.getSystemRole()!=null){role.setCapabilities(new HashSet<>(UserRole.defaults(role.getSystemRole())));roles.saveAndFlush(role);}}
  @Test void pagesRenderAndProduceReviewArtifacts()throws Exception{
  var pages=List.of("/admin/users/create","/admin/roles","/admin/users/"+member.getId());
@@ -74,7 +66,7 @@ class AdminRoleInvitationTests {
  .andExpect(status().is3xxRedirection());
  var invited=users.findByEmail("invite@example.com").orElseThrow();assertThat(invited.getRole()).isEqualTo(UserRole.ROLE_LIBRARIAN);assertThat(invited.hasPassword()).isFalse();assertThat(invited.isEmailVerified()).isFalse();
  var token=tokens.findAll().getFirst();assertThat(token.getPurpose()).isEqualTo(AccountTokenPurpose.INVITE_ACCOUNT);assertThat(Duration.between(token.getIssuedAt(),token.getExpiresAt())).isEqualTo(Duration.ofHours(24));
- var capture=ArgumentCaptor.forClass(SimpleMailMessage.class);verify(mail).send(capture.capture());String text=capture.getValue().getText();assertThat(text).contains("Welcome to the library","valid for 24 hours");
+ var capture=ArgumentCaptor.forClass(jakarta.mail.internet.MimeMessage.class);verify(mail).send(capture.capture());String text=TestMail.plain(capture.getValue()).getText();assertThat(text).contains("Welcome to the library","valid for 24 hours");
  String raw=text.substring(text.indexOf("token=")+6).split("\\s")[0];
  mvc.perform(get("/reset-password").param("token",raw)).andExpect(model().attribute("tokenValid",true));
  mvc.perform(post("/reset-password").with(csrf()).param("token",raw).param("password","NewPass123").param("confirmPassword","NewPass123")).andExpect(redirectedUrl("/login?reset=true"));
@@ -87,25 +79,22 @@ class AdminRoleInvitationTests {
  mvc.perform(post("/admin/roles/create").with(user(new CustomUserDetails(member))).with(csrf()).param("name","Denied")).andExpect(status().isForbidden());
  mvc.perform(get("/admin/roles/create").with(user(new CustomUserDetails(admin)))).andExpect(redirectedUrl("/admin/roles"));
  mvc.perform(post("/admin/roles/create").with(user(new CustomUserDetails(admin))).with(csrf()).param("name","Denied")).andExpect(status().isForbidden());
- assertThatThrownBy(()->saveRole(null,new grp3.java.booknet.dto.member.RoleForm("Escalation","",Set.of(RoleCapability.ROLE_MANAGE),0),admin.getId())).isInstanceOf(IllegalArgumentException.class);
- Long id=saveRole(null,new grp3.java.booknet.dto.member.RoleForm("Catalog Assistant","Catalog only",Set.of(RoleCapability.CATALOG_EDIT,RoleCapability.INVENTORY_REPORT),0),admin.getId());
- var role=roles.findById(id).orElseThrow();assertThat(role.getCapabilities()).containsExactlyInAnyOrder(RoleCapability.CATALOG_EDIT,RoleCapability.INVENTORY_REPORT);
+ var role=new RoleDefinition();role.setName("Catalog Assistant");role.setDescription("Catalog only");role.setCapabilities(new HashSet<>(Set.of(RoleCapability.CATALOG_EDIT,RoleCapability.INVENTORY_REPORT)));role=roles.saveAndFlush(role);assertThat(role.getCapabilities()).containsExactlyInAnyOrder(RoleCapability.CATALOG_EDIT,RoleCapability.INVENTORY_REPORT);
  member.setAssignedRole(role);users.saveAndFlush(member);
  mvc.perform(get("/admin/books/create").with(user(new CustomUserDetails(member)))).andExpect(status().isOk());
  mvc.perform(get("/admin/users").with(user(new CustomUserDetails(member)))).andExpect(status().isForbidden());
  mvc.perform(get("/staff/members").with(user(new CustomUserDetails(member)))).andExpect(status().isForbidden());
  }
  @Test
- void roleWritesAreBlockedAndInternalPermissionChangesStillRevokeSessions()throws Exception{
- var lib=save("lib@example.com",UserRole.ROLE_LIBRARIAN);var stale=new CustomUserDetails(lib);var role=roles.findBySystemRole(UserRole.ROLE_LIBRARIAN).orElseThrow();
- mvc.perform(post("/admin/roles/"+role.getId()+"/edit").with(user(new CustomUserDetails(admin))).with(csrf()).param("name",role.getName()).param("description",role.getDescription()).param("revision",Long.toString(role.getRevision())).param("capabilities","CATALOG_EDIT")).andExpect(status().isForbidden());
- assertThat(roles.findById(role.getId()).orElseThrow().getCapabilities()).contains(RoleCapability.MEMBER_READ);
- saveRole(role.getId(),new grp3.java.booknet.dto.member.RoleForm(role.getName(),role.getDescription(),Set.of(RoleCapability.CATALOG_EDIT),role.getRevision()),admin.getId());
- mvc.perform(get("/staff/members").with(user(stale))).andExpect(redirectedUrl("/login?error=true"));
- lib=users.findById(lib.getId()).orElseThrow();mvc.perform(get("/staff/members").with(user(new CustomUserDetails(lib)))).andExpect(status().isForbidden());
+ void roleWritesAreBlockedAndLeavePermissionsAndSessionsUnchanged()throws Exception{
+ var lib=save("lib@example.com",UserRole.ROLE_LIBRARIAN);var role=roles.findBySystemRole(UserRole.ROLE_LIBRARIAN).orElseThrow();
+ var capabilities=Set.copyOf(role.getCapabilities());long revision=lib.getAuthVersion();
+ mvc.perform(post("/admin/roles/"+role.getId()+"/edit").with(user(new CustomUserDetails(admin))).with(csrf()).param("name",role.getName()).param("capabilities","CATALOG_EDIT")).andExpect(status().isForbidden());
+ assertThat(roles.findById(role.getId()).orElseThrow().getCapabilities()).containsExactlyInAnyOrderElementsOf(capabilities);
+ assertThat(users.findById(lib.getId()).orElseThrow().getAuthVersion()).isEqualTo(revision);
+ mvc.perform(get("/staff/members").with(user(new CustomUserDetails(lib)))).andExpect(status().isOk());
  var ar=roles.findBySystemRole(UserRole.ROLE_ADMIN).orElseThrow();
- mvc.perform(post("/admin/roles/"+ar.getId()+"/edit").with(user(new CustomUserDetails(admin))).with(csrf()).param("name",ar.getName()).param("revision",Long.toString(ar.getRevision()))).andExpect(status().isForbidden());
- saveRole(ar.getId(),new grp3.java.booknet.dto.member.RoleForm(ar.getName(),ar.getDescription(),Set.of(),ar.getRevision()),admin.getId());
+ mvc.perform(post("/admin/roles/"+ar.getId()+"/edit").with(user(new CustomUserDetails(admin))).with(csrf()).param("name",ar.getName())).andExpect(status().isForbidden());
  assertThat(roles.findById(ar.getId()).orElseThrow().getCapabilities()).contains(RoleCapability.ROLE_MANAGE,RoleCapability.USER_ACCESS_UPDATE,RoleCapability.MEMBER_READ,RoleCapability.MEMBER_CARD_ACTIVATE);
  }
  @Test void controlRequiresCsrfReasonConfirmationAndAudits()throws Exception{
@@ -129,15 +118,15 @@ class AdminRoleInvitationTests {
  var role=roles.findBySystemRole(UserRole.ROLE_USER).orElseThrow();
  mvc.perform(post("/admin/users/create").with(user(new CustomUserDetails(admin))).with(csrf()).param("fullName","Duplicate Account").param("email",member.getEmail()).param("roleId",role.getId().toString())).andExpect(status().isOk()).andExpect(model().attributeHasErrors("createForm"));
  verifyNoInteractions(mail);
- doThrow(new org.springframework.mail.MailSendException("offline")).when(mail).send(any(SimpleMailMessage.class));
+ doThrow(new org.springframework.mail.MailSendException("offline")).when(mail).send(any(jakarta.mail.internet.MimeMessage.class));
  mvc.perform(post("/admin/users/create").with(user(new CustomUserDetails(admin))).with(csrf()).param("fullName","Pending Account").param("email","offline@example.com").param("roleId",role.getId().toString())).andExpect(status().isOk()).andExpect(model().attributeHasErrors("createForm"));
  assertThat(users.existsByEmail("offline@example.com")).isFalse();assertThat(tokens.count()).isZero();
  }
  @Test void expiredInvitationCannotActivateAndAccountRoleCannotBeChanged()throws Exception{
  var role=roles.findBySystemRole(UserRole.ROLE_LIBRARIAN).orElseThrow();
  mvc.perform(post("/admin/users/create").with(user(new CustomUserDetails(admin))).with(csrf()).param("fullName","Expired Invite").param("email","expired@example.com").param("roleId",role.getId().toString())).andExpect(status().is3xxRedirection());
- var capture=ArgumentCaptor.forClass(SimpleMailMessage.class);verify(mail).send(capture.capture());
- String text=capture.getValue().getText();String raw=text.substring(text.indexOf("token=")+6).split("\\s")[0];
+ var capture=ArgumentCaptor.forClass(jakarta.mail.internet.MimeMessage.class);verify(mail).send(capture.capture());
+ String text=TestMail.plain(capture.getValue()).getText();String raw=text.substring(text.indexOf("token=")+6).split("\\s")[0];
  var token=tokens.findAll().getFirst();token.setExpiresAt(java.time.Instant.now().minusSeconds(1));tokens.saveAndFlush(token);
  mvc.perform(get("/reset-password").param("token",raw)).andExpect(model().attribute("tokenValid",false));
  mvc.perform(post("/reset-password").with(csrf()).param("token",raw).param("password","NewPass123").param("confirmPassword","NewPass123")).andExpect(status().isOk());

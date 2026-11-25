@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import grp3.java.booknet.service.mail.BooknetMailService;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -14,7 +14,7 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @RequiredArgsConstructor
 public class ContactMailService {
-    private final JavaMailSender mailSender;
+    private final BooknetMailService mailSender;
 
     @Value("${app.account.mail-from:no-reply@booknet.local}")
     private String from;
@@ -25,14 +25,16 @@ public class ContactMailService {
         if (to.isBlank()) {
             throw new MailSendException("Contact recipient is not configured.");
         }
-        SimpleMailMessage mail = new SimpleMailMessage();
+        String topic = form.subject().isBlank() ? "Other" : form.subject();
+        String phone = form.phone().isBlank() ? "Not provided" : form.phone();
+        String text = "Name: " + form.fullName() + "\nEmail: " + form.email()
+                + "\nPhone: " + phone + "\nTopic: " + topic + "\n\n" + form.message();
+        var mail = new SimpleMailMessage();
         mail.setFrom(from);
         mail.setTo(to);
         mail.setReplyTo(form.email());
-        mail.setSubject("BookNet - Contact: " + (form.subject().isBlank() ? "Other" : form.subject()));
-        mail.setText("Name: " + form.fullName() + "\nEmail: " + form.email()
-                + "\nTopic: " + (form.subject().isBlank() ? "Other" : form.subject())
-                + "\n\n" + form.message());
-        mailSender.send(mail);
+        mail.setSubject("BookNet - Contact: " + topic);
+        mail.setText(text);
+        mailSender.sendContact(mail, form);
     }
 }

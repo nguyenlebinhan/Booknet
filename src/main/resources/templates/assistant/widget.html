@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
-<!-- Chat bubble, included with the shared navbar and the staff sidebar. assistant.js loads the
+<!-- Chat bubble for guests and members. assistant.js loads the
      conversation from /assistant when the bubble is opened. -->
-<div class="ai-widget" id="ai-widget" th:fragment="widget" th:unless="${activePage == 'assistant'}" th:attr="data-url=@{/assistant}">
+<div class="ai-widget" id="ai-widget" th:fragment="widget" sec:authorize="isAnonymous() or (hasAnyRole('USER', 'MEMBER') and !hasAnyRole('ADMIN', 'LIBRARIAN'))" th:unless="${activePage == 'assistant'}" th:attr="data-url=@{/assistant}">
   <link rel="stylesheet" th:href="@{/css/pages/assistant.css}">
   <div class="ai-window" id="ai-window" role="dialog" aria-label="AI assistant" hidden>
     <p class="ai-loading" id="ai-loading" role="status">Opening the assistant…</p>

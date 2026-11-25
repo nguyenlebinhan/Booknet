@@ -1,0 +1,259 @@
+/* ============================================================
+   staff-reports.css — Reports page (UC32)
+   ============================================================ */
+
+/* ── Filter bar ──────────────────────────────────────────────── */
+.report-filter-bar {
+  margin: 20px 0;
+  padding: 16px 20px;
+  border-radius: 10px;
+  background: var(--bn-sage);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.report-filter-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.report-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.report-filter-group label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--bn-forest);
+  text-transform: uppercase;
+}
+
+.report-filter-group input[type="date"] {
+  padding: 7px 10px;
+  border: 1.5px solid #ccc;
+  border-radius: 7px;
+  font: 13px var(--bn-font-sans);
+  color: var(--bn-forest);
+  background: white;
+}
+
+.report-filter-hint {
+  font-size: 12px;
+  color: #666;
+}
+
+/* ── Stat grid override ───────────────────────────────────────── */
+.report-stat-grid {
+  margin-bottom: 20px;
+}
+
+/* ── Two-column layout ──────────────────────────────────────── */
+.report-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 4px;
+}
+
+@media (max-width: 900px) {
+  .report-bottom-grid { grid-template-columns: 1fr; }
+}
+
+.report-col-left,
+.report-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ── Panel shared ────────────────────────────────────────────── */
+.report-panel {
+  padding: 20px 22px;
+  border-radius: 10px;
+  border: 1.5px solid #e4e0d8;
+  background: #fff;
+}
+
+.report-panel-desc {
+  font-size: 12.5px;
+  color: #666;
+  margin: 4px 0 16px;
+}
+
+.report-total-note {
+  margin-top: 14px;
+  font-size: 12px;
+  color: #666;
+}
+.report-total-note strong { color: var(--bn-forest); }
+
+/* ── Overdue bars ────────────────────────────────────────────── */
+.report-overdue-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.report-bar-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 36px;
+  align-items: center;
+  gap: 10px;
+}
+
+.report-bar-label {
+  font-size: 12px;
+  color: #555;
+  white-space: nowrap;
+}
+
+.report-bar-track {
+  height: 10px;
+  background: var(--bn-sage);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.report-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width .4s ease;
+}
+
+.report-bar-mild     { background: var(--bn-ochre); }
+.report-bar-moderate { background: #c47a3a; }
+.report-bar-severe   { background: #9c3a3a; }
+
+.report-bar-row strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bn-forest);
+  text-align: right;
+}
+
+/* ── Fine list ───────────────────────────────────────────────── */
+.report-fine-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.report-fine-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  background: var(--bn-sage);
+}
+
+.report-fine-label { font-size: 12.5px; color: #444; }
+
+.report-fine-badge {
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.badge-paid      { background: #d4edda; color: #155724; }
+.badge-unpaid    { background: #f8d7da; color: #721c24; }
+.badge-estimated { background: #fff3cd; color: #856404; }
+
+.report-fine-amount { font-size: 13px; font-weight: 600; color: var(--bn-forest); }
+.report-fine-danger { color: #9c3a3a; }
+.report-fine-muted  { color: #856404; }
+
+/* ── Top 5 list ──────────────────────────────────────────────── */
+.report-top5-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  counter-reset: top5;
+}
+
+.report-top5-item {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  background: var(--bn-sage);
+  font-size: 12.5px;
+}
+
+.report-top5-rank {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bn-forest);
+  color: #fff;
+  font: 600 11px var(--bn-font-sans);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.report-top5-title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #333;
+}
+
+.report-top5-count {
+  font-weight: 600;
+  color: var(--bn-forest);
+  white-space: nowrap;
+}
+
+.report-empty-note {
+  font-size: 12.5px;
+  color: #888;
+  font-style: italic;
+}
+
+/* ── Chart placeholder ───────────────────────────────────────── */
+.report-chart-placeholder {
+  display: flex;
+  flex-direction: column;
+  min-height: 150px;
+}
+
+.report-chart-coming-soon {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  border-radius: 8px;
+  background: var(--bn-sage);
+  color: #aaa;
+  margin-top: 12px;
+}
+
+.report-chart-coming-soon svg { opacity: .35; }
+
+.report-chart-coming-soon p {
+  font-size: 12px;
+  color: #999;
+  margin: 0;
+  font-style: italic;
+}

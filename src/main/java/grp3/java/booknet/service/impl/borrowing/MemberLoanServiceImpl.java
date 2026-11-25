@@ -21,6 +21,7 @@ import grp3.java.booknet.repository.book_service.LoanRepository;
 import grp3.java.booknet.repository.book_service.ReservationRepository;
 import grp3.java.booknet.repository.user.UserRepository;
 import grp3.java.booknet.service.borrowing.MemberLoanService;
+import grp3.java.booknet.service.fine.FineService;
 import grp3.java.booknet.service.reservation.ReservationQueueService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,6 +66,7 @@ public class MemberLoanServiceImpl implements MemberLoanService {
     private final ReservationRepository reservationRepository;
     private final ReservationQueueService reservationQueueService;
     private final BookCopyRepository bookCopyRepository;
+    private final FineService fineService;
 
     @Override
     @Transactional
@@ -78,7 +80,6 @@ public class MemberLoanServiceImpl implements MemberLoanService {
         List<Loan> historyEntityLoans = new ArrayList<>();
 
         for (Loan loan : userLoans) {
-            // Tự động chuyển status thành OVERDUE nếu quá hạn và đang BORROWING/RENEW_PENDING
             if ((loan.getStatus() == LoanStatus.BORROWING || loan.getStatus() == LoanStatus.RENEW_PENDING)
                     && loan.getDueDate().isBefore(today)) {
                 loan.setStatus(LoanStatus.OVERDUE);
@@ -135,9 +136,9 @@ public class MemberLoanServiceImpl implements MemberLoanService {
 
             String renewalHint;
             if (loan.getStatus() == LoanStatus.RENEW_PENDING) {
-                renewalHint = "Renewal requested · Waiting for librarian";
+                renewalHint = "Renewal requested - Waiting for librarian";
             } else if (loan.getStatus() == LoanStatus.RETURN_PENDING) {
-                renewalHint = "Return requested · Please bring book to desk";
+                renewalHint = "Return requested - Please bring book to desk";
             } else if (loan.getStatus() == LoanStatus.OVERDUE) {
                 renewalHint = "Please return soon";
             } else if (loan.getRenewCount() >= MAX_RENEWS_ALLOWED) {
@@ -224,7 +225,6 @@ public class MemberLoanServiceImpl implements MemberLoanService {
                 ? user.getMemberCode()
                 : "TV-" + String.format("%05d", user.getId());
 
-        // Pending reservations (loan requests chờ Librarian tiếp nhận)
         List<Reservation> pendingReservationEntities =
                 reservationRepository.findByMember_IdAndStatusIn(userId, ACTIVE_RESERVATIONS);
 
@@ -295,7 +295,6 @@ public class MemberLoanServiceImpl implements MemberLoanService {
         loan.setReturnRequestedAt(LocalDateTime.now());
         loanRepository.save(loan);
 
-        // Đồng bộ trạng thái LoanItem để Librarian nhìn thấy trong tab Pending Returns
         List<LoanItem> items = loanItemRepository.findByLoan_Id(loan.getId());
         for (LoanItem item : items) {
             if (item.getStatus() == LoanItemStatus.BORROWING || item.getStatus() == LoanItemStatus.BORROWED) {
@@ -489,6 +488,9 @@ public class MemberLoanServiceImpl implements MemberLoanService {
             loan.setNote(conditionNote.trim());
         }
         loanRepository.save(loan);
+
+        // Nguoi 7 - UC29/UC20: Tao Fine neu tra tre
+        fineService.finalizeFine(loan, librarian);
 
         log.info("Librarian {} confirmed return of Loan ID {} (copy: {})",
                 librarian.getId(), loan.getId(), loan.getCopy().getBarcode());

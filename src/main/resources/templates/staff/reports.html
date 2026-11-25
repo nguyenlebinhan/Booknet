@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports • Librarian | booknet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/dashboard.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/staff-reports.css}">
+</head>
+<body class="admin-page">
+<a class="admin-skip-link" href="#admin-main">Skip to reports</a>
+<div class="admin-shell">
+  <aside th:replace="~{admin/fragments/dashboard :: sidebar}"></aside>
+
+  <div class="admin-workspace">
+    <header class="admin-topbar">
+      <p>Staff space <span aria-hidden="true">/</span> Reports</p>
+      <a class="admin-topbar-account" th:href="@{/account/profile}" th:text="${adminName}">Staff</a>
+    </header>
+
+    <main class="admin-main" id="admin-main">
+      <p class="admin-breadcrumb">Staff space <span aria-hidden="true">/</span> Reports</p>
+
+      <section class="admin-page-heading">
+        <div>
+          <p class="admin-kicker">LIBRARY REPORTS</p>
+          <h1>Circulation reports</h1>
+          <p>Statistical overview of loans, returns, overdue items, and fines.</p>
+        </div>
+        <div class="admin-heading-actions">
+          <!-- Export buttons (Phase 3 / placeholder) -->
+          <button class="admin-button secondary" disabled title="PDF export coming soon">Export PDF</button>
+          <button class="admin-button primary"   disabled title="Excel export coming soon">Export Excel</button>
+        </div>
+      </section>
+
+      <!-- ── Date filter ──────────────────────────────────────────────── -->
+      <section class="report-filter-bar" aria-label="Report filter">
+        <form method="get" th:action="@{/staff/reports}" class="report-filter-form">
+          <div class="report-filter-group">
+            <label for="fromDate">From</label>
+            <input id="fromDate" type="date" name="from" th:value="${fromDate}" required>
+          </div>
+          <div class="report-filter-group">
+            <label for="toDate">To</label>
+            <input id="toDate" type="date" name="to" th:value="${toDate}" required>
+          </div>
+          <button type="submit" class="admin-button primary">Apply filter</button>
+        </form>
+        <p class="report-filter-hint">
+          Showing data from
+          <strong th:text="${#temporals.format(fromDate, 'dd MMM yyyy')}">start</strong>
+          to
+          <strong th:text="${#temporals.format(toDate, 'dd MMM yyyy')}">end</strong>
+        </p>
+      </section>
+
+      <!-- ── Summary stat cards ───────────────────────────────────────── -->
+      <section class="admin-stat-grid report-stat-grid" aria-label="Report summary">
+        <article class="admin-stat-card">
+          <p>Loans issued</p>
+          <strong th:text="${report.totalLoaned()}">0</strong>
+          <small>Books checked out in period</small>
+        </article>
+        <article class="admin-stat-card">
+          <p>Returns processed</p>
+          <strong th:text="${report.totalReturned()}">0</strong>
+          <small>Books checked in in period</small>
+        </article>
+        <article class="admin-stat-card">
+          <p>On-time returns</p>
+          <strong th:text="${report.onTimeReturns()}">0</strong>
+          <small th:text="${report.onTimePercent() + '% of returns'}">–% of returns</small>
+        </article>
+        <article class="admin-stat-card">
+          <p>Late returns</p>
+          <strong class="admin-stat-danger" th:text="${report.lateReturns()}">0</strong>
+          <small>Returned past due date</small>
+        </article>
+      </section>
+
+      <div class="report-bottom-grid">
+
+        <!-- ── Left column ───────────────────────────────────────────── -->
+        <div class="report-col-left">
+
+          <!-- Overdue distribution -->
+          <article class="admin-panel report-panel">
+            <div class="admin-panel-heading">
+              <div><p class="admin-kicker">OVERDUE DISTRIBUTION</p><h2>Days overdue breakdown</h2></div>
+            </div>
+            <p class="report-panel-desc">Late returns grouped by overdue duration in this period.</p>
+
+            <div class="report-overdue-bars">
+              <div class="report-bar-row">
+                <span class="report-bar-label">1–3 days</span>
+                <div class="report-bar-track">
+                  <div class="report-bar-fill report-bar-mild"
+                       th:style="${'width: ' + (report.totalOverdue() > 0 ? (report.overdueGroup1to3() * 100 / report.totalOverdue()) : 0) + '%'}"></div>
+                </div>
+                <strong th:text="${report.overdueGroup1to3()}">0</strong>
+              </div>
+              <div class="report-bar-row">
+                <span class="report-bar-label">4–7 days</span>
+                <div class="report-bar-track">
+                  <div class="report-bar-fill report-bar-moderate"
+                       th:style="${'width: ' + (report.totalOverdue() > 0 ? (report.overdueGroup4to7() * 100 / report.totalOverdue()) : 0) + '%'}"></div>
+                </div>
+                <strong th:text="${report.overdueGroup4to7()}">0</strong>
+              </div>
+              <div class="report-bar-row">
+                <span class="report-bar-label">&gt;7 days</span>
+                <div class="report-bar-track">
+                  <div class="report-bar-fill report-bar-severe"
+                       th:style="${'width: ' + (report.totalOverdue() > 0 ? (report.overdueGroupOver7() * 100 / report.totalOverdue()) : 0) + '%'}"></div>
+                </div>
+                <strong th:text="${report.overdueGroupOver7()}">0</strong>
+              </div>
+            </div>
+            <p class="report-total-note">Total late returns: <strong th:text="${report.totalOverdue()}">0</strong></p>
+          </article>
+
+          <!-- Fine summary -->
+          <article class="admin-panel report-panel">
+            <div class="admin-panel-heading">
+              <div><p class="admin-kicker">FINES</p><h2>Fine reconciliation</h2></div>
+            </div>
+            <p class="report-panel-desc">Financial status of overdue fines (all-time totals).</p>
+            <ul class="report-fine-list">
+              <li class="report-fine-row">
+                <span class="report-fine-label">Paid</span>
+                <span class="report-fine-badge badge-paid">PAID</span>
+                <strong class="report-fine-amount" th:text="${#numbers.formatDecimal(report.finePaid(), 1, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</strong>
+              </li>
+              <li class="report-fine-row">
+                <span class="report-fine-label">Finalized · Unpaid</span>
+                <span class="report-fine-badge badge-unpaid">UNPAID</span>
+                <strong class="report-fine-amount report-fine-danger" th:text="${#numbers.formatDecimal(report.fineUnpaid(), 1, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</strong>
+              </li>
+              <li class="report-fine-row">
+                <span class="report-fine-label">Estimated · Not finalized</span>
+                <span class="report-fine-badge badge-estimated">ESTIMATED</span>
+                <strong class="report-fine-amount report-fine-muted" th:text="${#numbers.formatDecimal(report.fineEstimated(), 1, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</strong>
+              </li>
+            </ul>
+          </article>
+        </div>
+
+        <!-- ── Right column ──────────────────────────────────────────── -->
+        <div class="report-col-right">
+
+          <!-- Top 5 titles -->
+          <article class="admin-panel report-panel">
+            <div class="admin-panel-heading">
+              <div><p class="admin-kicker">POPULARITY</p><h2>Top 5 borrowed titles</h2></div>
+            </div>
+            <p class="report-panel-desc">Most checked-out titles in the selected period.</p>
+
+            <th:block th:if="${report.top5Titles() != null and !report.top5Titles().isEmpty()}">
+              <ol class="report-top5-list">
+                <li th:each="stat, iterStat : ${report.top5Titles()}" class="report-top5-item">
+                  <span class="report-top5-rank" th:text="${iterStat.index + 1}">1</span>
+                  <span class="report-top5-title" th:text="${stat.title()}">Title</span>
+                  <span class="report-top5-count" th:text="${stat.count() + ' loans'}">0 loans</span>
+                </li>
+              </ol>
+            </th:block>
+            <th:block th:if="${report.top5Titles() == null or report.top5Titles().isEmpty()}">
+              <p class="report-empty-note">No loan data for the selected period.</p>
+            </th:block>
+          </article>
+
+          <!-- Chart placeholder (Phase 3) -->
+          <article class="admin-panel report-panel report-chart-placeholder">
+            <div class="admin-panel-heading">
+              <div><p class="admin-kicker">CHART</p><h2>Daily loans &amp; returns</h2></div>
+            </div>
+            <div class="report-chart-coming-soon">
+              <svg viewBox="0 0 48 36" aria-hidden="true" width="48" height="36">
+                <polyline points="2,30 10,20 18,24 26,10 34,16 46,4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <p>Interactive chart available in the next update.</p>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </main>
+    <footer class="admin-footer"><span>booknet Library</span><a th:href="@{/contact}">Help &amp; contact</a></footer>
+  </div>
+</div>
+</body>
+</html>

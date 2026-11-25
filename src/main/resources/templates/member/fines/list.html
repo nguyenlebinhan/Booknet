@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overdue Fines &amp; Payments · booknet Library</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" th:href="@{/css/base/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/layout/navbar.css}">
+  <link rel="stylesheet" th:href="@{/css/layout/footer.css}">
+  <link rel="stylesheet" th:href="@{/css/member/fines.css}">
+  <th:block th:replace="~{shared/navigation :: staffStyles}"></th:block>
+</head>
+<body class="member-fines-body">
+
+  <th:block th:replace="~{shared/navigation :: navigation}"></th:block>
+
+  <main class="fines-main">
+    <div class="fines-container">
+
+      <!-- Breadcrumb -->
+      <nav class="fines-breadcrumb" aria-label="Breadcrumb">
+        <a th:href="@{/}" class="btn-nav-back">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          Home
+        </a>
+        <span class="fines-crumb-sep">/</span>
+        <span class="fines-crumb-current">Overdue fines &amp; payments</span>
+      </nav>
+
+      <!-- Page Heading -->
+      <header class="fines-page-header">
+        <div>
+          <span class="fines-kicker">CIRCULATION &amp; BILLING</span>
+          <h1 class="fines-title">Overdue Fines</h1>
+          <p class="fines-subtitle">Review your overdue penalty statements, finalized dues, and pay online via QR transfer.</p>
+        </div>
+      </header>
+
+      <!-- Summary Statistics -->
+      <section class="fines-summary-grid" aria-label="Fines summary">
+        <article class="fines-summary-card card-unpaid">
+          <span class="card-label">Amount due now</span>
+          <strong class="card-value danger-text" th:text="${#numbers.formatDecimal(totalUnpaid, 1, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</strong>
+          <small class="card-hint">Finalized fees for returned books</small>
+        </article>
+
+        <article class="fines-summary-card card-estimated">
+          <span class="card-label">Estimated pending</span>
+          <strong class="card-value warning-text" th:text="${#numbers.formatDecimal(totalEstimated, 1, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</strong>
+          <small class="card-hint">Accruing fees for books currently overdue</small>
+        </article>
+
+        <article class="fines-summary-card card-paid">
+          <span class="card-label">Total paid history</span>
+          <strong class="card-value success-text" th:text="${#numbers.formatDecimal(totalPaid, 1, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</strong>
+          <small class="card-hint">Lifetime settled penalties</small>
+        </article>
+      </section>
+
+      <!-- Notice Alert -->
+      <div class="fines-policy-note" role="note">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <p>
+          <strong>Policy Notice:</strong> Overdue fees are calculated at <strong>5,000 ₫/day/copy</strong> starting the day after due date.
+          Fees for currently borrowed books remain <em>Estimated</em> until the physical copy is checked in at the circulation desk.
+        </p>
+      </div>
+
+      <!-- Fines Table / List -->
+      <section class="fines-table-section">
+        <div class="fines-section-head">
+          <h2>Fee Statements</h2>
+          <span class="fines-count-badge" th:text="${fines.size() + ' statements'}">0 statements</span>
+        </div>
+
+        <div th:if="${#lists.isEmpty(fines)}" class="fines-empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <h3>All clear! No overdue fees</h3>
+          <p>You currently have no overdue fines or pending penalties on your account.</p>
+          <a th:href="@{/catalog}" class="btn-browse-books">Explore library catalog</a>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(fines)}" class="fines-table-wrapper">
+          <table class="fines-table">
+            <thead>
+              <tr>
+                <th>Statement / Title</th>
+                <th>Borrow Dates</th>
+                <th>Overdue</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="item : ${fines}" class="fine-row">
+                <!-- Book & Code -->
+                <td class="col-title">
+                  <div class="fine-book-info">
+                    <img th:if="${item.coverUrl() != null}" th:src="${item.coverUrl()}" alt="" class="fine-cover-thumb">
+                    <div th:unless="${item.coverUrl() != null}" class="fine-cover-placeholder">📖</div>
+                    <div>
+                      <strong class="fine-book-title" th:text="${item.bookTitle()}">Book Title</strong>
+                      <span class="fine-book-author" th:text="${item.authorNames()}">Author</span>
+                      <small class="fine-code" th:text="${item.fineCode()}">FN-2026-0001</small>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Dates -->
+                <td class="col-dates">
+                  <div class="fine-date-lines">
+                    <span>Borrowed: <strong th:text="${item.borrowedDate() != null ? #temporals.format(item.borrowedDate(), 'dd/MM/yyyy') : '—'}">01/01/2026</strong></span>
+                    <span>Due: <strong th:text="${item.dueDate() != null ? #temporals.format(item.dueDate(), 'dd/MM/yyyy') : '—'}">15/01/2026</strong></span>
+                    <span th:if="${item.returnedDate() != null}">Returned: <em th:text="${#temporals.format(item.returnedDate(), 'dd/MM/yyyy')}">20/01/2026</em></span>
+                    <span th:unless="${item.returnedDate() != null}" class="unreturned-hint">Not returned yet</span>
+                  </div>
+                </td>
+
+                <!-- Overdue Days -->
+                <td class="col-overdue">
+                  <span class="overdue-days" th:text="${item.overdueDays() + ' days'}">3 days</span>
+                </td>
+
+                <!-- Amount -->
+                <td class="col-amount">
+                  <strong class="fine-amount" th:text="${#numbers.formatDecimal(item.amount(), 1, 'COMMA', 0, 'POINT') + ' ₫'}">15,000 ₫</strong>
+                </td>
+
+                <!-- Status Badge -->
+                <td class="col-status">
+                  <span class="fine-badge" th:classappend="${item.badgeClass()}" th:text="${item.statusLabel()}">Status</span>
+                </td>
+
+                <!-- Action -->
+                <td class="col-action">
+                  <!-- Case 1: Unpaid -> Allowed to pay via QR -->
+                  <a th:if="${item.canPay()}" th:href="@{/member/fines/{id}/pay(id=${item.fineId()})}" class="btn-action-pay">
+                    Pay via QR →
+                  </a>
+
+                  <!-- Case 2: Estimated -> Locked -->
+                  <button th:if="${item.isEstimated()}" class="btn-action-locked" disabled title="Please return book physically at desk first">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    Locked
+                  </button>
+
+                  <!-- Case 3: Paid -->
+                  <span th:if="${item.isPaid()}" class="fine-settled-check">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Settled
+                  </span>
+
+                  <!-- Case 4: Waived -->
+                  <span th:if="${item.isWaived()}" class="fine-waived-check">Waived</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer th:replace="~{shared/footer :: footer}"></footer>
+</body>
+</html>

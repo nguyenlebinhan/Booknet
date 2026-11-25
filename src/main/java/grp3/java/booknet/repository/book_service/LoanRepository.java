@@ -25,6 +25,38 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
 
     List<Loan> findByMember_IdOrderByBorrowedAtDesc(Long memberId);
 
+    // ── Người 7: Dashboard / Reports ─────────────────────────────────────────
+
+    /** 10 giao dich muon/tra gan nhat (cho Recent activity tren Librarian dashboard). */
+    List<Loan> findTop10ByOrderByUpdatedAtDesc();
+
+    /** Dem theo status (count ban sao dang muon, dang qua han, ...). */
+    long countByStatus(LoanStatus status);
+
+    /** Dem loans duoc tao trong khoang thoi gian (cho reports). */
+    long countByBorrowedAtBetween(java.time.LocalDateTime from, java.time.LocalDateTime to);
+
+    /** Dem loans duoc tra trong khoang thoi gian. */
+    long countByReturnedAtBetween(java.time.LocalDateTime from, java.time.LocalDateTime to);
+
+    /** Danh sach loans duoc tra trong khoang thoi gian. */
+    List<Loan> findByReturnedAtBetween(java.time.LocalDateTime from, java.time.LocalDateTime to);
+
+    /** Top sach duoc muon nhieu nhat. */
+    @org.springframework.data.jpa.repository.Query("""
+        SELECT l.copy.book.title, COUNT(l) as cnt
+        FROM Loan l
+        WHERE l.borrowedAt BETWEEN :from AND :to
+        GROUP BY l.copy.book.id, l.copy.book.title
+        ORDER BY cnt DESC
+        """)
+    List<Object[]> findTopBorrowedTitles(
+            @org.springframework.data.repository.query.Param("from") java.time.LocalDateTime from,
+            @org.springframework.data.repository.query.Param("to") java.time.LocalDateTime to,
+            org.springframework.data.domain.Pageable pageable);
+
+    // ── origin/main: Circulation features ────────────────────────────────────
+
     boolean existsByMember_IdAndCopy_Book_IdAndStatusIn(Long memberId, Long bookId, Collection<LoanStatus> statuses);
 
     List<Loan> findByCopy_Book_IdAndStatusInOrderByDueDateAsc(Long bookId, Collection<LoanStatus> statuses);

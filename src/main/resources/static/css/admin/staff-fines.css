@@ -1,0 +1,249 @@
+/* ==========================================================================
+   admin/staff-fines.css — Fine Management at Circulation Desk (UC29)
+   ========================================================================== */
+
+/* ── Flash Alert ───────────────────────────────────────────── */
+.staff-alert-success {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: 8px;
+  background: #edf7ee;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  margin-bottom: 22px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.staff-alert-success svg {
+  flex: 0 0 auto;
+}
+
+/* ── Filter Bar ────────────────────────────────────────────── */
+.staff-fines-filter-bar {
+  margin-bottom: 22px;
+  padding: 16px 20px;
+  border-radius: 10px;
+  background: var(--bn-sage, #e8eee6);
+}
+
+.staff-filter-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-field-search {
+  flex: 1 1 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-field-select {
+  flex: 0 0 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.staff-filter-form label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--bn-forest, #173f35);
+}
+
+.search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input-wrap svg {
+  position: absolute;
+  left: 10px;
+  color: #888;
+}
+
+.search-input-wrap input {
+  width: 100%;
+  padding: 7.5px 12px 7.5px 34px;
+  border: 1.5px solid #ccc;
+  border-radius: 7px;
+  font: 13px var(--bn-font-sans, sans-serif);
+  background: #ffffff;
+}
+
+.filter-field-select select {
+  padding: 7.5px 10px;
+  border: 1.5px solid #ccc;
+  border-radius: 7px;
+  font: 13px var(--bn-font-sans, sans-serif);
+  background: #ffffff;
+}
+
+.filter-button-group {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Registry Panel ────────────────────────────────────────── */
+.staff-fines-panel {
+  padding: 20px 22px;
+  border-radius: 10px;
+  border: 1.5px solid #e4e0d8;
+  background: #ffffff;
+}
+
+.fines-count-tag {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--bn-sage, #e8eee6);
+  color: var(--bn-forest, #173f35);
+  font-weight: 600;
+}
+
+.staff-fines-empty {
+  padding: 40px;
+  text-align: center;
+  color: #888;
+  font-style: italic;
+}
+
+.staff-table-wrapper {
+  overflow-x: auto;
+  margin-top: 14px;
+}
+
+.staff-fines-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  text-align: left;
+}
+
+.staff-fines-table th {
+  padding: 10px 12px;
+  background: var(--bn-sage, #e8eee6);
+  color: var(--bn-forest, #173f35);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #d5ded3;
+}
+
+.staff-fines-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #f0ede6;
+  vertical-align: middle;
+}
+
+.fine-code-text {
+  font-family: monospace;
+  font-size: 12.5px;
+  color: var(--bn-forest, #173f35);
+}
+
+.fine-created-time {
+  color: #888;
+  font-size: 11px;
+}
+
+.member-sub-info {
+  font-size: 11.5px;
+  color: #666;
+}
+
+.member-card-code {
+  font-family: monospace;
+  font-size: 11px;
+  background: #f4f4f4;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.copy-barcode {
+  font-family: monospace;
+  color: #888;
+  font-size: 11px;
+}
+
+.overdue-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.fine-amount-highlight {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--bn-forest, #173f35);
+}
+
+/* Badges */
+.staff-fine-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.badge-unpaid { background: #fee2e2; color: #991b1b; }
+.badge-paid   { background: #dcfce7; color: #166534; }
+.badge-waived { background: #f3f4f6; color: #4b5563; }
+
+/* Collect Button */
+.btn-collect-desk {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #16a34a;
+  color: #ffffff;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-collect-desk:hover {
+  background: #15803d;
+}
+
+.settled-note {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11.5px;
+  color: #166534;
+}
+
+.settled-note strong {
+  font-weight: 600;
+}
+
+.settled-note small {
+  color: #666;
+}
+
+.waived-note {
+  display: flex;
+  flex-direction: column;
+  font-size: 11.5px;
+  color: #6b7280;
+}

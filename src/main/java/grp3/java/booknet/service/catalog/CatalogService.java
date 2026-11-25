@@ -6,11 +6,15 @@ import grp3.java.booknet.entity.book.Category;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface CatalogService {
 
     Page<CatalogBookView> search(CatalogFilter filter, Pageable pageable, boolean includeUnpublished);
+
+    /** Published, undeleted books with these IDs, in the order given. */
+    List<CatalogBookView> findPublished(Collection<Long> bookIds);
 
     List<Category> getCategories();
 

@@ -1,81 +1,194 @@
-// AI assistant (UI only). Shows the message and the fixed reply straight away instead of
-// reloading the page. Without this script the forms post and the server shows the same reply.
+// AI assistant bubble. Loads the conversation panel from /assistant when opened and sends its forms in
+// the background. It stays open while the reader moves between pages.
 (function () {
-  const form = document.getElementById('ai-form');
-  const list = document.getElementById('ai-messages');
-  const box = document.getElementById('ai-message');
-  const script = document.getElementById('ai-script');
-  if (!form || !list || !box || !script) return;
-  const reply = script.dataset.reply;
-  const searchUrl = script.dataset.search;
+  const widget = document.getElementById('ai-widget');
+  if (!widget) return;
+  const OPEN = 'booknet-assistant-open';
+  const url = widget.dataset.url;
+  const panelWindow = document.getElementById('ai-window');
+  const launch = document.getElementById('ai-launch');
+  const status = document.getElementById('ai-loading');
+  let busy = false;
+  let loading = false;
 
-  function bubble(text, mine) {
-    const wrap = document.createElement('div');
-    wrap.className = 'ai-message ' + (mine ? 'from-you' : 'from-bot');
-    const body = mine ? wrap : document.createElement('div');
-    if (!mine) {
-      const avatar = document.createElement('span');
-      avatar.className = 'ai-avatar';
-      avatar.setAttribute('aria-hidden', 'true');
-      avatar.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg>';
-      body.className = 'ai-bot-body';
-      wrap.append(avatar, body);
+  const find = (selector) => panelWindow.querySelector(selector);
+
+  function remember(open) {
+    try {
+      sessionStorage.setItem(OPEN, String(open));
+    } catch (error) { /* storage is blocked: the bubble just starts closed */ }
+  }
+
+  function wasOpen() {
+    try {
+      return sessionStorage.getItem(OPEN) === 'true';
+    } catch (error) {
+      return false;
     }
-    const meta = document.createElement('p');
-    meta.className = 'ai-meta';
-    meta.textContent = mine ? 'You' : 'booknet assistant';
-    body.append(meta);
-    if (mine) {
-      const p = document.createElement('p');
-      p.className = 'ai-bubble';
-      p.textContent = text;
-      body.append(p);
+  }
+
+  // Scrolls to the newest question, so its answer starts in view.
+  function showLatest() {
+    const list = find('#ai-messages');
+    const questions = list.querySelectorAll('.from-you');
+    list.scrollTop = questions.length ? questions[questions.length - 1].offsetTop - 12 : 0;
+  }
+
+  function showError(text) {
+    const error = find('#ai-error');
+    error.textContent = text;
+    error.hidden = !text;
+    find('.ai-input').classList.toggle('has-error', Boolean(text));
+  }
+
+  async function readPage(options) {
+    const response = await fetch(url, options);
+    // 403: the session ended, so the form's security token is out of date.
+    if (!response.ok) throw new Error(response.status === 403 ? 'expired' : 'failed');
+    const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+    // No panel: another page came back, for example when the sign-in ended.
+    if (!page.getElementById('ai-panel')) throw new Error('expired');
+    return page;
+  }
+
+  // Returns false when the panel could not be loaded; a panel already shown stays.
+  async function load() {
+    if (loading) return false;
+    loading = true;
+    const old = find('#ai-panel');
+    if (!old) {
+      status.hidden = false;
+      status.textContent = 'Opening the assistant…';
+    }
+    try {
+      const panel = (await readPage({})).getElementById('ai-panel');
+      panel.querySelector('#ai-close').hidden = false;
+      if (old) old.remove();
+      panelWindow.append(panel);
+      status.hidden = true;
+      showLatest();
+      return true;
+    } catch (error) {
+      if (!old) status.textContent = 'The assistant could not be opened. Close the bubble and try again.';
+      return false;
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function open(focus) {
+    panelWindow.hidden = false;
+    launch.setAttribute('aria-expanded', 'true');
+    remember(true);
+    if (!find('#ai-panel')) await load();
+    const box = find('#ai-message');
+    if (focus && box && !panelWindow.hidden) box.focus({ preventScroll: true });
+  }
+
+  function close() {
+    panelWindow.hidden = true;
+    launch.setAttribute('aria-expanded', 'false');
+    remember(false);
+    launch.focus({ preventScroll: true });
+  }
+
+  function showWaiting(message) {
+    const you = document.createElement('div');
+    you.className = 'ai-message from-you';
+    const bubble = document.createElement('p');
+    bubble.className = 'ai-bubble';
+    bubble.textContent = message;
+    you.append(bubble);
+    const wait = document.createElement('p');
+    wait.className = 'ai-waiting';
+    wait.textContent = 'booknet assistant is thinking…';
+    find('#ai-messages').append(you, wait);
+    showLatest();
+  }
+
+  // Takes the conversation, error and guest allowance from the page the server returned.
+  function showPage(page, message) {
+    find('#ai-messages').replaceChildren(...page.getElementById('ai-messages').childNodes);
+    const error = page.getElementById('ai-error');
+    showError(error.hidden ? '' : error.textContent);
+    if (error.hidden && message !== null) find('#ai-message').value = '';
+    const allowance = find('#ai-allowance');
+    const updated = page.getElementById('ai-allowance');
+    if (allowance && updated) allowance.textContent = updated.textContent;
+    showLatest();
+  }
+
+  // message is null for "New conversation".
+  async function send(form, message) {
+    if (busy) return;
+    const body = new URLSearchParams(new FormData(form));
+    if (message === null) body.set('reset', 'true');
+    busy = true;
+    find('.ai-send').disabled = true;
+    showError('');
+    const before = [...find('#ai-messages').childNodes];
+    if (message !== null) showWaiting(message);
+    try {
+      showPage(await readPage({ method: 'POST', body }), message);
+    } catch (error) {
+      find('#ai-messages').replaceChildren(...before);
+      const draft = find('#ai-message').value;
+      // When the session ended, a fresh panel carries a new security token.
+      if (error.message === 'expired' && await load()) {
+        find('#ai-message').value = draft;
+        showError('Your session was renewed. Please try again.');
+      } else {
+        showError('Your message could not be sent. Check your connection and try again.');
+      }
+    } finally {
+      busy = false;
+      find('.ai-send').disabled = false;
+      if (!panelWindow.hidden) find('#ai-message').focus({ preventScroll: true });
+    }
+  }
+
+  function submitMessage() {
+    const box = find('#ai-message');
+    const message = box.value.trim();
+    if (message) {
+      send(find('#ai-form'), message);
     } else {
-      const replyBox = document.createElement('div');
-      replyBox.className = 'ai-reply';
-      const p = document.createElement('p');
-      p.textContent = reply;
-      const link = document.createElement('a');
-      link.href = searchUrl + '?keyword=' + encodeURIComponent(text.slice(0, 80));
-      link.textContent = 'Search the catalog for your question ↗';
-      const linkLine = document.createElement('p');
-      linkLine.append(link);
-      replyBox.append(p, linkLine);
-      body.append(replyBox);
-    }
-    list.append(wrap);
-    wrap.scrollIntoView({ block: 'nearest' });
-  }
-
-  function send(text) {
-    const message = text.trim();
-    if (!message) {
       box.focus();
-      return;
     }
-    bubble(message, true);
-    bubble(message, false);
-    box.value = '';
   }
 
-  form.addEventListener('submit', (event) => {
+  launch.addEventListener('click', () => (panelWindow.hidden ? open(true) : close()));
+
+  panelWindow.addEventListener('submit', (event) => {
     event.preventDefault();
-    send(box.value);
-  });
-
-  box.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
-      event.preventDefault();
-      send(box.value);
+    if (event.target.id === 'ai-form') {
+      submitMessage();
+    } else {
+      send(event.target, null);
     }
   });
 
-  // Starter questions and chips fill the box so the reader can edit before sending.
-  document.querySelectorAll('.ai-starter, .ai-chip').forEach((button) => {
-    button.addEventListener('click', (event) => {
+  panelWindow.addEventListener('click', (event) => {
+    if (event.target.closest('#ai-close')) close();
+    // Starter questions fill the box so the reader can edit before sending.
+    const chip = event.target.closest('.ai-chip');
+    if (chip) {
       event.preventDefault();
-      box.value = button.value;
-      box.focus();
-    });
+      find('#ai-message').value = chip.value;
+      find('#ai-message').focus();
+    }
   });
+
+  panelWindow.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      close();
+    } else if (event.target.id === 'ai-message' && event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      submitMessage();
+    }
+  });
+
+  launch.hidden = false;
+  // On a phone the window covers the page, so it does not reopen over the page the reader went to.
+  if (wasOpen() && !window.matchMedia('(max-width: 600px)').matches) open(false);
 })();

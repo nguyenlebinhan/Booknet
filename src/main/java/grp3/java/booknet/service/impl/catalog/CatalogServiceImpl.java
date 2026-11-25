@@ -21,10 +21,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -47,20 +49,37 @@ public class CatalogServiceImpl implements CatalogService {
         Page<Book> books = filter != null && POPULAR.equals(filter.getSort())
                 ? mostBorrowedFirst(specification, pageable)
                 : bookRepository.findAll(specification, pageable);
-        List<Long> bookIds = books.getContent().stream().map(Book::getId).toList();
+        Map<Long, CatalogBookView> views = viewsById(books.getContent());
+        return books.map(book -> views.get(book.getId()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CatalogBookView> findPublished(Collection<Long> bookIds) {
         if (bookIds.isEmpty()) {
-            return books.map(book -> toView(book, 0, 0, false));
+            return List.of();
+        }
+        Map<Long, CatalogBookView> views = viewsById(bookRepository.findAllById(bookIds).stream()
+                .filter(book -> !book.isDeleted() && book.getPublicationStatus() == PublicationStatus.PUBLISHED)
+                .toList());
+        return bookIds.stream().distinct().map(views::get).filter(Objects::nonNull).toList();
+    }
+
+    private Map<Long, CatalogBookView> viewsById(List<Book> books) {
+        List<Long> bookIds = books.stream().map(Book::getId).toList();
+        if (bookIds.isEmpty()) {
+            return Map.of();
         }
 
         Map<Long, Long> totalCopies = copyCountsByBook(bookCopyRepository.countTotalCopiesByBookIds(bookIds));
         Map<Long, Long> availableCopies = copyCountsByBook(bookCopyRepository.countCopiesByBookIdsAndStatus(bookIds, CopyStatus.AVAILABLE));
         Map<Long, Long> reservableCopies = copyCountsByBook(bookCopyRepository.countCopiesByBookIdsAndStatuses(
                 bookIds, List.of(CopyStatus.BORROWED, CopyStatus.RESERVED)));
-        return books.map(book -> {
+        return books.stream().collect(Collectors.toMap(Book::getId, book -> {
             long total = totalCopies.getOrDefault(book.getId(), 0L);
             long available = availableCopies.getOrDefault(book.getId(), 0L);
             return toView(book, total, available, reservableCopies.getOrDefault(book.getId(), 0L) > 0);
-        });
+        }, (first, second) -> first));
     }
 
     private List<Integer> categoryIdsWithDescendants(CatalogFilter filter) {

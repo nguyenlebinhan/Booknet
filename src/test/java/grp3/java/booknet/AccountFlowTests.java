@@ -187,7 +187,7 @@ class AccountFlowTests {
         MockHttpSession previous = login(user.getEmail(), INITIAL_PASSWORD);
         var remembered = mvc.perform(post("/login").with(csrf()).param("email", user.getEmail())
                 .param("password", INITIAL_PASSWORD).param("remember-me", "on"))
-                .andExpect(redirectedUrl("/account/profile")).andReturn().getResponse().getCookie("remember-me");
+                .andExpect(redirectedUrl("/")).andReturn().getResponse().getCookie("remember-me");
         CustomOAuth2User googlePrincipal = new CustomOAuth2User(google("google-sub", "google@example.com", true), user);
         requestEmail("/forgot-password", user.getEmail());
         String token = deliveredToken();
@@ -464,7 +464,7 @@ class AccountFlowTests {
 
     private MockHttpSession login(String email, String password) throws Exception {
         return (MockHttpSession) mvc.perform(post("/login").with(csrf()).param("email", email).param("password", password))
-                .andExpect(redirectedUrl("/account/profile")).andReturn().getRequest().getSession(false);
+                .andExpect(redirectedUrl("/")).andReturn().getRequest().getSession(false);
     }
 
     private String requestEmail(String path, String email) throws Exception {

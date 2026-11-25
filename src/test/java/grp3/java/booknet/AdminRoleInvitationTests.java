@@ -24,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest @AutoConfigureMockMvc @ActiveProfiles("test")
 class AdminRoleInvitationTests {
  @Autowired MockMvc mvc; @Autowired UserRepository users; @Autowired RoleDefinitionRepository roles;
+ @Autowired grp3.java.booknet.service.member.RoleManagementService roleService;
  @Autowired AccountTokenRepository tokens; @Autowired OAuthIdentityRepository identities; @Autowired AccountAccessAuditRepository audits;
  @MockitoBean JavaMailSender mail;
  User admin,member;
@@ -31,21 +32,39 @@ class AdminRoleInvitationTests {
  for(var role:roles.findAll())if(role.getSystemRole()!=null){role.setCapabilities(new HashSet<>(UserRole.defaults(role.getSystemRole())));roles.saveAndFlush(role);}
  admin=save("admin@example.com",UserRole.ROLE_ADMIN);member=save("member@example.com",UserRole.ROLE_USER);}
  User save(String email,UserRole role){return users.saveAndFlush(User.builder().email(email).fullName("Test Account").provider(AuthProvider.LOCAL).role(role).enabled(true).emailVerified(true).status(UserStatus.ACTIVE).build());}
+ Long saveRole(Long id,grp3.java.booknet.dto.member.RoleForm form,Long actor){
+ var context=org.springframework.security.core.context.SecurityContextHolder.createEmptyContext();
+ var principal=new CustomUserDetails(admin);context.setAuthentication(org.springframework.security.authentication.UsernamePasswordAuthenticationToken.authenticated(principal,null,principal.getAuthorities()));
+ org.springframework.security.core.context.SecurityContextHolder.setContext(context);
+ try{return roleService.save(id,form,actor);}finally{org.springframework.security.core.context.SecurityContextHolder.clearContext();}
+ }
  @AfterEach void resetPolicies(){for(var role:roles.findAll())if(role.getSystemRole()!=null){role.setCapabilities(new HashSet<>(UserRole.defaults(role.getSystemRole())));roles.saveAndFlush(role);}}
  @Test void pagesRenderAndProduceReviewArtifacts()throws Exception{
- var lib=roles.findBySystemRole(UserRole.ROLE_LIBRARIAN).orElseThrow();
- var pages=new ArrayList<String>(List.of("/admin/users/create","/admin/roles","/admin/roles/select","/admin/roles/create","/admin/roles/"+lib.getId()+"/edit","/admin/users/"+member.getId()));
- roles.findAll().forEach(r->pages.add("/admin/roles/"+r.getId()+"/edit"));
+ var pages=List.of("/admin/users/create","/admin/roles","/admin/users/"+member.getId());
  for(String path:pages){
  String html=mvc.perform(get(path).with(user(new CustomUserDetails(admin)))).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
  assertThat(html).doesNotContain("th:field","th:each");
  assertThat(html).contains("class=\"admin-sidebar\"", "href=\"/admin/users\"", "href=\"/admin/roles\"");
  if(path.startsWith("/admin/roles")) assertThat(html).contains("aria-current=\"page\"");
- if(path.equals("/admin/roles")) assertThat(html).doesNotContainPattern("<td[^>]*>\\s*(Own|All members|Partial)\\s*</td>");
+ if(path.equals("/admin/roles")) {
+ assertThat(html).contains("Guest","FUNCTION &amp; ACCESS SCOPE","Submit a borrowing request","Allowed","Not allowed");
+ assertThat(html).doesNotContain("View roles</a>","View audit log</a>","Recent role activity","id=\"activity\"","/admin/roles/select");
+ assertThat(html).doesNotContainPattern("<td[^>]*>\\s*(Own|All members|Partial)\\s*</td>");
+ }
+
  Path out=Path.of("target/admin-ui-review");Files.createDirectories(out);
  String assets=Path.of("src/main/resources/static").toAbsolutePath().toUri().toString();
  Files.writeString(out.resolve(path.replace('/','_')+".html"),html.replace("href=\"/css/","href=\""+assets+"css/").replace("src=\"/js/","src=\""+assets+"js/").replace("src=\"/images/","src=\""+assets+"images/"));
  }
+ }
+ @Test void formerRolePagesRedirectToTheSingleComparison()throws Exception{
+ var role=roles.findBySystemRole(UserRole.ROLE_LIBRARIAN).orElseThrow();
+ for(String path:List.of("/admin/roles/select","/admin/roles/create","/admin/roles/"+role.getId()+"/edit")){
+ mvc.perform(get(path).with(user(new CustomUserDetails(admin)))).andExpect(redirectedUrl("/admin/roles"));
+ mvc.perform(get(path).with(user(new CustomUserDetails(member)))).andExpect(status().isForbidden());
+ }
+ var response=mvc.perform(get("/admin/roles").with(user(new CustomUserDetails(admin)))).andExpect(status().isOk()).andReturn();
+ assertThat(response.getModelAndView().getModel()).doesNotContainKeys("activities","counts","selected");
  }
  @Test void invitationSetsPasswordOnceAndKeepsAssignedRole()throws Exception{
  var lib=roles.findBySystemRole(UserRole.ROLE_LIBRARIAN).orElseThrow();
@@ -63,23 +82,30 @@ class AdminRoleInvitationTests {
  mvc.perform(get("/reset-password").param("token",raw)).andExpect(model().attribute("tokenValid",false));
  mvc.perform(post("/login").with(csrf()).param("email","invite@example.com").param("password","NewPass123")).andExpect(redirectedUrl("/staff/members"));
  }
- @Test void customRoleIsSavedButCannotEscalateToAdmin()throws Exception{
+ @Test
+ void rolePagesAreReadOnlyAndExistingCustomRolesStillEnforceAccess()throws Exception{
  mvc.perform(post("/admin/roles/create").with(user(new CustomUserDetails(member))).with(csrf()).param("name","Denied")).andExpect(status().isForbidden());
- mvc.perform(post("/admin/roles/create").with(user(new CustomUserDetails(admin))).with(csrf()).param("name","Escalation").param("revision","0").param("capabilities","ROLE_MANAGE")).andExpect(status().isOk()).andExpect(model().attributeHasErrors("roleForm"));
- mvc.perform(post("/admin/roles/create").with(user(new CustomUserDetails(admin))).with(csrf()).param("name","Catalog Assistant").param("description","Catalog only").param("revision","0").param("capabilities","CATALOG_EDIT","INVENTORY_REPORT")).andExpect(status().is3xxRedirection());
- var role=roles.findAll().stream().filter(r->r.getName().equals("Catalog Assistant")).findFirst().orElseThrow();assertThat(role.getCapabilities()).containsExactlyInAnyOrder(RoleCapability.CATALOG_EDIT,RoleCapability.INVENTORY_REPORT);
+ mvc.perform(get("/admin/roles/create").with(user(new CustomUserDetails(admin)))).andExpect(redirectedUrl("/admin/roles"));
+ mvc.perform(post("/admin/roles/create").with(user(new CustomUserDetails(admin))).with(csrf()).param("name","Denied")).andExpect(status().isForbidden());
+ assertThatThrownBy(()->saveRole(null,new grp3.java.booknet.dto.member.RoleForm("Escalation","",Set.of(RoleCapability.ROLE_MANAGE),0),admin.getId())).isInstanceOf(IllegalArgumentException.class);
+ Long id=saveRole(null,new grp3.java.booknet.dto.member.RoleForm("Catalog Assistant","Catalog only",Set.of(RoleCapability.CATALOG_EDIT,RoleCapability.INVENTORY_REPORT),0),admin.getId());
+ var role=roles.findById(id).orElseThrow();assertThat(role.getCapabilities()).containsExactlyInAnyOrder(RoleCapability.CATALOG_EDIT,RoleCapability.INVENTORY_REPORT);
  member.setAssignedRole(role);users.saveAndFlush(member);
  mvc.perform(get("/admin/books/create").with(user(new CustomUserDetails(member)))).andExpect(status().isOk());
  mvc.perform(get("/admin/users").with(user(new CustomUserDetails(member)))).andExpect(status().isForbidden());
  mvc.perform(get("/staff/members").with(user(new CustomUserDetails(member)))).andExpect(status().isForbidden());
  }
- @Test void permissionRemovalRevokesSessionsAndCannotRemoveAdminCoreRights()throws Exception{
+ @Test
+ void roleWritesAreBlockedAndInternalPermissionChangesStillRevokeSessions()throws Exception{
  var lib=save("lib@example.com",UserRole.ROLE_LIBRARIAN);var stale=new CustomUserDetails(lib);var role=roles.findBySystemRole(UserRole.ROLE_LIBRARIAN).orElseThrow();
- mvc.perform(post("/admin/roles/"+role.getId()+"/edit").with(user(new CustomUserDetails(admin))).with(csrf()).param("name",role.getName()).param("description",role.getDescription()).param("revision",Long.toString(role.getRevision())).param("capabilities","CATALOG_EDIT")).andExpect(status().is3xxRedirection());
+ mvc.perform(post("/admin/roles/"+role.getId()+"/edit").with(user(new CustomUserDetails(admin))).with(csrf()).param("name",role.getName()).param("description",role.getDescription()).param("revision",Long.toString(role.getRevision())).param("capabilities","CATALOG_EDIT")).andExpect(status().isForbidden());
+ assertThat(roles.findById(role.getId()).orElseThrow().getCapabilities()).contains(RoleCapability.MEMBER_READ);
+ saveRole(role.getId(),new grp3.java.booknet.dto.member.RoleForm(role.getName(),role.getDescription(),Set.of(RoleCapability.CATALOG_EDIT),role.getRevision()),admin.getId());
  mvc.perform(get("/staff/members").with(user(stale))).andExpect(redirectedUrl("/login?error=true"));
  lib=users.findById(lib.getId()).orElseThrow();mvc.perform(get("/staff/members").with(user(new CustomUserDetails(lib)))).andExpect(status().isForbidden());
  var ar=roles.findBySystemRole(UserRole.ROLE_ADMIN).orElseThrow();
- mvc.perform(post("/admin/roles/"+ar.getId()+"/edit").with(user(new CustomUserDetails(admin))).with(csrf()).param("name",ar.getName()).param("revision",Long.toString(ar.getRevision()))).andExpect(status().is3xxRedirection());
+ mvc.perform(post("/admin/roles/"+ar.getId()+"/edit").with(user(new CustomUserDetails(admin))).with(csrf()).param("name",ar.getName()).param("revision",Long.toString(ar.getRevision()))).andExpect(status().isForbidden());
+ saveRole(ar.getId(),new grp3.java.booknet.dto.member.RoleForm(ar.getName(),ar.getDescription(),Set.of(),ar.getRevision()),admin.getId());
  assertThat(roles.findById(ar.getId()).orElseThrow().getCapabilities()).contains(RoleCapability.ROLE_MANAGE,RoleCapability.USER_ACCESS_UPDATE,RoleCapability.MEMBER_READ,RoleCapability.MEMBER_CARD_ACTIVATE);
  }
  @Test void controlRequiresCsrfReasonConfirmationAndAudits()throws Exception{
@@ -88,6 +114,16 @@ class AdminRoleInvitationTests {
  assertThat(users.findById(member.getId()).orElseThrow().isEnabled()).isTrue();
  mvc.perform(post("/admin/users/"+member.getId()+"/control/lock").with(user(new CustomUserDetails(admin))).with(csrf()).param("reason","Identity review").param("confirmed","true").param("revision","0")).andExpect(status().is3xxRedirection());
  assertThat(users.findById(member.getId()).orElseThrow().isEnabled()).isFalse();assertThat(audits.findAll()).singleElement().satisfies(a->assertThat(a.getReason()).isEqualTo("Identity review"));
+ }
+ @Test void profileErrorsRemainVisibleAndSavingCannotChangeRole()throws Exception{
+ String path="/admin/users/"+member.getId()+"/profile";
+ mvc.perform(post(path).with(user(new CustomUserDetails(admin))).param("fullName","Updated Member")).andExpect(status().isForbidden());
+ mvc.perform(post(path).with(user(new CustomUserDetails(admin))).with(csrf()).param("fullName","").param("phone","abc"))
+ .andExpect(status().isOk()).andExpect(model().attributeHasErrors("profileForm"))
+ .andExpect(model().attribute("profileEditing",true)).andExpect(content().string(org.hamcrest.Matchers.containsString("class=\"ad-profile-editor\"")));
+ mvc.perform(post(path).with(user(new CustomUserDetails(admin))).with(csrf()).param("fullName","Updated Member").param("phone","0901234567").param("address","Library Street").param("avatarUrl","").param("role","ROLE_ADMIN"))
+ .andExpect(redirectedUrl("/admin/users/"+member.getId()));
+ var updated=users.findById(member.getId()).orElseThrow();assertThat(updated.getFullName()).isEqualTo("Updated Member");assertThat(updated.getRole()).isEqualTo(UserRole.ROLE_USER);
  }
  @Test void duplicateAndSmtpFailureDoNotCreateAccounts()throws Exception{
  var role=roles.findBySystemRole(UserRole.ROLE_USER).orElseThrow();

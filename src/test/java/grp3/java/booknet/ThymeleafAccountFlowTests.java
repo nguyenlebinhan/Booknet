@@ -152,7 +152,7 @@ class ThymeleafAccountFlowTests {
         mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com").param("password", INITIAL_PASSWORD))
                 .andExpect(redirectedUrl("/login?error=true"));
         mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com").param("password", NEW_PASSWORD))
-                .andExpect(redirectedUrl("/account/profile"));
+                .andExpect(redirectedUrl("/"));
     }
 
     @ParameterizedTest
@@ -198,7 +198,7 @@ class ThymeleafAccountFlowTests {
                 .andExpect(content().string(containsString("This verification link is invalid")))
                 .andExpect(content().string(containsString("href=\"/verification/resend\"")));
         mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com").param("password", INITIAL_PASSWORD))
-                .andExpect(redirectedUrl("/account/profile"));
+                .andExpect(redirectedUrl("/"));
     }
 
     @Test
@@ -311,7 +311,7 @@ class ThymeleafAccountFlowTests {
         mvc.perform(get("/account/profile").with(authentication)).andExpect(redirectedUrl("/login?error=true"));
         MockHttpSession localSession = (MockHttpSession) mvc.perform(post("/login").with(csrf())
                         .param("email", user.getEmail()).param("password", NEW_PASSWORD))
-                .andExpect(redirectedUrl("/account/profile")).andReturn().getRequest().getSession(false);
+                .andExpect(redirectedUrl("/")).andReturn().getRequest().getSession(false);
         mvc.perform(get("/account/profile").session(localSession))
                 .andExpect(content().string(containsString("Change password")))
                 .andExpect(content().string(org.hamcrest.Matchers.not(containsString("action=\"/account/set-password\""))));
@@ -415,7 +415,7 @@ class ThymeleafAccountFlowTests {
 
     private MockHttpSession login() throws Exception {
         return (MockHttpSession) mvc.perform(post("/login").with(csrf()).param("email", "reader@example.com")
-                .param("password", INITIAL_PASSWORD)).andExpect(redirectedUrl("/account/profile")).andReturn().getRequest().getSession(false);
+                .param("password", INITIAL_PASSWORD)).andExpect(redirectedUrl("/")).andReturn().getRequest().getSession(false);
     }
 
     private String requestResetThroughForm() throws Exception {

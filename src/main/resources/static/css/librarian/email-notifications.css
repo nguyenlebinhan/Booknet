@@ -284,3 +284,10 @@
     grid-template-columns: 1fr;
   }
 }
+
+.emc-editor-tools { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
+.emc-sync-status { color: var(--bn-muted); font-size: 12px; max-width: 260px; }
+.emc-sync-status.is-error { color: var(--bn-danger); }
+.emc-step-head { gap: 16px; flex-wrap: wrap; }
+.emc-step-title-wrap { min-width: 0; }
+@media (max-width: 720px) { .emc-editor-tools { width: 100%; justify-content: space-between; } }

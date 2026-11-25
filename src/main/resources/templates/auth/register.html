@@ -82,10 +82,7 @@
           </div>
 
           <div class="auth-field">
-            <label class="auth-check">
-              <input type="checkbox" th:field="*{termsAccepted}" class="auth-checkbox" required>
-              <span>I agree to booknet Library's Terms of use, Privacy policy and Borrowing policy.</span>
-            </label>
+            <div class="auth-check policy-consent"><input type="checkbox" th:field="*{termsAccepted}" class="auth-checkbox" required aria-labelledby="policy-consent-text"><span id="policy-consent-text">I agree to booknet Library's <button type="button" class="policy-link" data-policy-open>Account, Privacy &amp; Library Terms</button>.</span></div>
             <p class="auth-field-error" th:if="${#fields.hasErrors('termsAccepted')}" th:errors="*{termsAccepted}">You must accept the terms.</p>
           </div>
 
@@ -116,6 +113,18 @@
     </main>
   </div>
 
+
+
+<dialog class="policy-dialog" id="registration-policy" aria-labelledby="policy-title">
+ <header><h2 id="policy-title">Booknet &mdash; Account, Privacy &amp; Library Terms</h2><button type="button" class="policy-close" data-policy-close aria-label="Close terms">&#215;</button></header>
+ <div class="policy-body" tabindex="0">
+ <p>By creating an account, you agree to the terms below. <strong>The main purpose of this agreement is to register and use your booknet account.</strong> Additional library service terms appear in the later sections.</p>
+ <section class="policy-account" id="policy-account"><h3>1. Account Registration &amp; Use</h3><ul><li>Provide accurate personal and contact information, and keep it up to date.</li><li>Use an email address you can access. Email verification is required to activate your account.</li><li>Keep your password secure. Do not share your account or allow others to use it.</li><li>Do not impersonate another person, misuse the platform or attempt unauthorized access.</li><li>Contact the library if you suspect unauthorized use of your account.</li><li>The library may restrict or suspend account access when these terms are violated.</li></ul></section>
+ <section id="policy-privacy"><h3>2. Personal Information &amp; Communication</h3><p>Booknet uses the information you provide to manage your account, verify your identity, contact you and support library services.</p><p>You may receive service-related emails, including verification links, password-reset instructions and account notices. Contact the library to request assistance with your personal information.</p></section>
+ <section><h3>3. Membership &amp; Library Services</h3><p>Creating an online account does not automatically activate a library card or grant borrowing privileges. Additional identity and membership checks may be required at the library.</p><p>When using library services, you agree to follow the applicable borrowing, return and reservation rules, take reasonable care of borrowed materials, and resolve any charges assessed under the library's published policies.</p></section>
+ <section><h3>4. Help &amp; Questions</h3><p>If you have questions about your account or these terms, contact booknet Library through the <a href="/contact" target="_blank" rel="noopener" th:href="@{/contact}">Contact page</a>.</p></section>
+ </div><footer><button type="button" class="auth-btn auth-btn-primary" data-policy-close>Close</button></footer>
+</dialog>
   <script th:src="@{/js/auth.js}" src="/js/auth.js"></script>
 </body>
 </html>

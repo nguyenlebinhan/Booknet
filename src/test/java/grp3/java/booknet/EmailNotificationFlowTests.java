@@ -196,6 +196,53 @@ class EmailNotificationFlowTests {
     }
 
     @Test
+    void automaticTemplateSaveAndPreviewNeverSendMailAndRequireCsrfAndPermission() throws Exception {
+        for (String base : List.of("/staff/notifications/email", "/librarian/notifications/email", "/admin/notifications/email")) {
+            mvc.perform(post(base + "/template").with(user(new CustomUserDetails(librarian)))
+                            .param("templateType", "OVERDUE").param("subjectTemplate", "Hello {{memberName}}")
+                            .param("bodyTemplate", "Book: {{bookTitle}}"))
+                    .andExpect(status().isForbidden());
+            mvc.perform(post(base + "/template").with(user(new CustomUserDetails(memberOverdue))).with(csrf())
+                            .param("templateType", "OVERDUE").param("subjectTemplate", "Hello")
+                            .param("bodyTemplate", "Book"))
+                    .andExpect(status().isForbidden());
+            mvc.perform(post(base + "/template").with(user(new CustomUserDetails(librarian))).with(csrf())
+                            .param("templateType", "OVERDUE").param("subjectTemplate", "Hello {{memberName}}")
+                            .param("bodyTemplate", "Book: {{bookTitle}}"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.message").value("Template saved automatically."));
+        }
+        mvc.perform(post("/staff/notifications/email/template").with(user(new CustomUserDetails(librarian))).with(csrf())
+                        .param("subjectTemplate", "Invalid {{unknownToken}}").param("bodyTemplate", "Book"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/staff/notifications/email/template").with(user(new CustomUserDetails(librarian))).with(csrf())
+                        .param("subjectTemplate", "x".repeat(251)).param("bodyTemplate", "Book"))
+                .andExpect(status().isBadRequest());
+        assertThat(emailNotificationService.getTemplate(EmailTemplateType.OVERDUE).getSubjectTemplate())
+                .isEqualTo("Hello {{memberName}}");
+        mvc.perform(post("/staff/notifications/email").with(user(new CustomUserDetails(librarian))).with(csrf())
+                        .param("action", "switch-template").param("templateType", "OVERDUE"))
+                .andExpect(status().isOk()).andExpect(content().string(containsString("Hello {{memberName}}")))
+                .andExpect(content().string(containsString("/js/email-composer.js")))
+                .andExpect(content().string(not(containsString("Load selected template"))))
+                .andExpect(content().string(not(containsString("Refresh recipients &amp; preview"))))
+                .andExpect(content().string(not(containsString(">Save template<"))));
+        assertThat(emailLogRepository.count()).isZero();
+        verifyNoInteractions(mailSender);
+        var out = java.nio.file.Path.of("target/email-ui-review");
+        java.nio.file.Files.createDirectories(out);
+        String assets = java.nio.file.Path.of("src/main/resources/static").toAbsolutePath().toUri().toString();
+        for (String type : List.of("OVERDUE", "DUE_SOON")) {
+            String html = mvc.perform(get("/staff/notifications/email").param("templateType", type)
+                            .with(user(new CustomUserDetails(librarian))))
+                    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+            java.nio.file.Files.writeString(out.resolve(type + ".html"), html
+                    .replace("href=\"/css/", "href=\"" + assets + "css/")
+                    .replace("src=\"/js/", "src=\"" + assets + "js/")
+                    .replace("src=\"/images/", "src=\"" + assets + "images/"));
+        }
+    }
+
+    @Test
     void templateValidationPreviewSaveAndResetWorkCorrectly() throws Exception {
         // Unknown placeholder fails validation and blocks dispatch
         EmailSendForm badForm = EmailSendForm.builder()

@@ -153,7 +153,7 @@ public class MemberManagementController {
         if(!errors.hasErrors())try{administration.updateProfile(grp3.java.booknet.security.principal.AccountPrincipal.id(auth),id,form);
             redirect.addFlashAttribute("successMessage","Profile updated.");return "redirect:/admin/users/"+id;
         }catch(IllegalArgumentException|grp3.java.booknet.exception.account.AccountException ex){errors.reject("profile.invalid",ex.getMessage());}
-        return detail(id,false,request,model);
+        model.addAttribute("profileEditing",true);return detail(id,false,request,model);
     }
     private void common(Model model, boolean admin, boolean demo) {
         model.addAttribute("adminArea", admin);

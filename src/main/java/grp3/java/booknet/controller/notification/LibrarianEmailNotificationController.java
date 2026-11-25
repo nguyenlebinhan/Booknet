@@ -27,6 +27,23 @@ public class LibrarianEmailNotificationController {
 
     private final EmailNotificationService emailNotificationService;
 
+    /** Autosaves wording only. Preview and saving never dispatch an email. */
+    @PostMapping("/template")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<java.util.Map<String, String>> autosaveTemplate(
+            @Valid @ModelAttribute EmailSendForm form, BindingResult errors) {
+        if (errors.hasErrors()) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of(
+                    "message", errors.getAllErrors().getFirst().getDefaultMessage()));
+        }
+        try {
+            emailNotificationService.saveTemplate(form.getTemplateType(), form.getSubjectTemplate(), form.getBodyTemplate());
+            return org.springframework.http.ResponseEntity.ok(java.util.Map.of("message", "Template saved automatically."));
+        } catch (AccountException ex) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", ex.getMessage()));
+        }
+    }
+
     @GetMapping
     public String showComposer(
             @RequestParam(required = false) EmailTemplateType templateType,

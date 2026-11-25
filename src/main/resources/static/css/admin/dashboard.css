@@ -30,6 +30,13 @@
   padding: 28px 20px 22px;
   background: var(--bn-forest);
   color: var(--bn-sage-muted);
+  font-family: var(--bn-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.admin-sidebar button {
+  font-family: inherit;
 }
 
 .admin-sidebar a {
@@ -47,34 +54,44 @@
   align-items: center;
   gap: 12px;
   padding: 0 4px;
+  line-height: normal;
 }
 
 .admin-brand-mark {
-  display: grid;
+  display: flex;
   width: 40px;
-  height: 40px;
+  height: 44px;
   flex: 0 0 auto;
-  place-items: center;
-  border-radius: 12px 12px 4px 4px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px 20px 4px 4px;
   background: var(--bn-surface);
 }
 
 .admin-brand-mark img {
-  width: 25px;
-  height: 25px;
+  width: 24px;
+  height: 24px;
+}
+
+.admin-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .admin-brand-name {
   color: var(--bn-surface);
-  font: 500 24px/1.1 var(--bn-font-serif);
+  font-family: var(--bn-font-serif);
+  font-size: 25px;
+  font-weight: 600;
 }
 
-.admin-brand-name small {
-  display: block;
-  margin-top: 5px;
+.admin-brand-tagline {
   color: var(--bn-sage-muted);
-  font: 8px var(--bn-font-sans);
-  letter-spacing: 1.4px;
+  font-family: var(--bn-font-sans);
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 1.7px;
 }
 
 .admin-space-badge {
@@ -84,7 +101,7 @@
   border-radius: 20px;
   background: var(--bn-sage);
   color: var(--bn-forest);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: .3px;
 }
@@ -102,7 +119,8 @@
 .admin-nav-group h2 {
   margin: 0 0 3px 4px;
   color: var(--bn-sage-muted);
-  font-size: 9px;
+  font-family: var(--bn-font-sans);
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 1px;
 }
@@ -116,7 +134,7 @@
   padding: 9px 11px;
   border-radius: 5px;
   color: var(--bn-sage-muted);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .admin-nav-link:hover {
@@ -154,13 +172,14 @@
   margin-top: auto;
   padding: 20px 4px 0;
   border-top: 1px solid #ffffff3b;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .admin-sidebar-footer strong {
   overflow: hidden;
   color: var(--bn-surface);
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -183,7 +202,7 @@
   background: transparent;
   color: var(--bn-sage-muted);
   cursor: pointer;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .admin-workspace {
@@ -202,6 +221,7 @@
   padding: 16px 38px;
   border-bottom: 1px solid var(--bn-line);
   background: var(--bn-surface);
+  font-family: var(--bn-font-sans);
 }
 
 .mg-topbar > a {
@@ -221,7 +241,7 @@
   display: flex;
   gap: 15px;
   align-items: center;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .mg-topbar-account > a {
@@ -263,7 +283,7 @@
 
 .admin-topbar p {
   color: var(--bn-muted);
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .admin-topbar p span {
@@ -274,7 +294,8 @@
   max-width: 240px;
   overflow: hidden;
   color: var(--bn-forest);
-  font-size: 10px;
+  font-size: 12px;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -292,7 +313,7 @@
   gap: 9px;
   margin-bottom: 21px;
   color: var(--bn-muted);
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .admin-page-heading {
@@ -306,20 +327,23 @@
 .admin-kicker {
   margin-bottom: 7px;
   color: var(--bn-ochre);
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
 }
 
 .admin-page-heading h1 {
   margin: 0 0 7px;
   color: var(--bn-ink);
-  font: 500 29px/1.25 var(--bn-font-serif);
+  font: 500 34px/1.25 var(--bn-font-serif);
+  letter-spacing: -0.5px;
 }
 
 .admin-page-heading > div:first-child > p:last-child {
   color: var(--bn-muted);
-  font-size: 11px;
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 .admin-heading-actions {
@@ -330,16 +354,16 @@
 
 .admin-button {
   display: inline-flex;
-  min-height: 38px;
+  min-height: 40px;
   align-items: center;
   justify-content: center;
-  padding: 8px 15px;
+  padding: 8px 16px;
   border: 1px solid var(--bn-line);
   border-radius: 5px;
   background: var(--bn-surface);
   color: var(--bn-forest);
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 12.5px;
+  font-weight: 600;
 }
 
 .admin-button:hover {
@@ -372,20 +396,20 @@
   border-radius: 3px;
   background: var(--bn-sage);
   color: var(--bn-forest);
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: .4px;
 }
 
 .admin-snapshot p {
   color: var(--bn-forest);
-  font-size: 10px;
+  font-size: 12.5px;
   font-weight: 500;
 }
 
 .admin-snapshot small {
   color: var(--bn-muted);
-  font-size: 9px;
+  font-size: 11.5px;
 }
 
 .admin-stat-grid {
@@ -410,7 +434,8 @@
 
 .admin-stat-card > p {
   color: var(--bn-muted);
-  font-size: 10px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .admin-stat-card:first-child > p,
@@ -422,7 +447,7 @@
   display: block;
   margin: 6px 0 4px;
   color: var(--bn-forest);
-  font: 500 27px/1.2 var(--bn-font-serif);
+  font: 500 30px/1.2 var(--bn-font-serif);
   font-variant-numeric: tabular-nums;
 }
 
@@ -436,7 +461,7 @@
 
 .admin-stat-card small {
   color: var(--bn-muted);
-  font-size: 9px;
+  font-size: 11.5px;
 }
 
 .admin-section-heading {
@@ -451,12 +476,12 @@
 .admin-panel h2,
 .admin-activity-panel h2 {
   color: var(--bn-ink);
-  font: 500 18px/1.4 var(--bn-font-serif);
+  font: 500 20px/1.35 var(--bn-font-serif);
 }
 
 .admin-section-heading > span {
   color: var(--bn-muted);
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .admin-attention-grid {
@@ -478,26 +503,26 @@
 .admin-attention-card h3 {
   margin: 4px 0 7px;
   color: var(--bn-ink);
-  font-size: 10px;
+  font-size: 13.5px;
   font-weight: 600;
 }
 
 .admin-attention-card > p:not(.admin-attention-value) {
-  min-height: 31px;
+  min-height: 36px;
   color: var(--bn-muted);
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .admin-attention-value {
   color: var(--bn-ochre);
-  font: 500 24px/1.2 var(--bn-font-serif);
+  font: 500 28px/1.2 var(--bn-font-serif);
 }
 
 .admin-attention-card > a {
   display: inline-block;
   margin-top: 11px;
   color: var(--bn-forest);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -508,11 +533,11 @@
 .admin-notice {
   display: inline-block;
   margin-top: 9px;
-  padding: 4px 7px;
+  padding: 4px 8px;
   border-radius: 3px;
   background: var(--bn-shelf);
   color: var(--bn-muted);
-  font-size: 8px;
+  font-size: 11px;
 }
 
 .admin-inventory-bar {
@@ -539,7 +564,7 @@
   gap: 8px;
   margin-top: 10px;
   color: var(--bn-muted);
-  font-size: 8px;
+  font-size: 11.5px;
 }
 
 .admin-inventory-legend span {
@@ -609,14 +634,14 @@
 
 .admin-quick-links strong {
   color: var(--bn-ink);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 600;
 }
 
 .admin-quick-links small {
   margin-top: 3px;
   color: var(--bn-muted);
-  font-size: 9px;
+  font-size: 11.5px;
 }
 
 .admin-quick-links b {
@@ -640,7 +665,7 @@
 
 .admin-activity-panel > p:not(.admin-kicker) {
   color: var(--bn-sage-muted);
-  font-size: 10px;
+  font-size: 12.5px;
   line-height: 1.7;
 }
 
@@ -650,7 +675,7 @@
   padding-top: 9px;
   border-top: 1px solid #ffffff40;
   color: var(--bn-surface);
-  font-size: 9px;
+  font-size: 11.5px;
 }
 
 .admin-footer {
@@ -660,7 +685,7 @@
   padding: 15px 38px;
   border-top: 1px solid var(--bn-line);
   color: var(--bn-muted);
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .admin-skip-link {
@@ -871,7 +896,7 @@ body:has(> .admin-sidebar) {
   }
 }
 
-/* -- Ngu?i 7: activity list trên admin dashboard ----------- */
+/* -- Activity list on admin dashboard ----------- */
 .admin-activity-list {
   list-style: none;
   margin: 12px 0 0;

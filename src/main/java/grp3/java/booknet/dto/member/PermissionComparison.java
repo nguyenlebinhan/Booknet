@@ -50,7 +50,7 @@ public record PermissionComparison(String label, String detail, Set<String> allo
             action("Manage physical copies", "Manage individual book copies and their availability.", ACCOUNTS, COPY_MANAGE),
             action("Discontinue or delete book records", "Deletion is subject to circulation and history checks.", ACCOUNTS, BOOK_RETIRE),
             action("Manage categories", "Category administration is restricted to Librarian and Administrator roles.", STAFF),
-            action("Manage authors", "Author administration is restricted to the Administrator role.", ADMIN),
+            action("Manage authors", "Author administration is available to Librarian and Administrator roles.", STAFF),
             // Circulation/reservation aliases have explicit CIRCULATION URL guards.
             action("Manage loans, renewals & returns", "Staff circulation actions; loan status and eligibility rules still apply.", ACCOUNTS, CIRCULATION),
             action("Manage reservation queue & pickups", "Allocate copies and process pickup or cancellation through staff reservation actions.", ACCOUNTS, CIRCULATION),

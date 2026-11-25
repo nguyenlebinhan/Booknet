@@ -138,8 +138,8 @@
                     <line x1="3" y1="10" x2="21" y2="10"></line>
                   </svg>
                   <div>
-                    <h4 class="term-heading">14-day loan</h4>
-                    <p class="term-desc">Starts on pickup day. Renew once for 7 more days if there are no reservations.</p>
+                    <h4 class="term-heading" th:text="${view.loanPeriodDays + '-day loan'}">14-day loan</h4>
+                    <p class="term-desc" th:text="${'Starts on pickup day. Renew once for ' + view.renewPeriodDays + ' more days if there are no reservations.'}">Starts on pickup day. Renew once for 7 more days if there are no reservations.</p>
                   </div>
                 </div>
 
@@ -149,7 +149,7 @@
                     <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                   </svg>
                   <div>
-                    <h4 class="term-heading">Up to 5 books at a time</h4>
+                    <h4 class="term-heading" th:text="${'Up to ' + view.maxAllowedLoans + ' books at a time'}">Up to 5 books at a time</h4>
                     <p class="term-desc" th:text="'You have ' + ${view.currentActiveLoansCount} + '/' + ${view.maxAllowedLoans} + ' books on loan. This loan will bring your total to ' + (${view.currentActiveLoansCount} + ${#lists.size(view.books)}) + '/' + ${view.maxAllowedLoans} + '.'">
                       You have 2/5 books on loan. This loan will bring your total to 3/5.
                     </p>

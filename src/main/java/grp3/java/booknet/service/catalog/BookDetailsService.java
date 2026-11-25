@@ -12,6 +12,7 @@ import grp3.java.booknet.enums.book_service.LoanStatus;
 import grp3.java.booknet.repository.book.BookCopyRepository;
 import grp3.java.booknet.repository.book.BookRepository;
 import grp3.java.booknet.repository.catalog.CatalogStatsRepository;
+import grp3.java.booknet.service.admin.CirculationPolicyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -35,6 +36,7 @@ public class BookDetailsService {
     private final BookRepository books;
     private final BookCopyRepository copies;
     private final CatalogStatsRepository stats;
+    private final CirculationPolicyService policyService;
 
     /**
      * Guests and members see published books only; staff also see drafts and discontinued books.
@@ -55,6 +57,7 @@ public class BookDetailsService {
                 .filter(s -> s != null && !s.isBlank()).findFirst().orElse(null);
         boolean popular = stats.findMostBorrowedBookIds(PublicationStatus.PUBLISHED, PageRequest.of(0, POPULAR_TOP)).contains(bookId);
         LocalDate today = LocalDate.now();
+        int loanPeriodDays = policyService.getPolicy().getLoanPeriodDays();
 
         return new BookDetailsView(book.getId(), book.getBookCode(), book.getTitle(),
                 book.getAuthors().stream().map(Author::getName).sorted().toList(), blankToNull(book.getTranslator()),
@@ -66,7 +69,7 @@ public class BookDetailsService {
                 bookCopies.size() - available.size() - onLoan, available.stream().map(BookCopy::getBarcode).toList(),
                 bookCopies.stream().sorted(Comparator.comparing(BookCopy::getBarcode)).map(BookDetailsService::row).toList(),
                 onLoan > 0 ? stats.findEarliestDueDate(bookId, ON_LOAN) : null, popular,
-                today, today.plusDays(BookDetailsView.LOAN_DAYS), related(book));
+                today, today.plusDays(loanPeriodDays), related(book));
     }
 
     private List<CatalogBookView> related(Book book) {

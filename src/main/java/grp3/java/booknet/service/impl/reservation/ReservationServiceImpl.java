@@ -24,6 +24,7 @@ import grp3.java.booknet.repository.book_service.LoanItemRepository;
 import grp3.java.booknet.repository.book_service.LoanRepository;
 import grp3.java.booknet.repository.book_service.ReservationRepository;
 import grp3.java.booknet.repository.user.UserRepository;
+import grp3.java.booknet.service.admin.CirculationPolicyService;
 import grp3.java.booknet.service.book.BookInventoryService;
 import grp3.java.booknet.service.member.MemberEligibilityService;
 import grp3.java.booknet.service.notification.NotificationService;
@@ -46,9 +47,6 @@ import java.util.stream.Collectors;
 public class ReservationServiceImpl implements ReservationService, ReservationQueueService {
 
     public static final int MAX_ACTIVE_RESERVATIONS = 5;
-    public static final int HOLD_DURATION_DAYS = 2;
-    public static final int MAX_LOAN_LIMIT = 5;
-    public static final int STANDARD_LOAN_DAYS = 14;
 
     private static final String DEFAULT_COVER = "/images/home/cover-hoa-vang.jpg";
     private static final String DEFAULT_PICKUP_LOCATION = "Circulation Desk · Floor 1";
@@ -81,6 +79,7 @@ public class ReservationServiceImpl implements ReservationService, ReservationQu
     private final BookInventoryService bookInventoryService;
     private final MemberEligibilityService memberEligibilityService;
     private final NotificationService notificationService;
+    private final CirculationPolicyService policyService;
 
     @Override
     @Transactional(readOnly = true)
@@ -133,11 +132,12 @@ public class ReservationServiceImpl implements ReservationService, ReservationQu
         releaseCopyBackToShelf(lockedCopy.getId(), status);
         BookCopy heldCopy = bookInventoryService.markReserved(lockedCopy.getId());
 
+        int holdDurationDays = policyService.getPolicy().getReservationHoldDays();
         Reservation next = nextPendingOpt.get();
         next.setStatus(ReservationStatus.READY);
         next.setAssignedCopy(heldCopy);
         next.setReadyAt(actionTime);
-        next.setPickupUntil(actionTime.plusDays(HOLD_DURATION_DAYS));
+        next.setPickupUntil(actionTime.plusDays(holdDurationDays));
         Reservation saved = reservationRepository.saveAndFlush(next);
         notificationService.notifyReservationReady(saved);
 
@@ -493,11 +493,12 @@ public class ReservationServiceImpl implements ReservationService, ReservationQu
                         "No available copy is currently on the shelf for this book."));
 
         LocalDateTime now = LocalDateTime.now();
+        int holdDurationDays = policyService.getPolicy().getReservationHoldDays();
         BookCopy heldCopy = bookInventoryService.markReserved(availableCopy.getId());
         locked.setStatus(ReservationStatus.READY);
         locked.setAssignedCopy(heldCopy);
         locked.setReadyAt(now);
-        locked.setPickupUntil(now.plusDays(HOLD_DURATION_DAYS));
+        locked.setPickupUntil(now.plusDays(holdDurationDays));
         if (librarianEmail != null && !librarianEmail.isBlank()
                 && (locked.getNotes() == null || locked.getNotes().isBlank())) {
             locked.setNotes("Copy " + heldCopy.getBarcode() + " held by " + librarianEmail);
@@ -543,10 +544,13 @@ public class ReservationServiceImpl implements ReservationService, ReservationQu
             throw new ReservationException(HttpStatus.BAD_REQUEST,
                     "Member has unpaid fines. Please settle fines before pickup handover.");
         }
+        var policy = policyService.getPolicy();
+        int maxLoanLimit = policy.getMaxLoansPerMember();
+        int standardLoanDays = policy.getLoanPeriodDays();
         long activeLoanCount = loanRepository.countByMember_IdAndStatusIn(member.getId(), ACTIVE_LOAN_STATUSES);
-        if (activeLoanCount >= MAX_LOAN_LIMIT) {
+        if (activeLoanCount >= maxLoanLimit) {
             throw new ReservationException(HttpStatus.BAD_REQUEST,
-                    "Member has already reached the maximum of " + MAX_LOAN_LIMIT + " active loans.");
+                    "Member has already reached the maximum of " + maxLoanLimit + " active loans.");
         }
 
         User librarian = (librarianEmail != null && !librarianEmail.isBlank())
@@ -554,7 +558,7 @@ public class ReservationServiceImpl implements ReservationService, ReservationQu
                 : null;
 
         BookCopy borrowedCopy = bookInventoryService.markBorrowed(copy.getId());
-        LocalDate dueDate = LocalDate.now().plusDays(STANDARD_LOAN_DAYS);
+        LocalDate dueDate = LocalDate.now().plusDays(standardLoanDays);
 
         Loan loan = loanRepository.saveAndFlush(Loan.builder()
                 .copy(borrowedCopy)
@@ -707,17 +711,20 @@ public class ReservationServiceImpl implements ReservationService, ReservationQu
 
     private LocalDate estimateAvailabilityDate(Long bookId, int queuePosition) {
         LocalDate today = LocalDate.now();
+        var policy = policyService.getPolicy();
+        int standardLoanDays = policy.getLoanPeriodDays();
+        int holdDurationDays = policy.getReservationHoldDays();
         List<Loan> activeLoans = loanRepository.findByCopy_Book_IdAndStatusInOrderByDueDateAsc(bookId, ACTIVE_LOAN_STATUSES);
         if (!activeLoans.isEmpty()) {
             int slotIndex = Math.min(queuePosition - 1, activeLoans.size() - 1);
             int extraCycles = Math.max(0, (queuePosition - 1) / activeLoans.size());
             LocalDate base = activeLoans.get(slotIndex).getDueDate();
             if (base == null || base.isBefore(today)) {
-                base = today.plusDays(2);
+                base = today.plusDays(holdDurationDays);
             }
-            return base.plusDays((long) extraCycles * STANDARD_LOAN_DAYS);
+            return base.plusDays((long) extraCycles * standardLoanDays);
         }
-        return today.plusDays((long) Math.max(1, queuePosition) * HOLD_DURATION_DAYS);
+        return today.plusDays((long) Math.max(1, queuePosition) * holdDurationDays);
     }
 
     private LibrarianReservationsView.StaffReservationRow toStaffRow(

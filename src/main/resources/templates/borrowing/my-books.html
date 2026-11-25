@@ -239,7 +239,7 @@
             </div>
             <div class="bottom-card-footer">
               <form th:action="@{/member/loans/{id}/renew(id=${view.renewSuggestion.loanId})}" method="post">
-                <button type="submit" class="btn-bottom-confirm">Confirm 7-day renewal</button>
+                <button type="submit" class="btn-bottom-confirm" th:text="|Confirm ${view.renewSuggestion.renewPeriodDays}-day renewal|">Confirm 7-day renewal</button>
               </form>
               <span class="bottom-card-sub" th:text="'Renewals used: ' + ${view.renewSuggestion.renewalsUsed} + '/' + ${view.renewSuggestion.maxRenewals}">Renewals used: 0/1</span>
             </div>

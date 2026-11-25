@@ -5,6 +5,7 @@ import grp3.java.booknet.repository.book_service.ReservationRepository;
 import grp3.java.booknet.repository.user.UserRepository;
 import grp3.java.booknet.security.dto.CustomUserDetails;
 import grp3.java.booknet.security.principal.CustomOAuth2User;
+import grp3.java.booknet.service.admin.CirculationPolicyService;
 import grp3.java.booknet.service.catalog.BookDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -23,6 +24,7 @@ public class BookDetailsController {
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
     private final grp3.java.booknet.service.borrowing.FavoriteBookService favoriteBookService;
+    private final CirculationPolicyService policyService;
 
     @GetMapping("/catalog/{id:\\d+}")
     public String details(@PathVariable Long id, Authentication authentication, Model model) {
@@ -30,6 +32,7 @@ public class BookDetailsController {
         model.addAttribute("book", details.details(id, isStaff(authentication)));
         model.addAttribute("alreadyReserved", isAlreadyReserved(id, userId, authentication));
         model.addAttribute("isFavorite", userId != null && favoriteBookService.isFavorite(userId, id));
+        model.addAttribute("policy", policyService.getPolicy());
         model.addAttribute("activePage", "catalog");
         return "catalog/details";
     }

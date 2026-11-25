@@ -128,7 +128,7 @@ class AssistantPageTests {
         ArgumentCaptor<String> rules = ArgumentCaptor.forClass(String.class);
         verify(gemini).ask(rules.capture(), any(), anyString());
         assertThat(rules.getValue()).contains("Answer only about Booknet", "id=" + match.getId() + " | Childhood river story",
-                "up to 5 books at once, 14 days each", "2,000 VND per book").doesNotContain("Childhood secret draft");
+                "up to 5 books at once, 14 days each", "5,000 VND per book").doesNotContain("Childhood secret draft");
         write("assistant", html);
     }
 

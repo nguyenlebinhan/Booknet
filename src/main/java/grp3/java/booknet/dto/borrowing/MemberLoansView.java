@@ -88,6 +88,7 @@ public record MemberLoansView(
             String bookTitle,
             LocalDate estimatedNewDueDate,
             int renewalsUsed,
-            int maxRenewals
+            int maxRenewals,
+            int renewPeriodDays
     ) {}
 }

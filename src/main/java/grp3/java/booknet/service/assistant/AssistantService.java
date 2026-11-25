@@ -1,6 +1,7 @@
 package grp3.java.booknet.service.assistant;
 
 import grp3.java.booknet.dto.catalog.CatalogBookView;
+import grp3.java.booknet.service.admin.CirculationPolicyService;
 import grp3.java.booknet.service.catalog.CatalogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,7 @@ public class AssistantService {
     private final AssistantBookFinder finder;
     private final GeminiClient gemini;
     private final GuestQuota guestQuota;
+    private final CirculationPolicyService policyService;
 
     /** Current card data for the books in a conversation, by ID. Books no longer published are left out. */
     public Map<Long, CatalogBookView> books(Collection<AssistantTurn> turns) {
@@ -78,7 +80,7 @@ public class AssistantService {
                     context.stream().flatMap(turn -> turn.bookIds().stream()).distinct().toList());
             try {
                 List<String> genres = catalog.getCategories().stream().map(category -> category.getName()).toList();
-                GeminiClient.Answer answer = gemini.ask(AssistantPrompt.build(genres, candidates), context, question);
+                GeminiClient.Answer answer = gemini.ask(AssistantPrompt.build(genres, candidates, policyService.getPolicy()), context, question);
                 answered = true;
                 if (!answer.onTopic()) {
                     // Fixed text: whatever the model wrote about another topic is never shown.

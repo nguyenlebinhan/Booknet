@@ -23,6 +23,7 @@ import grp3.java.booknet.enums.book_service.ReturnCondition;
 import grp3.java.booknet.exception.borrowing.LoanException;
 import grp3.java.booknet.security.dto.CustomUserDetails;
 import grp3.java.booknet.security.principal.CustomOAuth2User;
+import grp3.java.booknet.service.admin.CirculationPolicyService;
 import grp3.java.booknet.service.borrowing.LoanService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 public class LibrarianCirculationController {
 
     private final LoanService loanService;
+    private final CirculationPolicyService policyService;
 
     @ModelAttribute("activePage")
     public String activePage() {
@@ -124,7 +126,8 @@ public class LibrarianCirculationController {
             RedirectAttributes redirectAttributes) {
         try {
             loanService.renewLoanItem(id, getLibrarianEmail(authentication));
-            redirectAttributes.addFlashAttribute("successMessage", "Loan extended successfully by 7 days.");
+            int renewDays = policyService.getPolicy().getRenewPeriodDays();
+            redirectAttributes.addFlashAttribute("successMessage", "Loan extended successfully by " + renewDays + " days.");
         } catch (LoanException e) {
             log.warn("Cannot renew loan {}: {}", id, e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -143,6 +146,7 @@ public class LibrarianCirculationController {
         model.addAttribute("keyword", keyword);
         model.addAttribute("barcode", barcode);
         model.addAttribute("selectedRequestId", requestId);
+        model.addAttribute("policy", policyService.getPolicy());
 
         if (keyword != null && !keyword.trim().isEmpty()) {
             MemberCirculationInfoDto patron = loanService.lookupMember(keyword.trim());

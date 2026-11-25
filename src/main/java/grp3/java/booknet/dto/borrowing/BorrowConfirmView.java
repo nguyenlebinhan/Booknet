@@ -11,6 +11,8 @@ public record BorrowConfirmView(
         LocalDate returnDueDate,
         int currentActiveLoansCount,
         int maxAllowedLoans,
+        int loanPeriodDays,
+        int renewPeriodDays,
         boolean eligibleToBorrow,
         String ineligibleReason
 ) {

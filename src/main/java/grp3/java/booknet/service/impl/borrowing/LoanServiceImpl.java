@@ -10,6 +10,7 @@ import grp3.java.booknet.exception.borrowing.LoanException;
 import grp3.java.booknet.repository.book.BookCopyRepository;
 import grp3.java.booknet.repository.book_service.*;
 import grp3.java.booknet.repository.user.UserRepository;
+import grp3.java.booknet.service.admin.CirculationPolicyService;
 import grp3.java.booknet.service.borrowing.LoanService;
 import grp3.java.booknet.service.reservation.ReservationQueueService;
 import lombok.RequiredArgsConstructor;
@@ -33,11 +34,7 @@ import java.util.*;
 @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('CIRCULATION')")
 public class LoanServiceImpl implements LoanService {
 
-    private static final int MAX_LOANS_PER_MEMBER = 5;
-    private static final int STANDARD_LOAN_DAYS = 14;
-    private static final int RENEW_DAYS = 7;
     private static final int MAX_RENEW_COUNT = 1;
-    private static final BigDecimal OVERDUE_DAILY_FINE = new BigDecimal("2000.00");
     private static final BigDecimal DAMAGE_FEE = new BigDecimal("50000.00");
     private static final BigDecimal LOST_FEE = new BigDecimal("100000.00");
 
@@ -53,6 +50,7 @@ public class LoanServiceImpl implements LoanService {
     private final ReservationQueueService reservationQueueService;
     private final UserRepository userRepository;
     private final grp3.java.booknet.service.member.MemberEligibilityService memberEligibility;
+    private final CirculationPolicyService policyService;
     private final java.time.Clock clock;
 
     @Override
@@ -171,14 +169,15 @@ public class LoanServiceImpl implements LoanService {
         LocalDate today = LocalDate.now();
         boolean hasOverdue = loanItemRepository.existsByLoan_Member_IdAndStatusInAndDueDateBefore(member.getId(), activeStatuses, today);
 
+        int maxLoansPerMember = policyService.getPolicy().getMaxLoansPerMember();
         boolean cardActive = memberEligibility.isEligible(member.getId());
-        boolean withinLimit = activeLoansCount < MAX_LOANS_PER_MEMBER;
+        boolean withinLimit = activeLoansCount < maxLoansPerMember;
         boolean noFines = unpaidFines.compareTo(BigDecimal.ZERO) <= 0;
         boolean eligible = cardActive && withinLimit && noFines && !hasOverdue;
 
         StringBuilder reason = new StringBuilder();
         if (!cardActive) reason.append("Member account or library card is not active: unverified, expired or suspended. ");
-        if (!withinLimit) reason.append("Max loan limit reached (").append(activeLoansCount).append("/").append(MAX_LOANS_PER_MEMBER).append("). ");
+        if (!withinLimit) reason.append("Max loan limit reached (").append(activeLoansCount).append("/").append(maxLoansPerMember).append("). ");
         if (!noFines) reason.append("Unpaid fine balance of ").append(unpaidFines).append(" VND. ");
         if (hasOverdue) reason.append("Member has overdue book(s) in possession. ");
 
@@ -194,7 +193,7 @@ public class LoanServiceImpl implements LoanService {
                 .memberCode(member.getMemberCode())
                 .cardStatus(member.getMemberCard() == null ? "Pending" : member.getMemberCard().status(LocalDate.now(clock)))
                 .activeLoansCount(activeLoansCount)
-                .maxAllowedLoans(MAX_LOANS_PER_MEMBER)
+                .maxAllowedLoans(maxLoansPerMember)
                 .unpaidFines(unpaidFines)
                 .hasOverdue(hasOverdue)
                 .eligible(eligible)
@@ -269,9 +268,13 @@ public class LoanServiceImpl implements LoanService {
             throw new LoanException("Borrow request has no requested books.");
         }
 
-        if (memberInfo.getActiveLoansCount() + reqItems.size() > MAX_LOANS_PER_MEMBER) {
+        CirculationPolicy policy = policyService.getPolicy();
+        int maxLoansPerMember = policy.getMaxLoansPerMember();
+        int standardLoanDays = policy.getLoanPeriodDays();
+
+        if (memberInfo.getActiveLoansCount() + reqItems.size() > maxLoansPerMember) {
             throw new LoanException("Member quota exceeded: active loans (" + memberInfo.getActiveLoansCount()
-                    + ") + requested books (" + reqItems.size() + ") exceeds limit of " + MAX_LOANS_PER_MEMBER + ".");
+                    + ") + requested books (" + reqItems.size() + ") exceeds limit of " + maxLoansPerMember + ".");
         }
 
         List<String> cleanedBarcodes = copyBarcodes == null
@@ -323,7 +326,7 @@ public class LoanServiceImpl implements LoanService {
 
         User librarian = findUserByEmail(librarianEmail).orElse(null);
         LocalDateTime checkoutTime = LocalDateTime.now();
-        LocalDate dueDate = checkoutTime.toLocalDate().plusDays(STANDARD_LOAN_DAYS);
+        LocalDate dueDate = checkoutTime.toLocalDate().plusDays(standardLoanDays);
 
         Loan loan = Loan.builder()
                 .copy(matchedCopies.get(0))
@@ -422,11 +425,14 @@ public class LoanServiceImpl implements LoanService {
         LocalDateTime receiveTime = LocalDateTime.now();
         LocalDate today = receiveTime.toLocalDate();
 
-        BigDecimal overdueFine = BigDecimal.ZERO;
-        if (today.isAfter(loanItem.getDueDate())) {
-            long daysOverdue = ChronoUnit.DAYS.between(loanItem.getDueDate(), today);
-            overdueFine = OVERDUE_DAILY_FINE.multiply(BigDecimal.valueOf(daysOverdue));
+        BigDecimal dailyFineRate = policyService.getPolicy().getDailyFineRate();
+        if (dailyFineRate == null) {
+            dailyFineRate = BigDecimal.ZERO;
         }
+        int overdueDaysCount = (int) Math.max(0, ChronoUnit.DAYS.between(loanItem.getDueDate(), today));
+        BigDecimal overdueFine = overdueDaysCount > 0
+                ? dailyFineRate.multiply(BigDecimal.valueOf(overdueDaysCount))
+                : BigDecimal.ZERO;
 
         BigDecimal damageFine = BigDecimal.ZERO;
         ReturnCondition finalCondition = condition != null ? condition : ReturnCondition.GOOD;
@@ -480,6 +486,10 @@ public class LoanServiceImpl implements LoanService {
                     .amount(overdueFine)
                     .reason(FineReason.OVERDUE)
                     .status(FineStatus.UNPAID)
+                    .overdueDays(overdueDaysCount)
+                    .dailyRate(dailyFineRate)
+                    .finalizedAt(receiveTime)
+                    .finalizedBy(librarian)
                     .build();
             fineRepository.save(fine);
         }
@@ -490,6 +500,8 @@ public class LoanServiceImpl implements LoanService {
                     .amount(damageFine)
                     .reason(finalCondition == ReturnCondition.LOST ? FineReason.LOST : FineReason.DAMAGED)
                     .status(FineStatus.UNPAID)
+                    .finalizedAt(receiveTime)
+                    .finalizedBy(librarian)
                     .build();
             fineRepository.save(fine);
         }
@@ -508,8 +520,6 @@ public class LoanServiceImpl implements LoanService {
                 .note(conditionNotes)
                 .build();
         receipt = returnReceiptRepository.save(receipt);
-
-        int overdueDaysCount = (int) Math.max(0, ChronoUnit.DAYS.between(loanItem.getDueDate(), today));
 
         ReturnReceiptItem rItem = ReturnReceiptItem.builder()
                 .receipt(receipt)
@@ -562,7 +572,8 @@ public class LoanServiceImpl implements LoanService {
             throw new LoanException("Cannot renew book: another reader is currently waiting in reservation queue.");
         }
 
-        item.setDueDate(item.getDueDate().plusDays(RENEW_DAYS));
+        int renewDays = policyService.getPolicy().getRenewPeriodDays();
+        item.setDueDate(item.getDueDate().plusDays(renewDays));
         item.setRenewCount(item.getRenewCount() + 1);
         item.setLastRenewedAt(LocalDateTime.now());
         loanItemRepository.save(item);

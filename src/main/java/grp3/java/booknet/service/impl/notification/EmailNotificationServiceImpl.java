@@ -30,7 +30,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import grp3.java.booknet.service.mail.BooknetMailService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -78,7 +78,7 @@ public class EmailNotificationServiceImpl implements EmailNotificationService {
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
     private final NotificationPreferenceRepository preferenceRepository;
-    private final JavaMailSender mailSender;
+    private final BooknetMailService mailSender;
 
     @Value("${app.account.mail-from:no-reply@booknet.local}")
     private String mailFrom;
@@ -300,7 +300,7 @@ public class EmailNotificationServiceImpl implements EmailNotificationService {
                 msg.setTo(recipient.email());
                 msg.setSubject(renderedSubject);
                 msg.setText(renderedBody);
-                mailSender.send(msg);
+                mailSender.send(msg, "LIBRARY NOTIFICATION");
 
                 logEntry.setStatus(EmailLogStatus.SENT);
                 logEntry.setSentAt(attemptTime);
@@ -353,7 +353,7 @@ public class EmailNotificationServiceImpl implements EmailNotificationService {
             msg.setTo(logEntry.getRecipientEmail());
             msg.setSubject(logEntry.getSubject());
             msg.setText(logEntry.getBody());
-            mailSender.send(msg);
+            mailSender.send(msg, "LIBRARY NOTIFICATION");
 
             logEntry.setStatus(EmailLogStatus.SENT);
             logEntry.setSentAt(now);

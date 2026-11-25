@@ -35,6 +35,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -69,7 +70,7 @@ class AssistantPageTests {
     }
 
     @Test
-    void theBubbleIsOnEveryPageExceptTheLoginPagesAndNotInTheNavbar() throws Exception {
+    void theBubbleIsOnlyForGuestsAndMembersAndNotInTheNavbarOrStaffLayouts() throws Exception {
         for (String path : List.of("/", "/catalog", "/about", "/contact")) {
             assertThat(html(get(path))).as(path).containsOnlyOnce("id=\"ai-widget\"").contains("data-url=\"/assistant\"")
                     .doesNotContain(">AI assistant</a>");
@@ -85,13 +86,29 @@ class AssistantPageTests {
         }
         CustomUserDetails staff = new CustomUserDetails(account("bubble-staff@example.com", UserRole.ROLE_LIBRARIAN));
         for (String path : List.of("/catalog", "/staff/loans", "/admin/categories")) {
-            assertThat(html(get(path).with(user(staff)))).as(path).containsOnlyOnce("id=\"ai-widget\"")
+            assertThat(html(get(path).with(user(staff)))).as(path).doesNotContain("id=\"ai-widget\"", "/js/assistant.js")
                     .containsOnlyOnce("class=\"admin-sidebar\"");
         }
         CustomUserDetails admin = new CustomUserDetails(account("bubble-admin@example.com", UserRole.ROLE_ADMIN));
-        for (String path : List.of("/admin/dashboard", "/admin/users")) {
-            assertThat(html(get(path).with(user(admin)))).as(path).containsOnlyOnce("id=\"ai-widget\"");
+        for (String path : List.of("/admin/dashboard", "/admin/users", "/admin/roles", "/admin/tracking", "/admin/settings")) {
+            String rendered = html(get(path).with(user(admin)));
+            assertThat(rendered).as(path).doesNotContain("id=\"ai-widget\"", "/js/assistant.js")
+                    .containsPattern("</aside>\\s*<(?:div class=\"(?:admin|mg)-workspace\"|main class=\"ad-page\")");
+            write("layout-" + path.substring(7), rendered);
         }
+    }
+
+    @Test
+    void staffCannotOpenSendOrResetAssistantByDirectUrl() throws Exception {
+        for (UserRole role : List.of(UserRole.ROLE_ADMIN, UserRole.ROLE_LIBRARIAN)) {
+            var staff = new CustomUserDetails(account("no-ai-" + role.name() + "@example.com", role));
+            mvc.perform(get("/assistant").with(user(staff))).andExpect(status().isForbidden());
+            mvc.perform(post("/assistant").with(user(staff)).with(csrf()).param("message", "Hi"))
+                    .andExpect(status().isForbidden());
+            mvc.perform(post("/assistant").with(user(staff)).with(csrf()).param("reset", "true"))
+                    .andExpect(status().isForbidden());
+        }
+        verifyNoInteractions(gemini);
     }
 
     @Test
@@ -218,8 +235,7 @@ class AssistantPageTests {
         assertThat(mvc.perform(get("/assistant").with(user(new CustomUserDetails(member)))).andReturn().getResponse().getContentAsString())
                 .contains("bn-navbar", "id=\"ai-panel\"")
                 .doesNotContain("guest questions left");
-        assertThat(mvc.perform(get("/assistant").with(user(new CustomUserDetails(staff)))).andReturn().getResponse().getContentAsString())
-                .contains("admin-sidebar").doesNotContain("bn-navbar");
+        mvc.perform(get("/assistant").with(user(new CustomUserDetails(staff)))).andExpect(status().isForbidden());
         mvc.perform(post("/assistant").with(csrf()).with(user(new CustomUserDetails(member))).param("message", "What do I owe?"));
         ArgumentCaptor<String> rules = ArgumentCaptor.forClass(String.class);
         verify(gemini).ask(rules.capture(), any(), anyString());

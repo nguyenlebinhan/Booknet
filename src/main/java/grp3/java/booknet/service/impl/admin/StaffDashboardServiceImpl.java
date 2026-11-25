@@ -1,22 +1,15 @@
 package grp3.java.booknet.service.impl.admin;
 
-import grp3.java.booknet.dto.admin.LibrarianDashboardSummary;
 import grp3.java.booknet.dto.admin.RecentActivityItem;
 import grp3.java.booknet.dto.admin.ReportSummary;
 import grp3.java.booknet.entity.AuditLog;
 import grp3.java.booknet.entity.book_service.Loan;
-import grp3.java.booknet.enums.book.CopyStatus;
-import grp3.java.booknet.enums.book.PublicationStatus;
 import grp3.java.booknet.enums.book_service.FineStatus;
 import grp3.java.booknet.enums.book_service.LoanStatus;
-import grp3.java.booknet.enums.book_service.ReservationStatus;
 import grp3.java.booknet.enums.user.UserRole;
 import grp3.java.booknet.repository.AuditLogRepository;
-import grp3.java.booknet.repository.book.BookCopyRepository;
-import grp3.java.booknet.repository.book.BookRepository;
 import grp3.java.booknet.repository.book_service.FineRepository;
 import grp3.java.booknet.repository.book_service.LoanRepository;
-import grp3.java.booknet.repository.book_service.ReservationRepository;
 import grp3.java.booknet.repository.user.UserRepository;
 import grp3.java.booknet.service.admin.StaffDashboardService;
 import lombok.RequiredArgsConstructor;
@@ -37,38 +30,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class StaffDashboardServiceImpl implements StaffDashboardService {
 
-    private final BookRepository bookRepository;
-    private final BookCopyRepository bookCopyRepository;
     private final LoanRepository loanRepository;
-    private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
     private final FineRepository fineRepository;
     private final AuditLogRepository auditLogRepository;
-
-    // --- Librarian Dashboard Summary ---
-
-    @Override
-    @Transactional(readOnly = true)
-    public LibrarianDashboardSummary getLibrarianSummary() {
-        LocalDate today = LocalDate.now();
-
-        long publishedTitles  = bookRepository.countByDeletedFalseAndPublicationStatus(PublicationStatus.PUBLISHED);
-        long totalCopies      = bookCopyRepository.count();
-        long borrowedCopies   = bookCopyRepository.countByStatus(CopyStatus.BORROWED);
-        long availableCopies  = bookCopyRepository.countByStatus(CopyStatus.AVAILABLE);
-        long overdueLoans     = loanRepository.countByDueDateBeforeAndStatusIn(
-                today, List.of(LoanStatus.BORROWING, LoanStatus.OVERDUE));
-        long pendingRes       = reservationRepository.countByStatus(ReservationStatus.PENDING);
-        long awaitingHandover = reservationRepository.countByStatus(ReservationStatus.READY);
-        long pendingReturns   = loanRepository.countByStatus(LoanStatus.RETURN_PENDING);
-        long unpaidFines      = fineRepository.countByStatus(FineStatus.UNPAID);
-
-        return new LibrarianDashboardSummary(
-                publishedTitles, totalCopies, borrowedCopies, availableCopies,
-                overdueLoans, pendingRes,
-                awaitingHandover, pendingReturns, overdueLoans, unpaidFines
-        );
-    }
 
     // --- Recent Activity ---
 

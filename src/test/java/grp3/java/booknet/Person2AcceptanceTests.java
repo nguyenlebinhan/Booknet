@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.mail.MailSendException;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -97,10 +96,11 @@ class Person2AcceptanceTests {
     @Test
     @DisplayName("2.2 UC06 Contact inquiry: validated form, sent over SMTP, result shown")
     void uc06() throws Exception {
+        when(mail.createMimeMessage()).thenAnswer(invocation -> new jakarta.mail.internet.MimeMessage((jakarta.mail.Session) null));
         mvc.perform(post("/contact").with(csrf()).param("fullName", "P2 Reader").param("email", "p2-reader@example.com")
                         .param("subject", "Book donations").param("message", "I would like to donate some books."))
                 .andExpect(redirectedUrl("/contact")).andExpect(flash().attributeExists("contactSuccess"));
-        verify(mail).send(any(SimpleMailMessage.class));
+        verify(mail).send(any(jakarta.mail.internet.MimeMessage.class));
 
         String invalid = mvc.perform(post("/contact").with(csrf()).param("fullName", "").param("email", "not-an-email")
                         .param("subject", "Book donations").param("message", ""))
@@ -109,7 +109,7 @@ class Person2AcceptanceTests {
         mvc.perform(post("/contact").param("fullName", "P2 Reader").param("email", "p2-reader@example.com").param("message", "Hi"))
                 .andExpect(status().isForbidden());
 
-        doThrow(new MailSendException("down")).when(mail).send(any(SimpleMailMessage.class));
+        doThrow(new MailSendException("down")).when(mail).send(any(jakarta.mail.internet.MimeMessage.class));
         mvc.perform(post("/contact").with(csrf()).param("fullName", "P2 Reader").param("email", "p2-reader@example.com")
                         .param("subject", "Other").param("message", "Is the library open on holidays?"))
                 .andExpect(status().isOk()).andExpect(flash().attributeCount(0));

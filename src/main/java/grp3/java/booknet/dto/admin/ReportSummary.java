@@ -2,7 +2,6 @@ package grp3.java.booknet.dto.admin;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Dữ liệu tổng hợp cho trang Reports (UC32) — /staff/reports.

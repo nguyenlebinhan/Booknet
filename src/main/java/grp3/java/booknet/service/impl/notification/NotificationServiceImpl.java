@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import grp3.java.booknet.service.mail.BooknetMailService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,7 +64,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationPreferenceRepository preferenceRepository;
     private final UserRepository userRepository;
     private final LoanRepository loanRepository;
-    private final JavaMailSender mailSender;
+    private final BooknetMailService mailSender;
 
     @Value("${app.account.mail-from:no-reply@booknet.local}")
     private String mailFrom;
@@ -322,7 +322,7 @@ public class NotificationServiceImpl implements NotificationService {
             msg.setTo(to);
             msg.setSubject("booknet Library - " + subject);
             msg.setText(body + "\n\n--\nbooknet Community Library");
-            mailSender.send(msg);
+            mailSender.send(msg, "LIBRARY NOTIFICATION");
             return true;
         } catch (MailException ex) {
             log.warn("Automatic notification email failed ({})", ex.getClass().getSimpleName());

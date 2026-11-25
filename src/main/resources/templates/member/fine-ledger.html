@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="ledger">
+  <p th:if="${fineEntries.isEmpty()}">No recorded or estimated fines for this account.</p>
+  <div class="mg-table-scroll" th:unless="${fineEntries.isEmpty()}">
+    <table class="mg-table">
+      <caption>Recorded fines and estimates</caption>
+      <thead><tr><th scope="col">Book / fine</th><th scope="col">Status</th><th scope="col">Amount</th></tr></thead>
+      <tbody>
+        <tr th:each="entry : ${fineEntries}">
+          <td><strong th:text="${entry.bookTitle}"></strong><br><small th:text="${entry.fineCode}"></small></td>
+          <td th:text="${entry.statusLabel()}"></td>
+          <td th:text="${T(grp3.java.booknet.service.member.MemberActivityService).money(entry.amount)}"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</body>
+</html>

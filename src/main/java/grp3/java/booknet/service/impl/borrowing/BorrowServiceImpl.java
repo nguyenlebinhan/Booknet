@@ -15,7 +15,6 @@ import grp3.java.booknet.enums.book_service.FineStatus;
 import grp3.java.booknet.enums.book_service.LoanStatus;
 import grp3.java.booknet.enums.book_service.ReservationStatus;
 import grp3.java.booknet.enums.user.UserRole;
-import grp3.java.booknet.enums.user.UserStatus;
 import grp3.java.booknet.exception.account.AccountException;
 import grp3.java.booknet.repository.book.BookCopyRepository;
 import grp3.java.booknet.repository.book.BookRepository;

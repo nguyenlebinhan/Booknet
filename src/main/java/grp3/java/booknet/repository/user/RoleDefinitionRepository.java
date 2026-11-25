@@ -5,5 +5,4 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.*;
 public interface RoleDefinitionRepository extends JpaRepository<RoleDefinition,Long>{
  Optional<RoleDefinition> findBySystemRole(UserRole role);
- boolean existsByNameIgnoreCase(String name);
 }

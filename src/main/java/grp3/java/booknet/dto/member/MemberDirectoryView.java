@@ -36,6 +36,11 @@ public final class MemberDirectoryView {
                     .toUpperCase(java.util.Locale.ROOT);
         }
 
+        public Person withActivity(long borrowed, long late, String balance) {
+            return new Person(id, fullName, email, phone, address, role, access, verified, memberCode,
+                    cardNumber, cardStatus, issued, expires, borrowed, late, balance, revision);
+        }
+
         public String cardTone() {
             return switch (cardStatus) {
                 case "Active" -> "positive";

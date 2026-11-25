@@ -73,7 +73,12 @@ public class MemberManagementController {
                                 ? grp3.java.booknet.enums.user.UserStatus.SUSPENDED : grp3.java.booknet.enums.user.UserStatus.ACTIVE,
                 person.revision()));
         if (!model.containsAttribute("activationForm")) model.addAttribute("activationForm", new grp3.java.booknet.dto.member.MemberForms.ActivationForm(false, null));
-        model.addAttribute("loans", directory.previewLoans(demo, id));
+        model.addAttribute("loans", directory.currentLoans(admin, demo, id));
+        var fineEntries = directory.fines(admin, demo, id);
+        model.addAttribute("fineEntries", fineEntries);
+        model.addAttribute("estimatedFine", grp3.java.booknet.service.member.MemberActivityService.money(fineEntries.stream()
+                .filter(grp3.java.booknet.dto.member.MemberFineDto::isEstimated).map(grp3.java.booknet.dto.member.MemberFineDto::amount)
+                .filter(java.util.Objects::nonNull).reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add)));
         common(model, admin, demo);
         if(admin){if(!model.containsAttribute("profileForm"))model.addAttribute("profileForm",new grp3.java.booknet.dto.user.request.ProfileUpdateRequest(person.fullName(),person.phone(),person.address(),demo ? null : accounts.profile(id).avatarUrl()));model.addAttribute("activities",audits.findAll(org.springframework.data.domain.Sort.by("createdAt").descending()).stream().filter(a->a.getTargetId().equals(id)).limit(20).toList());return "member/admin-details";}
         return "member/details";

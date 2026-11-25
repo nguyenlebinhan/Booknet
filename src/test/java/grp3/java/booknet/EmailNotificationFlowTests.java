@@ -89,7 +89,7 @@ class EmailNotificationFlowTests {
 
     @BeforeEach
     void setUp() {
-        reset(mailSender);
+        reset(mailSender); TestMail.prepare(mailSender);
         cleanAll();
 
         librarian = userRepository.saveAndFlush(User.builder()
@@ -386,10 +386,10 @@ class EmailNotificationFlowTests {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/staff/notifications/email?templateType=OVERDUE"));
 
-        ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        ArgumentCaptor<jakarta.mail.internet.MimeMessage> captor = ArgumentCaptor.forClass(jakarta.mail.internet.MimeMessage.class);
         verify(mailSender, times(1)).send(captor.capture());
 
-        SimpleMailMessage sentMsg = captor.getValue();
+        SimpleMailMessage sentMsg = TestMail.plain(captor.getValue());
         assertThat(sentMsg.getTo()).containsExactly(memberOverdue.getEmail());
         assertThat(sentMsg.getSubject()).isEqualTo("[booknet] Overdue Effective Java (4d)");
         assertThat(sentMsg.getText()).contains("Minh Anh").contains("4 days overdue");
@@ -409,13 +409,13 @@ class EmailNotificationFlowTests {
                         .param("idempotencyToken", idempToken))
                 .andExpect(status().is3xxRedirection());
 
-        verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
+        verify(mailSender, times(1)).send(any(jakarta.mail.internet.MimeMessage.class));
     }
 
     @Test
     void failedSmtpDeliveryRecordsFailureAndRetryRecoversIdempotently() throws Exception {
         doThrow(new MailSendException("SMTP connection refused"))
-                .when(mailSender).send(any(SimpleMailMessage.class));
+                .when(mailSender).send(any(jakarta.mail.internet.MimeMessage.class));
 
         mvc.perform(post("/staff/notifications/email")
                         .with(user(new CustomUserDetails(librarian)))
@@ -439,7 +439,7 @@ class EmailNotificationFlowTests {
                 .andExpect(content().string(containsString("Retry")));
 
         // Recover SMTP and retry failed log
-        reset(mailSender);
+        reset(mailSender); TestMail.prepare(mailSender);
         mvc.perform(post("/staff/notifications/email/logs/" + failedLog.getId() + "/retry")
                         .with(user(new CustomUserDetails(librarian)))
                         .with(csrf()))
@@ -449,7 +449,7 @@ class EmailNotificationFlowTests {
         assertThat(retriedLog.getStatus()).isEqualTo(EmailLogStatus.SENT);
         assertThat(retriedLog.getRetryCount()).isEqualTo(1);
         assertThat(retriedLog.getErrorMessage()).isNull();
-        verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
+        verify(mailSender, times(1)).send(any(jakarta.mail.internet.MimeMessage.class));
 
         // Second retry attempt on already SENT log must NOT send again
         mvc.perform(post("/staff/notifications/email/logs/" + failedLog.getId() + "/retry")
@@ -458,6 +458,6 @@ class EmailNotificationFlowTests {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(flash().attributeExists("errorMessage"));
 
-        verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
+        verify(mailSender, times(1)).send(any(jakarta.mail.internet.MimeMessage.class));
     }
 }

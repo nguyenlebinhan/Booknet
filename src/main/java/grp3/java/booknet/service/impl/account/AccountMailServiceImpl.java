@@ -5,14 +5,14 @@ import grp3.java.booknet.service.account.AccountMailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import grp3.java.booknet.service.mail.BooknetMailService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 @RequiredArgsConstructor
 public class AccountMailServiceImpl implements AccountMailService {
-    private final JavaMailSender mailSender;
+    private final BooknetMailService mailSender;
 
     @Value("${app.account.base-url:http://localhost:8080}")
     private String baseUrl;
@@ -41,6 +41,7 @@ public class AccountMailServiceImpl implements AccountMailService {
                 +(personalMessage==null || personalMessage.isBlank() ? "" : "\n\nMessage from your library:\n"+personalMessage)
                 +"\nIf you did not expect this invitation, contact your library.");
         }
-        mailSender.send(message);
+        mailSender.sendAction(message, "ACCOUNT SECURITY", verification ? "Verify email address"
+                : purpose == AccountTokenPurpose.INVITE_ACCOUNT ? "Activate account" : "Set new password", url);
     }
 }

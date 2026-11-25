@@ -24,7 +24,7 @@
         <span>Dashboard</span>
       </a>
       <!-- LIBRARIAN: Dashboard visible via /staff/dashboard -->
-      <a class="admin-nav-link" sec:authorize="hasRole('LIBRARIAN')" th:href="@{/staff/dashboard}"
+      <a class="admin-nav-link" sec:authorize="!hasRole('ADMIN') AND hasRole('LIBRARIAN')" th:href="@{/staff/dashboard}"
          th:classappend="${activePage == 'dashboard'} ? ' is-current'"
          th:attr="aria-current=${activePage == 'dashboard' ? 'page' : null}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="4" rx="1"/><rect x="14" y="10" width="7" height="11" rx="1"/><rect x="3" y="13" width="7" height="8" rx="1"/></svg>

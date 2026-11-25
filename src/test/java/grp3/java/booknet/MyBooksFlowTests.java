@@ -68,6 +68,9 @@ class MyBooksFlowTests {
     private grp3.java.booknet.repository.book_service.FavoriteBookRepository favoriteBookRepository;
 
     @Autowired
+    private grp3.java.booknet.repository.book_service.BorrowRequestRepository borrowRequestRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -82,6 +85,7 @@ class MyBooksFlowTests {
     @BeforeEach
     void setUp() {
         favoriteBookRepository.deleteAll();
+        borrowRequestRepository.deleteAll();
         reservationRepository.deleteAll();
         loanRepository.deleteAll();
         bookCopyRepository.deleteAll();

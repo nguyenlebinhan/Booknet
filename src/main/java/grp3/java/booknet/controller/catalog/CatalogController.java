@@ -2,7 +2,6 @@ package grp3.java.booknet.controller.catalog;
 
 import grp3.java.booknet.dto.catalog.CatalogFilter;
 import grp3.java.booknet.dto.catalog.CatalogBookView;
-import grp3.java.booknet.entity.book_service.Reservation;
 import grp3.java.booknet.enums.book_service.ReservationStatus;
 import grp3.java.booknet.repository.book_service.ReservationRepository;
 import grp3.java.booknet.repository.user.UserRepository;

@@ -15,6 +15,17 @@ import java.util.Optional;
 @Repository
 public interface FineRepository extends JpaRepository<Fine, Long> {
 
+    interface MemberBalance {
+        Long getMemberId();
+        BigDecimal getAmount();
+    }
+
+    @Query("""
+        select f.member.id as memberId, sum(f.amount) as amount from Fine f
+        where f.member.id in :memberIds and f.status = :status group by f.member.id
+        """)
+    List<MemberBalance> summarizeMembers(java.util.Collection<Long> memberIds, FineStatus status);
+
     // ── Giữ nguyên — đang được BorrowServiceImpl sử dụng ───────────────────
     boolean existsByMember_IdAndStatus(Long memberId, FineStatus status);
     List<Fine> findByMember_IdAndStatus(Long memberId, FineStatus status);

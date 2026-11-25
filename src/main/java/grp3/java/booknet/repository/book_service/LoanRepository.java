@@ -13,6 +13,23 @@ import java.time.LocalDate;
 @Repository
 public interface LoanRepository extends JpaRepository<Loan, Long> {
 
+    @org.springframework.data.jpa.repository.Query("""
+        select l.member.id as memberId, count(l) as onLoan,
+               sum(case when l.dueDate < :today then 1L else 0L end) as overdue
+        from Loan l where l.member.id in :memberIds and l.status in :statuses
+          and l.returnedAt is null and not exists (select i.id from LoanItem i where i.loan = l)
+        group by l.member.id
+        """)
+    List<grp3.java.booknet.dto.member.MemberLoanTotals> summarizeLegacyMembers(
+            Collection<Long> memberIds, Collection<LoanStatus> statuses, LocalDate today);
+
+    @EntityGraph(attributePaths = {"copy", "copy.book", "copy.book.authors"})
+    @org.springframework.data.jpa.repository.Query("""
+        select l from Loan l where l.member.id = :memberId and l.status in :statuses
+          and l.returnedAt is null and not exists (select i.id from LoanItem i where i.loan = l)
+        """)
+    List<Loan> findLegacyActiveByMember(Long memberId, Collection<LoanStatus> statuses);
+
     long countByDueDateBeforeAndStatusIn(LocalDate dueDate, Collection<LoanStatus> statuses);
 
     long countByMember_IdAndStatusIn(Long memberId, Collection<LoanStatus> statuses);

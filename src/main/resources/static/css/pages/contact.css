@@ -434,7 +434,9 @@ body.bn-page-body {
 }
 
 .bn-textarea-input {
-  padding-left: 40px;
+  padding: 12px 14px;
+  line-height: 1.7;
+  text-align: left;
   resize: vertical;
   min-height: 120px;
 }

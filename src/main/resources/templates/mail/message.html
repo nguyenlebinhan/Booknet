@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title th:text="${title}">booknet Library</title></head>
+<body style="margin:0;padding:0;background-color:#f8f6f0;color:#202e28;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f8f6f0;table-layout:fixed;"><tr><td align="center" style="padding:32px 16px;">
+  <table role="presentation" width="640" cellspacing="0" cellpadding="0" style="width:100%;max-width:640px;table-layout:fixed;overflow-wrap:anywhere;">
+    <tr><td style="padding-bottom:20px;border-bottom:1px solid #dfe2d7;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr>
+        <td style="font:700 32px Georgia,serif;color:#173f35;">booknet</td>
+        <td align="right" style="font-size:11px;letter-spacing:2px;color:#173f35;"><span th:text="${category}">LIBRARY CONTACT</span></td>
+      </tr></table>
+    </td></tr>
+    <tr><td style="padding:28px 0 24px;">
+      <h1 th:text="${title}" style="margin:0 0 14px;font:400 32px/1.25 Georgia,serif;color:#173f35;">A new message for the library</h1>
+      <p th:if="${contact != null}" style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#73786e;">Someone has contacted Booknet. Their details and message are below.</p>
+      <span th:if="${contact != null}" th:text="${topic}" style="display:inline-block;padding:10px 14px;border-radius:8px;background-color:#e8eee6;color:#173f35;font-size:14px;font-weight:bold;">Borrowing &amp; renewals</span>
+    </td></tr>
+    <tr th:if="${contact != null}"><td style="padding:24px;background-color:#fffefa;border:1px solid #dfe2d7;border-radius:10px;">
+      <h2 style="margin:0 0 18px;font:400 25px Georgia,serif;color:#173f35;">Contact details</h2>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size:14px;line-height:1.6;table-layout:fixed;">
+        <tr><td style="width:35%;padding:12px 12px 12px 0;border-top:1px solid #dfe2d7;color:#73786e;">Full name</td><td th:text="${contact.fullName}" style="padding:12px 0;border-top:1px solid #dfe2d7;overflow-wrap:anywhere;">Nguyen Minh Anh</td></tr>
+        <tr><td style="padding:12px 12px 12px 0;border-top:1px solid #dfe2d7;color:#73786e;">Email address</td><td style="padding:12px 0;border-top:1px solid #dfe2d7;overflow-wrap:anywhere;"><a th:href="${actionUrl}" th:text="${contact.email}" style="color:#173f35;">minhanh@example.com</a></td></tr>
+        <tr><td style="padding:12px 12px 0 0;border-top:1px solid #dfe2d7;color:#73786e;">Phone number</td><td th:text="${phone}" style="padding:12px 0 0;border-top:1px solid #dfe2d7;font-weight:bold;color:#173f35;">0903 248 161</td></tr>
+      </table>
+    </td></tr>
+    <tr th:if="${contact != null}"><td height="20" style="height:20px;font-size:1px;">&nbsp;</td></tr>
+    <tr><td style="padding:24px;background-color:#fffefa;border:1px solid #dfe2d7;border-radius:10px;">
+      <h2 style="margin:0 0 18px;font:400 25px Georgia,serif;color:#173f35;">Message</h2>
+      <div th:text="${body}" style="font-size:15px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;">Hello Booknet team.</div>
+    </td></tr>
+    <tr th:if="${actionUrl != null}"><td align="center" style="padding:24px 0;">
+      <a th:href="${actionUrl}" th:text="${actionLabel}" style="display:block;background-color:#173f35;border:1px solid #173f35;border-radius:8px;padding:16px 24px;color:#ffffff;font-size:16px;font-weight:bold;text-decoration:none;">Reply to sender</a>
+      <p th:if="${contact != null}" style="margin:14px 0 0;font-size:13px;line-height:1.6;color:#73786e;">You can also reply directly to this email.</p>
+    </td></tr>
+    <tr th:if="${actionUrl == null}"><td height="24" style="height:24px;font-size:1px;">&nbsp;</td></tr>
+    <tr><td align="center" style="padding-top:24px;border-top:1px solid #dfe2d7;font-size:12px;line-height:1.8;color:#73786e;">
+      booknet Community Library<br>
+      <span th:if="${contact != null}">Sent via the Booknet contact form.<br>Reply-To: <span th:text="${contact.email}">minhanh@example.com</span></span>
+    </td></tr>
+  </table>
+</td></tr></table>
+</body></html>

@@ -20,6 +20,8 @@ import java.util.Locale;
 public class MemberDirectoryService {
     private final UserRepository users;
     private final java.time.Clock clock;
+    private final MemberActivityService activity;
+    private final grp3.java.booknet.service.fine.FineService fineService;
 
     @PreAuthorize("hasAuthority('MEMBER_READ') and (!#admin or hasAuthority('USER_READ'))")
     public Directory directory(boolean admin, boolean demo, String keyword, String card, String loan, String fine, String accountStatus, int page) {
@@ -43,32 +45,41 @@ public class MemberDirectoryService {
                     all.stream().filter(p -> p.cardStatus().equals("Expired")).count(),
                     all.stream().filter(p -> p.onLoan() > 0).count(), all.stream().filter(p -> p.overdue() > 0).count(), current, pages);
         }
-        if (!loan.isEmpty() || !fine.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Loan and fine filters are available in sample preview only.");
-        }
         if (!admin && !accountStatus.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account status filters are only available to administrators.");
         }
         var sort = Sort.by("fullName").ascending().and(Sort.by("id"));
-        var result = users.findAll(criteria(admin, keyword, card, accountStatus), PageRequest.of(Math.max(0, page), 7, sort));
+        var result = users.findAll(criteria(admin, keyword, card, accountStatus, loan, fine), PageRequest.of(Math.max(0, page), 7, sort));
         int pages = Math.max(1, result.getTotalPages());
-        if (page >= pages) result = users.findAll(criteria(admin, keyword, card, accountStatus), PageRequest.of(pages - 1, 7, sort));
-        return new Directory(result.getContent().stream().map(u -> Person.from(u, java.time.LocalDate.now(clock))).toList(), result.getTotalElements(),
+        if (page >= pages) result = users.findAll(criteria(admin, keyword, card, accountStatus, loan, fine), PageRequest.of(pages - 1, 7, sort));
+        var totals = activity.summaries(result.getContent().stream().map(u -> u.getId()).toList());
+        return new Directory(result.getContent().stream().map(u -> withActivity(Person.from(u, java.time.LocalDate.now(clock)), totals.getOrDefault(u.getId(), MemberActivityService.Summary.EMPTY))).toList(), result.getTotalElements(),
                 users.count(criteria(admin, "", "", "")), users.count(criteria(admin, "", "Active", "")), users.count(criteria(admin, "", "Expired", "")),
-                null, null, result.getNumber(), pages);
+                users.count(criteria(admin, "", "", "", "borrowed", "")),
+                users.count(criteria(admin, "", "", "", "overdue", "")), result.getNumber(), pages);
     }
 
     @PreAuthorize("hasAuthority('MEMBER_READ') and (!#admin or hasAuthority('USER_READ'))")
     public Person detail(boolean admin, boolean demo, Long id) {
         if (demo) return MemberPreviewData.people().stream().filter(p -> p.id().equals(id)).findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return withActivity(Person.from(scopedUser(admin, id), java.time.LocalDate.now(clock)),
+                activity.summaries(List.of(id)).getOrDefault(id, MemberActivityService.Summary.EMPTY));
+    }
+
+    private grp3.java.booknet.entity.user.User scopedUser(boolean admin, Long id) {
         return users.findById(id).filter(user -> admin || (user.getRole() == grp3.java.booknet.enums.user.UserRole.ROLE_USER
                 && (user.getAssignedRole() == null || user.getAssignedRole().getSystemRole() == grp3.java.booknet.enums.user.UserRole.ROLE_USER)))
-                .map(u -> Person.from(u, java.time.LocalDate.now(clock))).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     private org.springframework.data.jpa.domain.Specification<grp3.java.booknet.entity.user.User> criteria(
             boolean admin, String keyword, String status, String accountStatus) {
+        return criteria(admin, keyword, status, accountStatus, "", "");
+    }
+
+    private org.springframework.data.jpa.domain.Specification<grp3.java.booknet.entity.user.User> criteria(
+            boolean admin, String keyword, String status, String accountStatus, String loanFilter, String fineFilter) {
         return (root, query, cb) -> {
             var card = root.join("memberCard", jakarta.persistence.criteria.JoinType.LEFT);
             var role = root.join("assignedRole", jakarta.persistence.criteria.JoinType.LEFT);
@@ -90,12 +101,57 @@ public class MemberDirectoryService {
             jakarta.persistence.criteria.Predicate account = accountStatus.isEmpty() ? cb.conjunction()
                     : cb.and(cb.equal(root.get("status"), grp3.java.booknet.enums.user.UserStatus.valueOf(accountStatus)),
                             accountStatus.equals("SUSPENDED") ? cb.conjunction() : cb.isTrue(root.get("enabled")));
-            return cb.and(scope, search, validity, account);
+            var itemQuery = query.subquery(Long.class);
+            var item = itemQuery.from(grp3.java.booknet.entity.book_service.LoanItem.class);
+            var itemConditions = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
+            itemConditions.add(cb.equal(item.get("loan").get("member").get("id"), root.get("id")));
+            itemConditions.add(item.get("status").in(MemberActivityService.ACTIVE_ITEMS));
+            itemConditions.add(cb.isNull(item.get("returnedAt")));
+            if (loanFilter.equals("overdue")) itemConditions.add(cb.lessThan(item.get("dueDate"), today));
+            itemQuery.select(item.get("id")).where(itemConditions.toArray(jakarta.persistence.criteria.Predicate[]::new));
+            var legacyQuery = query.subquery(Long.class);
+            var legacy = legacyQuery.from(grp3.java.booknet.entity.book_service.Loan.class);
+            var hasItems = legacyQuery.subquery(Long.class);
+            var anyItem = hasItems.from(grp3.java.booknet.entity.book_service.LoanItem.class);
+            hasItems.select(anyItem.get("id")).where(cb.equal(anyItem.get("loan"), legacy));
+            var legacyConditions = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
+            legacyConditions.add(cb.equal(legacy.get("member").get("id"), root.get("id")));
+            legacyConditions.add(legacy.get("status").in(MemberActivityService.ACTIVE_LOANS));
+            legacyConditions.add(cb.isNull(legacy.get("returnedAt")));
+            legacyConditions.add(cb.not(cb.exists(hasItems)));
+            if (loanFilter.equals("overdue")) legacyConditions.add(cb.lessThan(legacy.get("dueDate"), today));
+            legacyQuery.select(legacy.get("id")).where(legacyConditions.toArray(jakarta.persistence.criteria.Predicate[]::new));
+            var hasLoans = cb.or(cb.exists(itemQuery), cb.exists(legacyQuery));
+            var loanMatch = loanFilter.isEmpty() ? cb.conjunction()
+                    : loanFilter.equals("none") ? cb.not(hasLoans) : hasLoans;
+            var fineQuery = query.subquery(java.math.BigDecimal.class);
+            var fineRecord = fineQuery.from(grp3.java.booknet.entity.book_service.Fine.class);
+            fineQuery.select(cb.sum(fineRecord.get("amount"))).where(
+                    cb.equal(fineRecord.get("member").get("id"), root.get("id")),
+                    cb.equal(fineRecord.get("status"), grp3.java.booknet.enums.book_service.FineStatus.UNPAID));
+            var balance = cb.coalesce(fineQuery, java.math.BigDecimal.ZERO);
+            var fineMatch = fineFilter.isEmpty() ? cb.conjunction() : fineFilter.equals("unpaid")
+                    ? cb.greaterThan(balance, java.math.BigDecimal.ZERO) : cb.lessThanOrEqualTo(balance, java.math.BigDecimal.ZERO);
+            return cb.and(scope, search, validity, account, loanMatch, fineMatch);
         };
     }
 
-    @PreAuthorize("hasAuthority('MEMBER_READ')")
-    public List<Loan> previewLoans(boolean demo, Long id) {
-        return demo ? MemberPreviewData.loans(id) : List.of();
+    @PreAuthorize("hasAuthority('MEMBER_READ') and (!#admin or hasAuthority('USER_READ'))")
+    public List<Loan> currentLoans(boolean admin, boolean demo, Long id) {
+        if (demo) detail(admin, true, id); else scopedUser(admin, id);
+        return demo ? MemberPreviewData.loans(id) : activity.currentLoans(id);
+    }
+
+    @PreAuthorize("hasAuthority('MEMBER_READ') and (!#admin or hasAuthority('USER_READ'))")
+    public List<grp3.java.booknet.dto.member.MemberFineDto> fines(boolean admin, boolean demo, Long id) {
+        if (demo) { detail(admin, true, id); return List.of(); }
+        scopedUser(admin, id);
+        var currentIds = activity.currentLoanIds(id);
+        return fineService.getMemberFineDtos(id).stream()
+                .filter(fine -> !fine.isEstimated() || currentIds.contains(fine.loanId())).toList();
+    }
+
+    private Person withActivity(Person person, MemberActivityService.Summary summary) {
+        return person.withActivity(summary.onLoan(), summary.overdue(), MemberActivityService.money(summary.outstanding()));
     }
 }

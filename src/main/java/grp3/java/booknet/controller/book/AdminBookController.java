@@ -9,7 +9,6 @@ import grp3.java.booknet.dto.author.AuthorOptionDto;
 import grp3.java.booknet.dto.catalog.CategoryOptionDto;
 import grp3.java.booknet.entity.book.Author;
 import grp3.java.booknet.entity.book.Book;
-import grp3.java.booknet.entity.book.BookCopy;
 import grp3.java.booknet.entity.book.Category;
 import grp3.java.booknet.enums.book.PublicationStatus;
 import grp3.java.booknet.repository.book.BookCopyRepository;

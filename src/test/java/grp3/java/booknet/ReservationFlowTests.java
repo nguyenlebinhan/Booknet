@@ -107,6 +107,7 @@ class ReservationFlowTests {
     @BeforeEach
     void setUp() {
         cleanAll();
+        TestMail.prepare(mailSender);
 
         memberA = createMember("Minh Anh", "minhanh.resv@booknet.test", "BN-2026-0148", true);
         memberB = createMember("Binh Tran", "binh.borrower@booknet.test", "BN-2026-0149", true);

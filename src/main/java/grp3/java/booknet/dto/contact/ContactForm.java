@@ -12,6 +12,8 @@ public record ContactForm(
         @Email(message = "Please enter a valid email address.")
         @Size(max = 120, message = "Email address must not exceed 120 characters.")
         @Pattern(regexp = "^[^\\r\\n]*$", message = "Please enter a valid email address.") String email,
+        @Size(max = 20, message = "Phone number must not exceed 20 characters.")
+        @Pattern(regexp = "|[+]?[0-9 ()-]{8,19}", message = "Please enter a valid phone number.") String phone,
         @Pattern(regexp = "^(Borrowing & renewals|Membership & card activation|Catalog searches & reservations|Book donations|Events & reading rooms|Other)?$",
                 message = "Please select a valid topic.") String subject,
         @NotBlank(message = "Please enter your message.")
@@ -20,6 +22,7 @@ public record ContactForm(
     public ContactForm {
         fullName = fullName == null ? "" : fullName.trim();
         email = email == null ? "" : email.trim();
+        phone = phone == null ? "" : phone.trim();
         subject = subject == null ? "" : subject.trim();
         message = message == null ? "" : message.trim();
     }

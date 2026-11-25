@@ -1,7 +1,6 @@
 package grp3.java.booknet.service.impl.borrowing;
 
 import grp3.java.booknet.dto.loan.*;
-import grp3.java.booknet.entity.book.Book;
 import grp3.java.booknet.entity.book.BookCopy;
 import grp3.java.booknet.entity.book_service.*;
 import grp3.java.booknet.entity.user.User;

@@ -11,7 +11,6 @@ import grp3.java.booknet.entity.book_service.Loan;
 import grp3.java.booknet.entity.book_service.LoanItem;
 import grp3.java.booknet.entity.book_service.Reservation;
 import grp3.java.booknet.entity.user.User;
-import grp3.java.booknet.enums.book.CopyStatus;
 import grp3.java.booknet.enums.book_service.LoanItemStatus;
 import grp3.java.booknet.enums.book_service.LoanStatus;
 import grp3.java.booknet.enums.book_service.ReservationStatus;

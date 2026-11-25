@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,11 +20,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * AI book assistant (UC09). The chat bubble on every page loads the panel of this page; without
+ * AI book assistant (UC09) for guests and members. The chat bubble loads this panel; without
  * JavaScript the page works on its own. The conversation is kept only in the HTTP session.
  */
 @Controller
 @RequestMapping("/assistant")
+@PreAuthorize("isAnonymous() or (hasAnyRole('USER', 'MEMBER') and !hasAnyRole('ADMIN', 'LIBRARIAN'))")
 @RequiredArgsConstructor
 public class AssistantController {
     private static final String CONVERSATION = "assistantConversation";

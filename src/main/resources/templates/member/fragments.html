@@ -9,7 +9,7 @@
 <div class="mg-preview" th:fragment="dataNotice">
   <span class="mg-badge warning" th:text="${demo ? 'DEMO DATA' : 'LIVE DIRECTORY'}">DEMO DATA</span>
   <p th:if="${demo}">Fictional records · Snapshot 08/11/2026. Previewing this page does not change accounts, cards or payments.</p>
-  <p th:unless="${demo}">Account and card information is live. Loan and fine information is not connected yet.</p>
+  <p th:unless="${demo}">Account, card, current loan and finalized fine information comes from live booknet records.</p>
   <a th:href="@{${basePath}(demo=${!demo})}" th:text="${demo ? 'View live directory →' : 'Preview sample data →'}">Preview sample data →</a>
 </div>
 

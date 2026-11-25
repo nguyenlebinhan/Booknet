@@ -78,6 +78,7 @@ class NotificationFlowTests {
     @BeforeEach
     void setUp() {
         cleanAll();
+        TestMail.prepare(mailSender);
 
         member = userRepository.saveAndFlush(User.builder()
                 .fullName("Minh Anh")

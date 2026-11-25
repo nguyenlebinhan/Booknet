@@ -157,7 +157,8 @@ public class LibrarianCirculationController {
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
         try {
-            loanService.handoverLoan(requestId, List.of(copyBarcode), notes, getLibrarianEmail(authentication));
+            List<String> copyBarcodes = parseBarcodes(copyBarcode);
+            loanService.handoverLoan(requestId, copyBarcodes, notes, getLibrarianEmail(authentication));
             redirectAttributes.addFlashAttribute("successMessage", "Physical books checked out successfully! Official 14-day loan issued.");
             return "redirect:/staff/loans?tab=active_loans";
         } catch (LoanException e) {
@@ -165,6 +166,16 @@ public class LibrarianCirculationController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/staff/loans/receive-return?requestId=" + requestId;
         }
+    }
+
+    private static List<String> parseBarcodes(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return List.of();
+        }
+        return java.util.Arrays.stream(raw.split("[,;\\r\\n\\s]+"))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
     }
 
     @PostMapping("/return")

@@ -145,17 +145,19 @@
                     <option th:each="req : ${awaitingHandoverList}" 
                             th:value="${req.requestId}" 
                             th:selected="${selectedRequestId != null and selectedRequestId == req.requestId}"
-                            th:text="${req.requestCode + ' · ' + req.memberName + ' (' + #strings.listJoin(req.bookTitles, ', ') + ')'}">
+                            th:text="${req.requestCode + ' · ' + req.memberName + ' (' + req.bookCount + (req.bookCount == 1 ? ' book: ' : ' books: ') + #strings.listJoin(req.bookTitles, ', ') + ')'}">
                       BR-001 · Nguyễn Văn A
                     </option>
                   </select>
                 </div>
 
                 <div class="bn-form-group">
-                  <label class="bn-form-label">Physical Copy Barcode(s)</label>
-                  <input type="text" name="copyBarcode" placeholder="Scan or enter copy barcode (e.g. BC-001)" class="bn-form-input" required>
+                  <label class="bn-form-label" for="checkout-copy-barcodes">Physical Copy Barcode(s)</label>
+                  <textarea id="checkout-copy-barcodes" name="copyBarcode" rows="2"
+                            placeholder="Scan or enter barcodes separated by comma or new line (e.g. BC-001, BC-002)"
+                            class="bn-form-textarea" required></textarea>
                   <small style="display: block; color: var(--bn-muted); margin-top: 4px; font-size: 11px;">
-                    Scan the barcode sticker on the physical book. Barcode will be marked BORROWED and official due date set to 14 days.
+                    For multi-book requests, enter one barcode per book (separated by comma or new line, in any order). All copies will be marked BORROWED with a 14-day due date.
                   </small>
                 </div>
 

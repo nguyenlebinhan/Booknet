@@ -285,9 +285,14 @@
   }
 }
 
-.emc-editor-tools { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
-.emc-sync-status { color: var(--bn-muted); font-size: 12px; max-width: 260px; }
+.emc-editor-tools { justify-self: end; align-self: start; }
+.emc-sync-status { color: var(--bn-muted); font-size: 12px; margin: 0 0 16px; }
 .emc-sync-status.is-error { color: var(--bn-danger); }
 .emc-step-head { gap: 16px; flex-wrap: wrap; }
 .emc-step-title-wrap { min-width: 0; }
-@media (max-width: 720px) { .emc-editor-tools { width: 100%; justify-content: space-between; } }
+
+.emc-compose-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
+.emc-compose-head .emc-step-title-wrap { align-items: flex-start; }
+.emc-compose-head .emc-step-num { flex-shrink: 0; }
+.emc-editor-tools .bn-btn { white-space: nowrap; }
+.emc-empty-group { margin: 8px 0 0; color: var(--bn-muted); font-size: 13px; }

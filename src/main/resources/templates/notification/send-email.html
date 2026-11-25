@@ -41,7 +41,8 @@
         <span th:text="${errorMessage}">Failed</span>
       </div>
 
-      <form th:action="@{${basePath}}" th:object="${sendForm}" method="post" id="email-composer-form">
+      <form th:action="@{${basePath}}" th:object="${sendForm}" method="post" id="email-composer-form"
+            th:attr="data-csrf-header=${_csrf.headerName},data-csrf-token=${_csrf.token}">
         <input type="hidden" th:field="*{idempotencyToken}">
         <input type="hidden" th:field="*{reviewStep}">
 
@@ -135,6 +136,7 @@
               <div class="emc-context-box" th:if="${view.recipientMode == 'GROUP'}">
                 <div>
                   <strong>Batch summary for eligible group</strong>
+                  <p class="emc-empty-group" th:if="${view.preview.validRecipientCount == 0}">No eligible recipients for this template right now. Try another template or choose a specific member.</p>
                   <div style="margin-top: 6px; font-size: 13px; color: var(--bn-ink);">
                     Ready to send: <strong th:text="${view.preview.validRecipientCount}">0</strong> individual email(s)
                     <span th:if="${view.preview.skippedDuplicateCount > 0}"
@@ -154,7 +156,7 @@
 
             <!-- 03 Compose message -->
             <section class="emc-step-card">
-              <div class="emc-step-head">
+              <div class="emc-step-head emc-compose-head">
                 <div class="emc-step-title-wrap">
                   <span class="emc-step-num">03</span>
                   <div>
@@ -163,12 +165,13 @@
                   </div>
                 </div>
                 <div class="emc-editor-tools">
-                  <span id="composer-sync-status" class="emc-sync-status" role="status" aria-live="polite">Changes save automatically</span>
                   <button type="submit" name="action" value="reset-template" class="bn-btn bn-btn-secondary bn-btn-sm">
                     Reset template
                   </button>
                 </div>
               </div>
+
+              <p id="composer-sync-status" class="emc-sync-status" role="status" aria-live="polite">Ready to preview</p>
 
               <div class="emc-var-list" aria-label="Supported template variables">
                 <span class="emc-var-chip">{{memberName}}</span>

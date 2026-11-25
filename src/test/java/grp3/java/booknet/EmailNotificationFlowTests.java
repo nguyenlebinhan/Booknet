@@ -60,7 +60,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class EmailNotificationFlowTests {
@@ -68,6 +68,7 @@ class EmailNotificationFlowTests {
     @MockitoBean
     private JavaMailSender mailSender;
 
+    @org.springframework.boot.test.web.server.LocalServerPort private int port;
     @Autowired private MockMvc mvc;
     @Autowired private EmailNotificationService emailNotificationService;
     @Autowired private EmailLogRepository emailLogRepository;
@@ -196,6 +197,68 @@ class EmailNotificationFlowTests {
     }
 
     @Test
+    void realHttpSessionSupportsEncodedAutosaveAndRecipientSwitching() throws Exception {
+        String password = TestPasswords.valid();
+        librarian.setPassword(passwordEncoder.encode(password));
+        userRepository.saveAndFlush(librarian);
+        var cookies = new java.net.CookieManager(null, java.net.CookiePolicy.ACCEPT_ALL);
+        var client = java.net.http.HttpClient.newBuilder().cookieHandler(cookies).build();
+        String root = "http://localhost:" + port;
+        var login = client.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(root + "/login")).GET().build(),
+                java.net.http.HttpResponse.BodyHandlers.ofString());
+        String token = csrfValue(login.body());
+        var signedIn = httpPost(client, root + "/login", token,
+                "email=" + encoded(librarian.getEmail()) + "&password=" + encoded(password) + "&_csrf=" + encoded(token));
+        assertThat(signedIn.statusCode()).isEqualTo(302);
+        assertThat(signedIn.headers().firstValue("Location").orElseThrow()).doesNotContain("error");
+        String endpoint = root + "/staff/notifications/email";
+        var composer = client.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(endpoint)).GET().build(),
+                java.net.http.HttpResponse.BodyHandlers.ofString());
+        assertThat(composer.statusCode()).isEqualTo(200);
+        token = csrfValue(composer.body());
+        assertThat(composer.body()).contains("data-csrf-header=\"X-CSRF-TOKEN\"", "data-csrf-token=\"");
+        String wording = "templateType=OVERDUE&subjectTemplate=" + encoded("Hello {{memberName}}")
+                + "&bodyTemplate=" + encoded("Book: {{bookTitle}} & due {{dueDate}}");
+        var saved = httpPost(client, endpoint + "/template", token, wording);
+        assertThat(saved.statusCode()).isEqualTo(200);
+        assertThat(saved.body()).contains("Template saved automatically.");
+        for (String mode : List.of("GROUP", "SPECIFIC", "GROUP")) {
+            var preview = httpPost(client, endpoint, token, wording + "&action=filter&recipientMode=" + mode);
+            assertThat(preview.statusCode()).isEqualTo(200);
+            assertThat(preview.body()).contains(mode.equals("GROUP") ? "Batch summary for eligible group" : "emc-member-pill");
+        }
+        var empty = httpPost(client, endpoint, token,
+                "action=switch-template&templateType=DUE_SOON&recipientMode=GROUP");
+        assertThat(empty.statusCode()).isEqualTo(200);
+        assertThat(empty.body()).contains("No eligible recipients for this template right now.");
+        var rejected = httpPost(client, endpoint + "/template", null, wording);
+        assertThat(rejected.statusCode()).isEqualTo(403);
+        var reset = httpPost(client, endpoint, token, "action=reset-template&templateType=OVERDUE");
+        assertThat(reset.statusCode()).isEqualTo(302);
+        assertThat(emailLogRepository.count()).isZero();
+        verifyNoInteractions(mailSender);
+    }
+
+    private static String encoded(String value) {
+        return java.net.URLEncoder.encode(value, java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    private static String csrfValue(String html) {
+        var matcher = java.util.regex.Pattern.compile("name=\"_csrf\"[^>]*value=\"([^\"]+)\"").matcher(html);
+        assertThat(matcher.find()).as("Rendered form contains a CSRF token").isTrue();
+        return matcher.group(1);
+    }
+
+    private static java.net.http.HttpResponse<String> httpPost(java.net.http.HttpClient client, String url,
+                                                               String token, String body) throws Exception {
+        var request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(url))
+                .header("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
+                .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body));
+        if (token != null) request.header("X-CSRF-TOKEN", token);
+        return client.send(request.build(), java.net.http.HttpResponse.BodyHandlers.ofString());
+    }
+
+    @Test
     void automaticTemplateSaveAndPreviewNeverSendMailAndRequireCsrfAndPermission() throws Exception {
         for (String base : List.of("/staff/notifications/email", "/librarian/notifications/email", "/admin/notifications/email")) {
             mvc.perform(post(base + "/template").with(user(new CustomUserDetails(librarian)))
@@ -236,6 +299,13 @@ class EmailNotificationFlowTests {
                             .with(user(new CustomUserDetails(librarian))))
                     .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
             java.nio.file.Files.writeString(out.resolve(type + ".html"), html
+                    .replace("href=\"/css/", "href=\"" + assets + "css/")
+                    .replace("src=\"/js/", "src=\"" + assets + "js/")
+                    .replace("src=\"/images/", "src=\"" + assets + "images/"));
+            String groupHtml = mvc.perform(get("/staff/notifications/email").param("templateType", type)
+                            .param("recipientMode", "GROUP").with(user(new CustomUserDetails(librarian))))
+                    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+            java.nio.file.Files.writeString(out.resolve(type + "_GROUP.html"), groupHtml
                     .replace("href=\"/css/", "href=\"" + assets + "css/")
                     .replace("src=\"/js/", "src=\"" + assets + "js/")
                     .replace("src=\"/images/", "src=\"" + assets + "images/"));

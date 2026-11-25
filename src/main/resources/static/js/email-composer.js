@@ -4,6 +4,8 @@
   const subject = form.elements.subjectTemplate;
   const body = form.elements.bodyTemplate;
   const status = document.getElementById('composer-sync-status');
+  // Named action buttons shadow HTMLFormElement.action with a RadioNodeList.
+  const actionUrl = new URL(form.getAttribute('action'), document.baseURI).href;
   let loadedType = form.elements.templateType.value;
   let saved = JSON.stringify([subject.value, body.value]);
   let timer, version = 0, queue = Promise.resolve(), submitting = false;
@@ -12,9 +14,21 @@
     status.classList.toggle('is-error', error);
   };
   const request = async (url, data) => {
-    const response = await fetch(url, {method: 'POST', body: data, credentials: 'same-origin'});
-    if (response.redirected || !response.ok && !response.headers.get('content-type')?.includes('application/json')) {
-      throw new Error('Could not update. Check your connection or sign in again.');
+    const headers = {};
+    if (form.dataset.csrfHeader && form.dataset.csrfToken) {
+      headers[form.dataset.csrfHeader] = form.dataset.csrfToken;
+    }
+    const response = await fetch(url, {
+      method: 'POST', body: new URLSearchParams(data), headers, credentials: 'same-origin'
+    });
+    if (response.redirected || response.status === 401) {
+      throw new Error('Your session has expired. Sign in again to continue.');
+    }
+    if (response.status === 403) {
+      throw new Error('Could not authorize this update. Reload the page and try again.');
+    }
+    if (!response.ok && !response.headers.get('content-type')?.includes('application/json')) {
+      throw new Error('Could not update the preview. Please try again.');
     }
     return response;
   };
@@ -29,7 +43,7 @@
     if (wording !== saved) {
       const draft = new FormData(form);
       draft.set('templateType', loadedType);
-      const response = await request(form.action + '/template', draft);
+      const response = await request(actionUrl + '/template', draft);
       const result = await response.json();
       if (!response.ok) {
         saveError = result.message || 'Template could not be saved.';
@@ -42,7 +56,7 @@
     const switching = desiredType !== loadedType;
     data.set('action', switching ? 'switch-template' : 'filter');
     data.set('reviewStep', 'false');
-    const response = await request(form.action, data);
+    const response = await request(actionUrl, data);
     const page = new DOMParser().parseFromString(await response.text(), 'text/html');
     const incoming = page.getElementById('email-composer-form');
     if (!incoming) throw new Error('Could not refresh the preview. Please reload the page.');

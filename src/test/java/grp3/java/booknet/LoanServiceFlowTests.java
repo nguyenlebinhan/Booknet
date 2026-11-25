@@ -216,6 +216,64 @@ class LoanServiceFlowTests {
     }
 
     @Test
+    @DisplayName("Multi-book request checkout parses comma/newline barcodes regardless of scan order")
+    @WithMockUser(username = "librarian.flow@booknet.local", authorities = {"ROLE_LIBRARIAN", "CIRCULATION"})
+    void multiBookCheckoutSupportsMultipleBarcodesInSingleInput() throws Exception {
+        Book secondBook = bookRepository.save(Book.builder()
+                .title("Clean Code")
+                .isbn("9780132350884")
+                .publishYear((short) 2008)
+                .build());
+        BookCopy secondBookCopy = bookCopyRepository.save(BookCopy.builder()
+                .book(secondBook)
+                .barcode("BC-CC-01")
+                .status(CopyStatus.AVAILABLE)
+                .build());
+
+        BorrowRequest req = borrowRequestRepository.save(BorrowRequest.builder()
+                .requestCode("BR-MULTI-01").member(member).status(BorrowRequestStatus.APPROVED).build());
+        borrowRequestItemRepository.save(BorrowRequestItem.builder().request(req).book(book).build());
+        borrowRequestItemRepository.save(BorrowRequestItem.builder().request(req).book(secondBook).build());
+
+        mvc.perform(get("/staff/loans/receive-return").param("requestId", req.getId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"copyBarcode\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("2 books: Effective Java, Clean Code")));
+
+        // Wrong count (only 1 barcode for 2-book request) fails with flash error and keeps copies available
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/staff/loans/checkout")
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
+                        .param("requestId", req.getId().toString())
+                        .param("copyBarcode", "BC-EJ-01"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/staff/loans/receive-return?requestId=" + req.getId()))
+                .andExpect(flash().attributeExists("errorMessage"));
+
+        assertThat(findCopyByBarcode("BC-EJ-01").getStatus()).isEqualTo(CopyStatus.AVAILABLE);
+        assertThat(findCopyByBarcode("BC-CC-01").getStatus()).isEqualTo(CopyStatus.AVAILABLE);
+
+        // Two comma-separated barcodes in reverse order succeed and assign both books
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/staff/loans/checkout")
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
+                        .param("requestId", req.getId().toString())
+                        .param("copyBarcode", secondBookCopy.getBarcode() + ", " + copy1.getBarcode())
+                        .param("notes", "Two-book counter handover"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/staff/loans?tab=active_loans"))
+                .andExpect(flash().attributeExists("successMessage"));
+
+        BorrowRequest completed = borrowRequestRepository.findById(req.getId()).orElseThrow();
+        assertThat(completed.getStatus()).isEqualTo(BorrowRequestStatus.COMPLETED);
+        assertThat(findCopyByBarcode("BC-EJ-01").getStatus()).isEqualTo(CopyStatus.BORROWED);
+        assertThat(findCopyByBarcode("BC-CC-01").getStatus()).isEqualTo(CopyStatus.BORROWED);
+
+        List<LoanItem> loanItems = loanItemRepository.findAll().stream()
+                .filter(i -> i.getLoan().getMember().getId().equals(member.getId()))
+                .toList();
+        assertThat(loanItems).hasSize(2);
+    }
+
+    @Test
     @DisplayName("Tasks 4.9 & 4.10: Receive return at desk from pending return request")
     void test4_9_and_4_10_ReceiveReturnAtCounterNormal() {
         Loan loan = loanRepository.save(Loan.builder()

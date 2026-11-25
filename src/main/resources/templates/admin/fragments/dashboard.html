@@ -3,12 +3,18 @@
 <body>
 <aside class="admin-sidebar" th:fragment="sidebar">
   <a class="admin-brand" sec:authorize="hasRole('ADMIN')" th:href="@{/admin/dashboard}" aria-label="booknet admin dashboard">
-    <span class="admin-brand-mark"><img th:src="@{/images/home/nav-book-open.svg}" width="26" height="26" alt=""></span>
-    <span class="admin-brand-name">booknet<small>COMMUNITY LIBRARY</small></span>
+    <span class="admin-brand-mark"><img th:src="@{/images/auth/book-open.svg}" width="24" height="24" alt=""></span>
+    <span class="admin-brand-text">
+      <span class="admin-brand-name">booknet</span>
+      <span class="admin-brand-tagline">COMMUNITY LIBRARY</span>
+    </span>
   </a>
   <a class="admin-brand" sec:authorize="!hasRole('ADMIN') and hasRole('LIBRARIAN')" th:href="@{/staff/dashboard}" aria-label="booknet staff dashboard">
-    <span class="admin-brand-mark"><img th:src="@{/images/home/nav-book-open.svg}" width="26" height="26" alt=""></span>
-    <span class="admin-brand-name">booknet<small>COMMUNITY LIBRARY</small></span>
+    <span class="admin-brand-mark"><img th:src="@{/images/auth/book-open.svg}" width="24" height="24" alt=""></span>
+    <span class="admin-brand-text">
+      <span class="admin-brand-name">booknet</span>
+      <span class="admin-brand-tagline">COMMUNITY LIBRARY</span>
+    </span>
   </a>
   <span class="admin-space-badge" sec:authorize="hasRole('ADMIN')">ADMIN SPACE</span>
   <span class="admin-space-badge" sec:authorize="hasRole('LIBRARIAN')">STAFF SPACE</span>

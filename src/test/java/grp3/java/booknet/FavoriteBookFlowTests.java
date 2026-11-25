@@ -203,4 +203,63 @@ class FavoriteBookFlowTests {
 
         assertThat(favoriteBookRepository.count()).isZero();
     }
+
+    @Test
+    @DisplayName("Request multiple saved books verifies loan limit constraint")
+    void memberRequestMultipleSavedBooksRespectsLimit() throws Exception {
+        MockHttpSession session = loginMember();
+
+        // Create 5 additional books (total 6 books)
+        for (int i = 1; i <= 5; i++) {
+            Book extraBook = bookRepository.saveAndFlush(Book.builder()
+                    .title("Extra Book " + i)
+                    .isbn("978-0-000-0000" + i)
+                    .publicationStatus(PublicationStatus.PUBLISHED)
+                    .build());
+            bookCopyRepository.saveAndFlush(BookCopy.builder()
+                    .book(extraBook)
+                    .barcode("EX-00" + i)
+                    .shelfLocation("Floor 1")
+                    .status(CopyStatus.AVAILABLE)
+                    .build());
+            // Add to favorites
+            mockMvc.perform(post("/member/favorites/" + extraBook.getId() + "/toggle")
+                            .session(session)
+                            .with(csrf()))
+                    .andExpect(status().is3xxRedirection());
+        }
+
+        // Add the initial book as favorite as well (total 6 favorites)
+        mockMvc.perform(post("/member/favorites/" + book.getId() + "/toggle")
+                        .session(session)
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        assertThat(favoriteBookRepository.count()).isEqualTo(6);
+
+        // Access confirm loan with 2 books -> eligibleToBorrow = true
+        var allFavorites = favoriteBookRepository.findAll();
+        Long id1 = allFavorites.get(0).getBook().getId();
+        Long id2 = allFavorites.get(1).getBook().getId();
+
+        mockMvc.perform(get("/loans/confirm")
+                        .session(session)
+                        .param("bookId", String.valueOf(id1))
+                        .param("bookId", String.valueOf(id2)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("borrowing/confirm"))
+                .andExpect(model().attribute("view", org.hamcrest.Matchers.hasToString(org.hamcrest.Matchers.containsString("eligibleToBorrow=true"))));
+
+        // Access confirm loan with 6 books (exceeding MAX_LOAN_LIMIT of 5) -> eligibleToBorrow = false
+        var builder = get("/loans/confirm").session(session);
+        for (var fav : allFavorites) {
+            builder.param("bookId", String.valueOf(fav.getBook().getId()));
+        }
+
+        mockMvc.perform(builder)
+                .andExpect(status().isOk())
+                .andExpect(view().name("borrowing/confirm"))
+                .andExpect(model().attribute("view", org.hamcrest.Matchers.hasToString(org.hamcrest.Matchers.containsString("eligibleToBorrow=false"))))
+                .andExpect(model().attribute("view", org.hamcrest.Matchers.hasToString(org.hamcrest.Matchers.containsString("You can only request 5 more book(s)"))));
+    }
 }

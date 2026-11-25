@@ -372,6 +372,51 @@
   background: var(--bn-forest-hover);
 }
 
+.btn-action-remove {
+  background: var(--bn-surface);
+  color: #8c887b;
+  border: 1px solid var(--bn-line);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-action-remove:hover {
+  background: #fff5f5;
+  color: var(--bn-danger);
+  border-color: rgba(184, 50, 50, 0.4);
+}
+
+/* Toolbar for favorites batch action */
+.favorites-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: var(--bn-surface);
+  border: 1px solid var(--bn-line);
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
+}
+
+.favorites-toolbar-info {
+  font-size: 14px;
+  color: var(--bn-muted);
+}
+
+.favorites-toolbar-info strong {
+  color: var(--bn-ink);
+}
+
+.favorites-toolbar-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
 .btn-action-renew {
   background: var(--bn-surface);
   color: var(--bn-ink);
